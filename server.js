@@ -8,6 +8,9 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(express.json());
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 app.use(express.static(__dirname));
 
 const SECRET = process.env.PAYSTACK_SECRET_KEY;
@@ -34,7 +37,7 @@ app.post('/api/pay', async (req, res) => {
       {
         email: email,
         amount: amount * 100,
-        callback_url: 'http://localhost:3000/'
+        callback_url: `${req.protocol}://${req.get('host')}/`
       },
       { headers: { Authorization: `Bearer ${SECRET}` } }
     );
@@ -57,7 +60,7 @@ app.get('/api/verify/:reference', async (req, res) => {
   }
 });
 // ===== LOGIN / REGISTER =====
-app.post('/api/register', async (req, res) => {
+app.post('/api/signup', async (req, res) => {
   const { name, email, password } = req.body;
   if(!email || !password || password.length < 6) return res.json({success:false, message:'Email + password min 6 chars needed'});
   try{
