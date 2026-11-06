@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Pet Shop</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+<body>
+}
+</style>
+<h1 class="welcome-3d">Welcome to pets world 🪩🐶🦜</h1>
+
+  <!-- Toggle Button -->
+  <button id="menuBtn">☰</button>
+
+  <!-- Side Panel -->
+  
+   <div id="sidebar">
+  <h2>🐾 Pet Shop</h2>
+  <a href="#" onclick="goHome()">🏠 Home</a>
+  <a href="#" onclick="showPets('dog')">🐶 Dogs</a>
+  <a href="#" onclick="showPets('cat')">🐱 Cat</a>
+  <a href="#" onclick="showPets('kitten')">🐱 Kittens</a>
+  <a href="#" onclick="showPets('parrot')">🦜 Parrots</a>
+  <a href="#" onclick="showPets('puppy')">🐶 Puppies</a>
+  <a href="#" onclick="openWallet()">💰 Wallet</a>
+    <!-- SIGN OUT - BOTTOM OF SIDEBAR -->
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+    <button id="signOutBtn" type="button" style="width:100%; padding:12px; border:none; border-radius:50px; background:linear-gradient(#ff7eb6,#ff2e7e); color:white; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 4px 0 #a8004a;">
+      🚪 Sign Out
+    </button>
+  </div>
+</div>
+
+  <!-- Main Content -->
+  <div id="main">
+    <h1 id="pageTitle">All Pets</h1>
+   <p>Click the ≡ button to open / close the side panel.</p><p>Click the = button to open / close the side panel.</p>
+
+<!-- PASTE THIS NEW PART ONLY -->
+<div class="google-search-box">
+  <h1>Find Your Perfect Pet 🐾</h1>
+  <div class="search-wrapper">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="Search pets... e.g. German Shepherd" onkeyup="googleSearch()" autocomplete="off">
+    <span onclick="clearSearch()">❌</span>
+  </div>
+  <div id="suggestionsBox"></div>
+  <div class="search-buttons">
+    <button onclick="googleSearch()">Search</button>
+    <button onclick="feelingLucky()">I'm Feeling Lucky 🍀</button>
+  </div>
+</div>
+<h2>🔥 Explore Trending Pets</h2>
+<div id="exploreSection"></div>
+<!-- END OF NEW PART -->
+
+
+
+<!-- ===== STEP 3: HOME PAGE ===== -->
+<section id="homePage" style="text-align:center; padding:30px 15px; background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:15px; margin:15px;">
+  <h1 style="font-size:32px; margin:0;">🐾 Find Your New Best Friend</h1>
+  <p style="font-size:16px; color:#555;">Healthy, vaccinated pets from trusted breeders. Dogs, Cats, Kittens, Parrots & Puppies.</p>
+  <input id="homeSearch" placeholder="Search e.g. Belgian Malinois..." style="padding:12px; width:80%; max-width:400px; border-radius:25px; border:1px solid #ccc; font-size:16px;" onkeyup="if(event.key==='Enter'){document.getElementById('searchInput').value=this.value; googleSearch(); document.getElementById('homePage').style.display='none';}">
+  <br><br>
+  <button onclick="document.getElementById('searchInput').value=document.getElementById('homeSearch').value; googleSearch(); document.getElementById('homePage').style.display='none';" style="padding:12px 30px; background:#ff6b00; color:white; border:none; border-radius:25px; font-size:16px; cursor:pointer;">🔍 Search Pets</button>
+  <button onclick="showPets('all'); document.getElementById('homePage').style.display='none';" style="padding:12px 25px; background:white; border:1px solid #ff6b00; color:#ff6b00; border-radius:25px; font-size:16px; cursor:pointer; margin-left:10px;">View All Pets</button>
+</section>
+
+<!-- Categories with your exact counts -->
+<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:15px;">
+  <div onclick="showPets('dog')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐶</div><b>Dogs</b><br>147 Pets</div>
+  <div onclick="showPets('cat')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐱</div><b>Cats</b><br>112 Pets</div>
+  <div onclick="showPets('kitten')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐈</div><b>Kittens</b><br>89 Pets</div>
+  <div onclick="showPets('parrot')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🦜</div><b>Parrots</b><br>74 Pets</div>
+  <div onclick="showPets('puppy')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐕</div><b>Puppies</b><br>97 Pets</div>
+</div>
+
+<!-- Why Choose Us -->
+<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:15px; text-align:center;">
+  <div style="background:#e8f5e9; padding:12px; border-radius:10px; width:150px;">✅ <b>Health Checked</b><br>All pets vaccinated</div>
+  <div style="background:#e3f2fd; padding:12px; border-radius:10px; width:150px;">🌍 <b>Origin Shown</b><br>Know where it comes from</div>
+  <div style="background:#fff3e0; padding:12px; border-radius:10px; width:150px;">🚚 <b>Fast Delivery</b><br>Safe pet transport</div>
+  <div style="background:#fce4ec; padding:12px; border-radius:10px; width:150px;">💬 <b>Support</b><br>Help after purchase</div>
+</div>
+
+<div style="text-align:center; margin:10px;">
+  <button onclick="document.getElementById('homePage').style.display='none'; showPets('all');" style="background:none; border:none; color:#ff6b00; cursor:pointer; font-size:14px;">⬇️ Scroll down to see all pets or click a category above</button>
+</div><div id="petList"></div>
+ 
+
+  <script src="script.js"></script>-
+
+
+<div id="cartDrawer" style="display:none;position:fixed;right:0;top:0;width:340px;max-width:90%;height:100%;background:#fff;padding:20px;z-index:200;overflow-y:auto">
+  <h2>🛒 Your Cart</h2>
+  <div id="cartItems"></div><hr>
+  <h3>Total: USD
+
+ <span id="cartTotal">0</span></h3>
+  <p id="balanceInfo"></p>
+  <div id="checkoutForm" style="text-align:left; margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px;">
+  <h4>Delivery Details</h4>
+  <label>Full Name</label><br>
+  <input id="custName" placeholder="e.g. gabriel james" style="width:100%;padding:8px;margin:5px 0;"><br>
+  <label>Delivery Address</label><br>
+  <input id="custAddress" placeholder="e.g. Lodwar, Turkana, Kenya - Estate / House No." style="width:100%;padding:8px;margin:5px 0;"><br>
+  <label>Telephone</label><br>
+  <div style="display:flex; gap:5px;">
+    
+<div style="display:flex;gap:5px;position:relative;">
+  <div id="countryPicker" style="position:relative;">
+    <button type="button" id="countryBtn" style="padding:8px;width:150px;text-align:left;background:white;border:1px solid #ccc;cursor:pointer;display:flex;align-items:center;gap:6px;">
+      <img id="countryBtnFlag" src="https://flagcdn.com/w20/gb.png" style="width:20px;"> <span id="countryBtnText">+44 Uk</span> ▼
+    </button>
+    <div id="countryDrop" style="display:none;position:absolute;top:100%;left:0;width:260px;background:white;border:1px solid #ccc;z-index:999;box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+      <input id="countrySearch" placeholder="🔍 Search country... USA, UK, Kenya" style="width:100%;padding:10px;box-sizing:border-box;border:none;border-bottom:1px solid #eee;outline:none;">
+      <div id="countryList" style="max-height:250px;overflow-y:auto;"></div>
+    </div>
+  </div>
+  <input id="custPhone" placeholder="712345678" style="flex:1;padding:8px;">
+  <input type="hidden" id="phoneCode" value="+44">
+</div>
+  </div><br>
+  <label>Email</label><br>
+  <input id="custEmail" type="email" placeholder="e.g. john@gmail.com" style="width:100%;padding:8px;margin:5px 0;"><br>
+  <button id="payBtn" onclick="payNow()" style="width:100%;padding:12px;background:green;color:white;border:none;border-radius:6px;font-size:16px;margin-top:10px;">Pay Now</button>
+  <p id="orderMessage" style="color:green; font-weight:bold;"></p>
+</div>
+  <button id="checkoutBtn" onclick="checkout()" style="background:#ff6b00;color:#fff;width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold">Pay From Wallet & Checkout</button>
+  <button onclick="closeCart()" style="width:100%;padding:12px;margin-top:10px">Close Cart</button>
+</div>
+<button onclick="openCart()" style="position:fixed;top:15px;right:15px;z-index:300;background:#111;color:#fff;padding:10px 14px;border-radius:8px">🛒 Cart (<span id="cartCount">0</span>)</button>
+<script>
+  // SIGN OUT ONLY - clears login and goes back to landing fresh
+  document.getElementById('signOutBtn').addEventListener('click', function() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+    window.location.href = '/login';
+  });
+</script>

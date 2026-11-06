@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Your Shop</title>
+<style>
+  body{font-family:Arial;background:#f5f5f5;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+  .box{background:white;padding:30px;border-radius:12px;width:90%;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+  h2{text-align:center;margin:0 0 20px}
+  input{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
+  button{width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:10px}
+  .link{text-align:center;margin-top:15px;font-size:14px;cursor:pointer;color:blue}
+  #msg{text-align:center;color:red;font-size:14px;margin-top:10px}
+  .hidden{display:none}
+</style>
+<style>
+  /* --- ONLY LOOKS --- */
+  body {
+    margin: 0;
+    background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #landing {
+    position: fixed; inset: 0; z-index: 20;
+    background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200');
+    background-size: cover; background-position: center;
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 40px; transition: transform 0.9s ease-in;
+  }
+  #landing.fall { transform: translateY(100%); }
+  #landing{ overflow:hidden; }
+.fall-text{
+  padding:28px 42px; margin:20px;
+  font-size:54px; font-weight:900; color:#fff; text-align:center;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.6);
+  border-radius:30px;
+  box-shadow:0 25px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.8);
+  text-shadow:0 0 25px #fff, 0 0 45px #00e5ff;
+}
+.bubble{
+  position:absolute; bottom:-50px; border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  border:1px solid rgba(255,255,255,0.6);
+  animation:rise 3s linear infinite;
+  pointer-events:none;
+}
+.bubble:nth-child(1){left:10%; width:60px; height:60px;}
+.bubble:nth-child(2){left:25%; width:35px; height:35px;}
+.bubble:nth-child(3){left:50%; width:80px; height:80px;}
+.bubble:nth-child(4){left:70%; width:45px; height:45px;}
+.bubble:nth-child(5){left:85%; width:65px; height:65px;}
+@keyframes rise{to{transform:translateY(-110vh); opacity:0;}}
+.landing-footer{
+  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
+  width:max-content; max-width:92%;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center;
+  padding:10px 22px;
+  font-size:14px; font-weight:600; color:#fff; text-align:center;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+  z-index:5;
+}
+.email-3d{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px;
+  background:linear-gradient(135deg,#ff6ec4,#7873f5,#00e5ff);
+  border-radius:50px;
+  color:#fff; text-decoration:none; font-weight:800;
+  box-shadow:0 4px 0 #ff6ec4, 0 8px 0 #7873f5, 0 10px 15px rgba(0,0,0,0.4);
+  transform:perspective(400px) rotateX(10deg);
+}
+.email-3d:active{ transform:translateY(3px); box-shadow:0 1px 0 #ff6ec4, 0 3px 0 #7873f5; }
+.landing-footer{
+  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
+  width:max-content; max-width:92%;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center;
+  padding:10px 22px;
+  font-size:14px; font-weight:600; color:#fff; text-align:center;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+  z-index:5;
+}
+.email-3d{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px;
+  background:linear-gradient(135deg,#ff6ec4,#7873f5,#00e5ff);
+  border-radius:50px;
+  color:#fff; text-decoration:none; font-weight:800;
+  box-shadow:0 4px 0 #ff6ec4, 0 8px 0 #7873f5, 0 10px 15px rgba(0,0,0,0.4);
+  transform:perspective(400px) rotateX(10deg);
+}
+.email-3d:active{ transform:translateY(3px); box-shadow:0 1px 0 #ff6ec4, 0 3px 0 #7873f5; }
+  #letsGoBtn {
+    padding: 16px 50px; font-size: 26px; font-weight: 900; color: white;
+    background: linear-gradient(#ff7eb6, #ff2e7e); border: none; border-radius: 50px;
+    cursor: pointer; box-shadow: 0 8px 0 #a8004a, 0 15px 25px rgba(0,0,0,0.4);
+  }
+  /* Make YOUR existing .box look fancy - we don't replace it */
+  .box {
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,46,126,0.35) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25) !important;
+    border-radius: 22px !important;
+  }
+  .box button {
+    background: linear-gradient(#ff7eb6, #ff2e7e) !important;
+    border-radius: 50px !important;
+    box-shadow: 0 6px 0 #a8004a !important;
+  }
+  .ribbon-footer {
+    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 5;
+    text-align: center; padding: 14px;
+    background: linear-gradient(#e84393, #c2185b);
+    color: white; font-weight: bold; font-size: 18px;
+  }
+</style>
+</head>
+<body><!-- LANDING - ONLY VISUAL -->
+<div id="landing">
+  <span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>
+  <h1 class="fall-text">Welcome to pets world 🪩🐶🦜</h1>
+  <button id="letsGoBtn" type="button">LET'S GO 🐾</button>
+  <div class="landing-footer">
+    <a class="email-3d" href="mailto:pets457@gmail.com">✉️ pets457@gmail.com</a>
+    <span>• Terms & conditions apply</span>
+    <span>• © 2026 petsshopworld. All rights reserved.</span>
+  </div>
+</div>
+<div class="box">
+  <!-- LOGIN -->
+  <div id="loginBox">
+    <h2>Welcome Back</h2>
+    <input id="loginEmail" type="email" placeholder="Email">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button onclick="doLogin()">Login</button>
+    <div class="link" onclick="showSignup()">No account? Create one</div>
+    <div class="link" onclick="location.href='/'">← Back to Shop</div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signupBox" class="hidden">
+    <h2>Create Account</h2>
+    <input id="regName" type="text" placeholder="Full Name">
+    <input id="regEmail" type="email" placeholder="Email">
+    <input id="regPass" type="password" placeholder="Password (min 6)">
+    <button onclick="doSignup()">Sign Up</button>
+    <div class="link" onclick="showLogin()">Already have account? Login</div>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<script>
+function showSignup(){document.getElementById('loginBox').classList.add('hidden');document.getElementById('signupBox').classList.remove('hidden');}
+function showLogin(){document.getElementById('signupBox').classList.add('hidden');document.getElementById('loginBox').classList.remove('hidden');}
+
+async function doSignup(){
+  const name=document.getElementById('regName').value;
+  const email=document.getElementById('regEmail').value;
+  const password=document.getElementById('regPass').value;
+  const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
+  const data=await res.json();
+  document.getElementById('msg').innerText=data.message;
+  if(data.success){alert('Account created! Now login');showLogin();}
+}
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value;
+  const password=document.getElementById('loginPass').value;
+  const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+  const data=await res.json();
+  document.getElementById('msg').innerText=data.message;
+  if(data.success){
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    location.href='/';
+  }
+}
+</script>
+<div class="ribbon-footer">Welcome to Pets World ♥️😻</div>
+
+<script>
+  // ONLY FALL ANIMATION - DOES NOT TOUCH LOGIN
+  document.getElementById('letsGoBtn').addEventListener('click', function() {
+    document.getElementById('landing').classList.add('fall');
+    setTimeout(() => {
+      document.getElementById('landing').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }, 900);
+  });
+</script>
+</body>
+</html>
