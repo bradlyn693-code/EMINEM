@@ -127,6 +127,19 @@
     color: white; font-weight: bold; font-size: 18px;
   }
 </style>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+  input, button, img { max-width: 100%; }
+  @media (max-width: 768px) {
+    body { display: block; padding: 12px; }
+    .box { width: 100%; max-width: 380px; margin: 12px auto; }
+    #landing { max-width: 100%; }
+    .fall-text { max-width: 100%; font-size: clamp(30px, 9vw, 54px); padding: 20px; }
+    .landing-footer { width: max-content; max-width: 100%; }
+    .ribbon-footer { box-sizing: border-box; }
+  }
+</style>
 </head>
 <body><!-- LANDING - ONLY VISUAL -->
 <div id="landing">
@@ -141,51 +154,145 @@
 </div>
 <div class="box">
   <!-- LOGIN -->
-    <form id="loginBox" onsubmit="event.preventDefault(); return false;">
+    <form id="loginBox">
     <h2>Welcome Back</h2>
-    <input id="loginEmail" type="email" placeholder="Email">
-    <input id="loginPass" type="password" placeholder="Password">
-      <button type="button" onclick="login()">Login</button>
+    <input id="loginEmail" type="email" placeholder="Email" autocomplete="email">
+    <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
+      <button type="submit">Login</button>
     <div class="link" onclick="showSignup()">No account? Create one</div>
     </form>
 
     <!-- SIGNUP -->
-    <form id="signupBox" class="hidden" onsubmit="event.preventDefault(); return false;">
+    <form id="signupBox" class="hidden">
       <h2>Create Account</h2>
       <input id="regName" type="text" placeholder="Full Name">
-      <input id="regEmail" type="email" placeholder="Email">
-      <input id="regPass" type="password" placeholder="Password (min 6)">
-      <button type="button" onclick="signup()">Sign Up</button>
+      <input id="regEmail" type="email" placeholder="Email" autocomplete="email">
+      <input id="regPass" type="password" placeholder="Password (min 6)" autocomplete="current-password">
+      <button type="submit">Sign Up</button>
       <div class="link" onclick="showLogin()">Already have account? Login</div>
+    </form>
+    <form id="verifyEmailBox" class="hidden">
+      <h2>Verify Your Email</h2>
+      <input id="verifyEmail" type="email" placeholder="Email" autocomplete="email" required>
+      <input id="verifyCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" required>
+      <button type="submit">Verify Email</button>
+      <div class="link" onclick="showLogin()">Back to Login</div>
     </form>
     <div id="msg"></div>
   </div>
 
   <script>
-  function showSignup(){document.getElementById('loginBox').classList.add('hidden');document.getElementById('signupBox').classList.remove('hidden');}
-  function showLogin(){document.getElementById('signupBox').classList.add('hidden');document.getElementById('loginBox').classList.remove('hidden');}
+  function showSignup(){document.getElementById('loginBox').classList.add('hidden');document.getElementById('verifyEmailBox').classList.add('hidden');document.getElementById('signupBox').classList.remove('hidden');}
+  function showLogin(email){document.getElementById('signupBox').classList.add('hidden');document.getElementById('verifyEmailBox').classList.add('hidden');document.getElementById('loginBox').classList.remove('hidden');if(email)document.getElementById('loginEmail').value=email;}
+  function showVerification(email){document.getElementById('loginBox').classList.add('hidden');document.getElementById('signupBox').classList.add('hidden');document.getElementById('verifyEmailBox').classList.remove('hidden');document.getElementById('verifyEmail').value=email;}
 
-  function signup(){
+  localStorage.removeItem('petsAccount');
+  document.getElementById('loginEmail').value = localStorage.getItem('userEmail') || '';
+
+  async function signup(event){
+    event.preventDefault();
     const account = {
       name: document.getElementById('regName').value.trim(),
-      email: document.getElementById('regEmail').value.trim(),
+      email: document.getElementById('regEmail').value.trim().toLowerCase(),
       password: document.getElementById('regPass').value
     };
-    localStorage.setItem('petsAccount', JSON.stringify(account));
-    alert('Account created');
-    showLogin();
-  }
-  function login(){
-    const account = JSON.parse(localStorage.getItem('petsAccount') || 'null');
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPass').value;
-    if (account && account.email === email && account.password === password) {
-      alert('Login success');
-      window.location.href = 'index.html';
-    } else {
-      alert('Wrong email or password');
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(account)
+      });
+      const data = await response.json();
+      if (data.success) {
+        document.getElementById('msg').innerText = 'Verification code sent. Enter the code emailed to you.';
+        showVerification(account.email);
+        return;
+      }
+      if (!data.fallback) {
+        document.getElementById('msg').innerText = data.message || 'Account creation failed';
+        alert(data.message || 'Account creation failed');
+        return;
+      }
+      document.getElementById('msg').innerText = data.message || 'Account creation failed';
+      alert(data.message || 'Account creation failed');
+    } catch (error) {
+      document.getElementById('msg').innerText = 'Error: ' + error.message;
+      alert('Error: ' + error.message);
     }
   }
+  async function verifyEmail(event){
+    event.preventDefault();
+    const email = document.getElementById('verifyEmail').value.trim().toLowerCase();
+    const code = document.getElementById('verifyCode').value.trim();
+    try {
+      const response = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
+      const data = await response.json();
+      if (!data.success) {
+        document.getElementById('msg').innerText = data.message || 'Email verification failed';
+        alert(data.message || 'Email verification failed');
+        return;
+      }
+      document.getElementById('msg').innerText = 'Email verified. You can now log in.';
+      showLogin(email);
+      alert('Email verified. Please log in.');
+    } catch (error) {
+      document.getElementById('msg').innerText = 'Error: ' + error.message;
+      alert('Error: ' + error.message);
+    }
+  }
+  async function login(event){
+    event.preventDefault();
+    const credentials = {
+      email: document.getElementById('loginEmail').value.trim().toLowerCase(),
+      password: document.getElementById('loginPass').value
+    };
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
+      });
+      const data = await response.json();
+      if (data.success) {
+        if (data.token) localStorage.setItem('token', data.token);
+        localStorage.setItem('userEmail', credentials.email);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        alert('Login success');
+        window.location.href = 'index.html';
+        return;
+      }
+      if (!data.fallback) {
+        if (data.code === 'not_verified') {
+          document.getElementById('msg').innerText = data.message;
+          showVerification(credentials.email);
+          alert(data.message);
+          return;
+        }
+        const message = (data.message || '').toLowerCase();
+        const errorMessage = data.code === 'email_not_found' || message.includes('no account') || message.includes('email not found') || message.includes('not registered')
+          ? 'Email not found. Please create account first.'
+          : data.code === 'wrong_password' || message.includes('wrong password') || message.includes('incorrect password') || message.includes('invalid password')
+            ? 'Wrong password. Try again.'
+            : 'Wrong email or password';
+        document.getElementById('msg').innerText = errorMessage;
+        alert(errorMessage);
+        return;
+      }
+      document.getElementById('msg').innerText = data.message || 'Database unavailable';
+      alert(data.message || 'Database unavailable');
+      return;
+    } catch (error) {
+      document.getElementById('msg').innerText = 'Error: ' + error.message;
+      alert('Error: ' + error.message);
+    }
+  }
+  document.getElementById('loginBox').addEventListener('submit', login);
+  document.getElementById('signupBox').addEventListener('submit', signup);
+  document.getElementById('verifyEmailBox').addEventListener('submit', verifyEmail);
 
   document.getElementById('letsGoBtn').addEventListener('click', function() {
     document.getElementById('landing').classList.add('fall');
