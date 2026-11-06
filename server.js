@@ -90,6 +90,7 @@ app.post('/api/login', async (req, res) => {
 app.get('/login', (req,res)=>{ res.sendFile(__dirname + '/login.html'); });
 
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => console.log('Running on', PORT));
+}
+module.exports = app;
