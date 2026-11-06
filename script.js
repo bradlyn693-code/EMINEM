@@ -1,7 +1,8 @@
-function toggleMenu(){
+function toggleSidePanel(){
   document.getElementById('sidebar').classList.toggle('hidden');
   document.getElementById('main').classList.toggle('full');
 }
+function toggleMenu(){ toggleSidePanel(); }
 
 let allPets = [];
 let usedImgs = new Set();
@@ -865,4 +866,12 @@ document.addEventListener("input", (e) => {
   if (e.target.id === "countrySearch") renderCountries(e.target.value);
 });
 renderCountries("");
+});
+
+document.getElementById('menuBtn').addEventListener('click', toggleSidePanel);
+document.getElementById('signOutBtn').addEventListener('click', function() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  sessionStorage.clear();
+  window.location.href = 'login.html';
 });

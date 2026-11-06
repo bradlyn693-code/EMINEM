@@ -37,7 +37,7 @@
   <!-- Main Content -->
   <div id="main">
     <h1 id="pageTitle">All Pets</h1>
-   <p>Click the ≡ button to open / close the side panel.</p><p>Click the = button to open / close the side panel.</p>
+   <p>Click the ≡ button to open / close the side panel.</p>
 
 <!-- PASTE THIS NEW PART ONLY -->
 <div class="google-search-box">
@@ -91,9 +91,6 @@
 </div><div id="petList"></div>
  
 
-  <script src="script.js"></script>-
-
-
 <div id="cartDrawer" style="display:none;position:fixed;right:0;top:0;width:340px;max-width:90%;height:100%;background:#fff;padding:20px;z-index:200;overflow-y:auto">
   <h2>🛒 Your Cart</h2>
   <div id="cartItems"></div><hr>
@@ -133,12 +130,4 @@
   <button onclick="closeCart()" style="width:100%;padding:12px;margin-top:10px">Close Cart</button>
 </div>
 <button onclick="openCart()" style="position:fixed;top:15px;right:15px;z-index:300;background:#111;color:#fff;padding:10px 14px;border-radius:8px">🛒 Cart (<span id="cartCount">0</span>)</button>
-<script>
-  // SIGN OUT ONLY - clears login and goes back to landing fresh
-  document.getElementById('signOutBtn').addEventListener('click', function() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.clear();
-    window.location.href = 'login.html';
-  });
-</script>
+<script src="script.js"></script>

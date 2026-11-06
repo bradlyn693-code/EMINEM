@@ -141,57 +141,52 @@
 </div>
 <div class="box">
   <!-- LOGIN -->
-  <div id="loginBox">
+    <form id="loginBox" onsubmit="event.preventDefault(); return false;">
     <h2>Welcome Back</h2>
     <input id="loginEmail" type="email" placeholder="Email">
     <input id="loginPass" type="password" placeholder="Password">
-    <button onclick="doLogin()">Login</button>
+      <button type="button" onclick="login()">Login</button>
     <div class="link" onclick="showSignup()">No account? Create one</div>
-    <div class="link" onclick="location.href='/'">← Back to Shop</div>
+    </form>
+
+    <!-- SIGNUP -->
+    <form id="signupBox" class="hidden" onsubmit="event.preventDefault(); return false;">
+      <h2>Create Account</h2>
+      <input id="regName" type="text" placeholder="Full Name">
+      <input id="regEmail" type="email" placeholder="Email">
+      <input id="regPass" type="password" placeholder="Password (min 6)">
+      <button type="button" onclick="signup()">Sign Up</button>
+      <div class="link" onclick="showLogin()">Already have account? Login</div>
+    </form>
+    <div id="msg"></div>
   </div>
 
-  <!-- SIGNUP -->
-  <div id="signupBox" class="hidden">
-    <h2>Create Account</h2>
-    <input id="regName" type="text" placeholder="Full Name">
-    <input id="regEmail" type="email" placeholder="Email">
-    <input id="regPass" type="password" placeholder="Password (min 6)">
-    <button onclick="doSignup()">Sign Up</button>
-    <div class="link" onclick="showLogin()">Already have account? Login</div>
-  </div>
-  <div id="msg"></div>
-</div>
+  <script>
+  function showSignup(){document.getElementById('loginBox').classList.add('hidden');document.getElementById('signupBox').classList.remove('hidden');}
+  function showLogin(){document.getElementById('signupBox').classList.add('hidden');document.getElementById('loginBox').classList.remove('hidden');}
 
-<script>
-function showSignup(){document.getElementById('loginBox').classList.add('hidden');document.getElementById('signupBox').classList.remove('hidden');}
-function showLogin(){document.getElementById('signupBox').classList.add('hidden');document.getElementById('loginBox').classList.remove('hidden');}
-
-async function doSignup(){
-  const name=document.getElementById('regName').value;
-  const email=document.getElementById('regEmail').value;
-  const password=document.getElementById('regPass').value;
-  const res=await fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
-  const data=await res.json();
-  document.getElementById('msg').innerText=data.message;
-  if(data.success){alert('Account created! Now login');showLogin();}
-}
-async function doLogin(){
-  const email=document.getElementById('loginEmail').value;
-  const password=document.getElementById('loginPass').value;
-  const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-  const data=await res.json();
-  document.getElementById('msg').innerText=data.message;
-  if(data.success){
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    location.href='/';
+  function signup(){
+    const account = {
+      name: document.getElementById('regName').value.trim(),
+      email: document.getElementById('regEmail').value.trim(),
+      password: document.getElementById('regPass').value
+    };
+    localStorage.setItem('petsAccount', JSON.stringify(account));
+    alert('Account created');
+    showLogin();
   }
-}
-</script>
-<div class="ribbon-footer">Welcome to Pets World ♥️😻</div>
+  function login(){
+    const account = JSON.parse(localStorage.getItem('petsAccount') || 'null');
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPass').value;
+    if (account && account.email === email && account.password === password) {
+      alert('Login success');
+      window.location.href = 'index.html';
+    } else {
+      alert('Wrong email or password');
+    }
+  }
 
-<script>
-  // ONLY FALL ANIMATION - DOES NOT TOUCH LOGIN
   document.getElementById('letsGoBtn').addEventListener('click', function() {
     document.getElementById('landing').classList.add('fall');
     setTimeout(() => {
@@ -199,6 +194,7 @@ async function doLogin(){
       document.body.style.overflow = 'auto';
     }, 900);
   });
-</script>
-</body>
-</html>
+  </script>
+  <div class="ribbon-footer">Welcome to Pets World ♥️😻</div>
+  </body>
+  </html>
