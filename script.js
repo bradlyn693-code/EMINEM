@@ -150,10 +150,21 @@ let parrotList = [
   {breed:"Palm Cockatoo", price: 1600, desc:"Black, big beak."}
 ];
 
+async function fetchWithTimeout(url, timeoutMs = 8000){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    return await fetch(url, { signal: controller.signal });
+  }finally{
+    clearTimeout(timeout);
+  }
+}
+
 async function getUniqueDog(api){
   for(let t=0; t<5; t++){
     try{
-      let res = await fetch(`https://dog.ceo/api/breed/${api}/images/random`);
+      let res = await fetchWithTimeout(`https://dog.ceo/api/breed/${api}/images/random`);
+      if(!res.ok) continue;
       let d = await res.json();
       if(!usedImgs.has(d.message)){ usedImgs.add(d.message); return d.message; }
     }catch(e){}
@@ -164,7 +175,8 @@ async function getUniqueDog(api){
 async function getUniqueCat(code){
   for(let t=0; t<5; t++){
     try{
-      let res = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${code}&limit=1`);
+      let res = await fetchWithTimeout(`https://api.thecatapi.com/v1/images/search?breed_ids=${code}&limit=1`);
+      if(!res.ok) continue;
       let d = await res.json();
       if(d[0] && !usedImgs.has(d[0].url)){ usedImgs.add(d[0].url); return d[0].url; }
     }catch(e){}
@@ -172,26 +184,39 @@ async function getUniqueCat(code){
   return "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80";
 }
 
-async function loadPets(){
+function loadPets(){
+  if(allPets.length) return;
+  const imageTasks = [];
+  function addPet(pet, getImage){
+    const index = allPets.push(pet) - 1;
+    if(getImage){
+      imageTasks.push(async () => {
+        const image = await getImage();
+        if(image){
+          allPets[index].img = image;
+          document.querySelectorAll(`[data-pet-index="${index}"]`).forEach((img) => {
+            img.src = image;
+          });
+        }
+      });
+    }
+  }
+
   for(let i=0; i<dogList.length; i++){
     let b = dogList[i];
-    let img = await getUniqueDog(b.api);
-    allPets.push({type:'dog', name: b.breed, breed: b.breed, price: b.price, age: (2 + (i%10))+" months", desc: b.desc, img: img});
+    addPet({type:'dog', name: b.breed, breed: b.breed, price: b.price, age: (2 + (i%10))+" months", desc: b.desc, img: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&q=80"}, () => getUniqueDog(b.api));
   }
   for(let i=0; i<24; i++){
     let b = dogList[i];
-    let img = await getUniqueDog(b.api);
-    allPets.push({type:'puppy', name: puppyNames[i], breed: b.breed+" Puppy", price: puppyPrices[i], age: (2 + (i%4))+" months", desc: "Baby "+b.breed+" puppy named "+puppyNames[i]+". "+b.desc, img: img});
+    addPet({type:'puppy', name: puppyNames[i], breed: b.breed+" Puppy", price: puppyPrices[i], age: (2 + (i%4))+" months", desc: "Baby "+b.breed+" puppy named "+puppyNames[i]+". "+b.desc, img: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&q=80"}, () => getUniqueDog(b.api));
   }
   for(let i=0; i<catList.length; i++){
     let c = catList[i];
-    let img = await getUniqueCat(c.code);
-    allPets.push({type:'cat', name: c.breed, breed: c.breed, price: c.price, age: (3 + (i%8))+" months", desc: c.desc, img: img});
+    addPet({type:'cat', name: c.breed, breed: c.breed, price: c.price, age: (3 + (i%8))+" months", desc: c.desc, img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80"}, () => getUniqueCat(c.code));
   }
   for(let i=0; i<26; i++){
     let c = catList[i % catList.length];
-    let img = await getUniqueCat(c.code);
-    allPets.push({type:'kitten', name: kittenNames[i], breed: c.breed+" Kitten", price: kittenPrices[i], age: (2 + (i%4))+" months", desc: "Kitten "+kittenNames[i]+" - "+c.desc, img: img});
+    addPet({type:'kitten', name: kittenNames[i], breed: c.breed+" Kitten", price: kittenPrices[i], age: (2 + (i%4))+" months", desc: "Kitten "+kittenNames[i]+" - "+c.desc, img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80"}, () => getUniqueCat(c.code));
   }
   let parrotImgs = [
     "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&q=80",
@@ -206,9 +231,19 @@ async function loadPets(){
   for(let i=0; i<parrotList.length; i++){
     let p = parrotList[i];
     let img = parrotImgs[i % parrotImgs.length];
-    allPets.push({type:'parrot', name: p.breed, breed: p.breed, price: p.price, age: (4 + (i%10))+" months", desc: p.desc, img: img});
+    addPet({type:'parrot', name: p.breed, breed: p.breed, price: p.price, age: (4 + (i%10))+" months", desc: p.desc, img: img});
   }
   showPets('all');
+  showExplore();
+
+  let nextImageTask = 0;
+  const workers = Array.from({length: 6}, async () => {
+    while(nextImageTask < imageTasks.length){
+      const task = imageTasks[nextImageTask++];
+      await task();
+    }
+  });
+  Promise.all(workers).catch((error) => console.error('Pet image loading failed:', error));
 }
 
 function showPets(type){
@@ -218,13 +253,13 @@ function showPets(type){
   title.innerText = type === 'all' ? 'All Pets (' + allPets.length + ')' : type.charAt(0).toUpperCase() + type.slice(1) + ' (' + filtered.length + ')';
   list.innerHTML = filtered.map(p => `
     <div class="card">
-      <img src="${p.img}" loading="lazy" alt="${p.name}">
+      <img src="${p.img}" loading="lazy" alt="${p.name}" data-pet-index="${allPets.indexOf(p)}">
       <div class="card-body">
         <span class="health">✓ HEALTH CHECKED</span>
         <h3>${p.name}</h3>
         <p class="age">${p.age} • ${p.breed}</p>
         <p class="desc">${p.desc}</p>
-        <div class="price">$${p.price.toLocaleString()}</div>
+        <div class="price">${formatUsd(p.price)}</div>
         <button onclick="addToCart('${p.name}')">🛒 Add to Cart</button>
       </div>
     </div>
@@ -247,7 +282,7 @@ function displaySearchResults(list) {
         <h3>${p.name}</h3>
         <p class="age">${p.age} • ${p.breed}</p>
         <p class="desc">${p.desc}</p>
-        <div class="price">$${p.price.toLocaleString()}</div>
+        <div class="price">${formatUsd(p.price)}</div>
         <button>Add to Cart</button>
       </div>
     </div>
@@ -273,7 +308,7 @@ async function googleSearch() {
   );
 
   box.innerHTML = filtered.slice(0,5).map(p =>
-    `<div class="suggestion" onclick="selectSuggestion('${p.name}')">🔍 ${p.name} - $${p.price}</div>`
+    `<div class="suggestion" onclick="selectSuggestion('${p.name}')">🔍 ${p.name} - ${formatUsd(p.price)}</div>`
   ).join("");
 
   if (filtered.length > 0) {
@@ -292,7 +327,7 @@ async function googleSearch() {
 
   try {
     if (input.includes("cat") || input.includes("persian") || input.includes("siamese") || input.includes("maine")) {
-      let r = await fetch("https://api.thecatapi.com/v1/images/search");
+      let r = await fetchWithTimeout("https://api.thecatapi.com/v1/images/search");
       let d = await r.json();
       img = d[0].url; type = "cat";
     } else if (input.includes("parrot") || input.includes("bird") || input.includes("macaw") || input.includes("cockatoo")) {
@@ -302,7 +337,7 @@ async function googleSearch() {
     } else if (input.includes("rabbit") || input.includes("bunny")) {
       img = "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400"; type = "rabbit";
     } else {
-      let r = await fetch(`https://dog.ceo/api/breed/${input.split(" ")[0]}/images/random`);
+      let r = await fetchWithTimeout(`https://dog.ceo/api/breed/${input.split(" ")[0]}/images/random`);
       let d = await r.json();
       if (d.message) img = d.message;
     }
@@ -320,7 +355,7 @@ async function googleSearch() {
 
   allPets.push(newPet);
   displaySearchResults([newPet]);
-  box.innerHTML = `<div class="suggestion">✅ Found "${newPet.name}" - $${newPet.price} - Added to store</div>`;
+  box.innerHTML = `<div class="suggestion">✅ Found "${newPet.name}" - ${formatUsd(newPet.price)} - Added to store</div>`;
 }
 
 function selectSuggestion(name){
@@ -343,7 +378,7 @@ function showExplore(){
   let trending = [...allPets].sort(()=>0.5-Math.random()).slice(0,8);
   box.innerHTML = trending.map(p=>`
     <div class="explore-card" onclick="selectSuggestion('${p.name}')">
-      <img src="${p.img}"><p><b>${p.name}</b></p><p>🔥 $${p.price}</p>
+      <img src="${p.img}"><p><b>${p.name}</b></p><p>🔥 ${formatUsd(p.price)}</p>
     </div>`).join("");
 }
 
@@ -467,60 +502,151 @@ function feelingLucky(){
   allPets = oldAll;
 }
 
-// ===== STEP 6B: WALLET + PAYSTACK INLINE (NO REDIRECT) =====
-const PAYSTACK_PUBLIC_KEY = "pk_live_746fa4cd031258a58692b35c6f73e79ca330c873";
-function getBalance(){ return parseFloat(localStorage.getItem("userBalance") || "0"); }
-function setBalance(v){ localStorage.setItem("userBalance", v.toString()); updateWalletUI(); }
+function formatUsd(amount){
+  return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function getBalance(){
+  const balance = Number(localStorage.getItem('userBalance'));
+  return Number.isFinite(balance) && balance >= 0 ? balance : 0;
+}
+
+function setBalance(value){
+  localStorage.setItem('userBalance', Number(value).toFixed(2));
+  updateWalletUI();
+}
+
+let walletPaymentPending = false;
 
 function updateWalletUI(){
-  let el = document.getElementById("walletBalanceDisplay");
-  if(el) el.innerText = "$" + getBalance().toFixed(2);
-  let nav = document.getElementById("walletNavBalance");
-  if(nav) nav.innerText = "$" + getBalance().toFixed(2);
+  const formattedBalance = formatUsd(getBalance());
+  const balanceDisplay = document.getElementById('walletBalanceDisplay');
+  if(balanceDisplay) balanceDisplay.textContent = formattedBalance;
+  const navBalance = document.getElementById('walletNavBalance');
+  if(navBalance) navBalance.textContent = formattedBalance;
+}
+
+function showWalletMessage(message, type){
+  const element = document.getElementById('wallet-message');
+  if(!element) return;
+  element.textContent = message;
+  element.style.color = type === 'success' ? '#198754' : '#c62828';
 }
 
 function openWallet(){
-  let m = document.getElementById("walletModal");
-  if(!m){
-    let div = document.createElement("div");
-    div.id = "walletModal";
-    div.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;display:flex;justify-content:center;align-items:center;";
-    div.innerHTML = '<div style="background:white;width:90%;max-width:380px;padding:20px;border-radius:15px;text-align:center;"><h2>💰 My Wallet</h2><p style="font-size:14px;color:#666;">Your  balance to buy pets</p><div id="walletBalanceDisplay" style="background:#f0f8ff;padding:20px;border-radius:12px;font-size:32px;font-weight:bold;">$0.00</div><br><label>Top Up Amount ($)</label><br><input id="topupAmount" type="number" value="10" min="1" style="padding:12px;width:80%;border-radius:10px;border:1px solid #ccc;text-align:center;font-size:18px;"><br><br><button onclick="topUpWallet()" style="width:100%;padding:14px;background:#0ba4db;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;">💳 Top Up with Paystack</button><p style="font-size:12px;color:#888;">Visa • Mastercard • American Express • Apple Pay</p><button onclick="closeWallet()" style="background:none;border:none;color:red;cursor:pointer;">Close</button></div>';
-    document.body.appendChild(div);
-    m = div;
+  let modal = document.getElementById('walletModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'walletModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;display:flex;justify-content:center;align-items:center;';
+    modal.innerHTML = '<div style="background:white;width:90%;max-width:380px;padding:20px;border-radius:15px;text-align:center;"><h2>💰 My Wallet</h2><p style="font-size:14px;color:#666;">Your USD balance to buy pets</p><div id="walletBalanceDisplay" style="background:#f0f8ff;padding:20px;border-radius:12px;font-size:32px;font-weight:bold;">$0.00</div><br><label for="topupAmount">Top Up Amount (USD)</label><br><input id="topupAmount" type="number" value="10.00" min="0.01" step="0.01" style="padding:12px;width:80%;border-radius:10px;border:1px solid #ccc;text-align:center;font-size:18px;"><br><br><button id="topupButton" type="button" onclick="topUpWallet()" style="width:100%;padding:14px;background:#0ba4db;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;">💳 Top Up with Paystack</button><div id="wallet-message" role="status" aria-live="polite" style="min-height:20px;margin:12px 0;font-weight:bold;"></div><p style="font-size:12px;color:#888;">Visa • Mastercard • American Express • Apple Pay</p><button type="button" onclick="closeWallet()" style="background:none;border:none;color:red;cursor:pointer;">Close</button></div>';
+    document.body.appendChild(modal);
   }
   updateWalletUI();
-  m.style.display = "flex";
-}
-function closeWallet(){ let m=document.getElementById("walletModal"); if(m) m.style.display="none"; }
-function topUpWallet(){
-  let amount = parseFloat(document.getElementById("topupAmount").value);
-  if(!amount || amount < 1){ alert("Enter amount $1 or more"); return; }
-  let email = localStorage.getItem("userEmail") || prompt("Enter your email for receipt:");
-  if(!email) return;
-  localStorage.setItem("userEmail", email);
-closeWallet();
-window.scrollTo(0,0);
-  let handler = PaystackPop.setup({
-    key: PAYSTACK_PUBLIC_KEY,
-    email: email,
-    amount: amount * 100, // Paystack uses cents
-    currency: "USD",
-    channels: ['card', 'apple_pay'], // This shows Visa, Mastercard, Amex, Apple Pay
-    callback: function(response){
-      // Payment succeeded!
-      let newBal = getBalance() + amount;
-      setBalance(newBal);
-      alert("Top up successful! New Balance: $" + newBal.toFixed(2) + "\nRef: " + response.reference);
-      closeWallet();
-    },
-    onClose: function(){ alert("Payment cancelled"); openWallet(); },
-  });
-  handler.openIframe(); // This is the popup INSIDE your site, NOT redirect
+  modal.style.display = 'flex';
 }
 
-// Make sidebar Wallet button open wallet
-// In index.html change Wallet link to onclick="openWallet()"M
+function closeWallet(){
+  if(walletPaymentPending){
+    showWalletMessage('Complete or cancel the Paystack payment before closing the wallet.', 'error');
+    return;
+  }
+  const modal = document.getElementById('walletModal');
+  if(modal) modal.style.display = 'none';
+}
+
+async function topUpWallet(){
+  const button = document.getElementById('topupButton');
+  const token = localStorage.getItem('token');
+  const email = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+  const amount = Number(document.getElementById('topupAmount').value);
+  const amountInCents = Math.round(amount * 100);
+  if(!token){
+    showWalletMessage('Please log in before topping up your wallet.', 'error');
+    return;
+  }
+  if(!Number.isFinite(amount) || amount <= 0 || !Number.isSafeInteger(amountInCents) || amountInCents < 1){
+    showWalletMessage('Enter a USD amount greater than $0.00.', 'error');
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showWalletMessage('Please log in with a valid email address.', 'error');
+    return;
+  }
+  if(!window.PaystackPop || typeof window.PaystackPop.setup !== 'function'){
+    showWalletMessage('Paystack failed to load. Check internet and refresh.', 'error');
+    return;
+  }
+
+  button.disabled = true;
+  walletPaymentPending = true;
+  showWalletMessage('Preparing secure payment...', 'error');
+  try{
+    const configResponse = await fetch('/api/config');
+    const config = await configResponse.json();
+    const paystackPublicKey = typeof config.paystackPublicKey === 'string'
+      ? config.paystackPublicKey.trim()
+      : '';
+    if(!configResponse.ok || !/^pk_(test|live)_/.test(paystackPublicKey)){
+      throw new Error(config.message || 'Payment service is not configured.');
+    }
+
+    let paymentCompleted = false;
+    const reference = window.crypto?.randomUUID
+      ? `pets-${window.crypto.randomUUID()}`
+      : `pets-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const handler = window.PaystackPop.setup({
+      key: paystackPublicKey,
+      email,
+      amount: amountInCents,
+      currency: 'USD',
+      ref: reference,
+      callback: function(response) {
+        paymentCompleted = true;
+        showWalletMessage('Verifying payment...', 'error');
+        (async () => {
+          try{
+            const verifyResponse = await fetch('/api/wallet/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ reference: response.reference })
+            });
+            const data = await verifyResponse.json();
+            if(!verifyResponse.ok || !data.success) {
+              throw new Error(data.message || data.error || 'Payment verification failed.');
+            }
+            setBalance(data.balance);
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            user.balance = Number(data.balance);
+            localStorage.setItem('user', JSON.stringify(user));
+            showWalletMessage(`Top-up successful! New balance: ${formatUsd(data.balance)}`, 'success');
+          }catch(error){
+            showWalletMessage(error.message || 'Payment verification failed.', 'error');
+          }finally{
+            walletPaymentPending = false;
+            button.disabled = false;
+          }
+        })();
+      },
+      onClose: () => {
+        if(!paymentCompleted){
+          walletPaymentPending = false;
+          showWalletMessage('Payment cancelled.', 'error');
+          button.disabled = false;
+        }
+      }
+    });
+    showWalletMessage('', 'error');
+    handler.openIframe();
+  }catch(error){
+    walletPaymentPending = false;
+    showWalletMessage(error.message || 'Could not start payment.', 'error');
+    button.disabled = false;
+  }
+}
 
 let cart = [];
 function addToCart(petName){
@@ -533,18 +659,14 @@ function addToCart(petName){
 function updateCartUI(){
   document.getElementById('cartCount').innerText = cart.length;
   const total = cart.reduce((s,p)=> s + Number(p.price), 0);
-  document.getElementById('cartTotal').innerText = total.toLocaleString();
-  document.getElementById('cartItems').innerHTML = cart.length===0 ? "<p>Cart is empty</p>" : cart.map((p,i)=>`<div style="display:flex;justify-content:space-between;padding:10px 0"><span>${p.name} - USD
- ${Number(p.price).toLocaleString()}</span><button onclick="removeFromCart(${i})">❌</button></div>`).join('');
+  document.getElementById('cartTotal').innerText = formatUsd(total);
+  document.getElementById('cartItems').innerHTML = cart.length===0 ? "<p>Cart is empty</p>" : cart.map((p,i)=>`<div style="display:flex;justify-content:space-between;padding:10px 0"><span>${p.name} - ${formatUsd(p.price)}</span><button onclick="removeFromCart(${i})">❌</button></div>`).join('');
   const btn = document.getElementById('checkoutBtn');
   const info = document.getElementById('balanceInfo');
   if(btn && info){
     if(cart.length===0){ btn.disabled=true; info.innerText=""; }
-    else if(getBalance() < total){ btn.disabled=true; btn.style.background="#ccc"; info.innerText=`❌ Not enough balance. Need 
-       ${total.toLocaleString()}, you have 
-     ${getBalance().toLocaleString()}. Top up first.`; info.style.color="red"; }
-    else { btn.disabled=false; btn.style.background="#ff6b00"; info.innerText=`✅ Enough balance. After paying you will remain with 
-       ${(getBalance()-total).toLocaleString()}`; info.style.color="green"; }
+    else if(getBalance() < total){ btn.disabled=true; btn.style.background="#ccc"; info.innerText=`❌ Not enough balance. Need ${formatUsd(total)}, you have ${formatUsd(getBalance())}. Top up first.`; info.style.color="red"; }
+    else { btn.disabled=false; btn.style.background="#ff6b00"; info.innerText=`✅ Enough balance. After paying you will remain with ${formatUsd(getBalance()-total)}`; info.style.color="green"; }
   }
 }
 function removeFromCart(i){ cart.splice(i,1); updateCartUI(); }
@@ -553,13 +675,10 @@ function closeCart(){ document.getElementById('cartDrawer').style.display='none'
 function checkout(){
   const total = cart.reduce((s,p)=> s + Number(p.price), 0);
   if(cart.length===0) return alert("Cart empty");
-  if(getBalance() < total){ alert(`❌ Cannot buy. Need 
-     ${total}, you have 
-     ${getBalance()}. Top up first.`); closeCart(); openWallet(); return; }
+  if(getBalance() < total){ alert(`❌ Cannot buy. Need ${formatUsd(total)}, you have ${formatUsd(getBalance())}. Top up first.`); closeCart(); openWallet(); return; }
   setBalance(getBalance() - total);
   updateWalletUI(); updateCartUI();
-  alert(`🎉 Order successful! Paid 
-     ${total.toLocaleString()} from wallet.`);
+  alert(`🎉 Order successful! Paid ${formatUsd(total)} from wallet.`);
   cart=[]; updateCartUI(); closeCart();
 }
 
@@ -872,6 +991,7 @@ document.getElementById('menuBtn').addEventListener('click', toggleSidePanel);
 document.getElementById('signOutBtn').addEventListener('click', function() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem('userBalance');
   sessionStorage.clear();
   window.location.href = 'login.html';
 });
