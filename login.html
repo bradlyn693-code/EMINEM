@@ -283,7 +283,7 @@
       document.getElementById('loginBox').classList.remove('hidden');
       document.getElementById('loginEmail').value = verificationEmail;
       showAuthMessage('Email verified! Please log in.', 'success');
-      setTimeout(() => { window.location.href = '/login'; }, 2000);
+      
     } catch (error) {
       showAuthMessage(error.message || 'Email verification failed', 'error');
     } finally {
@@ -337,8 +337,9 @@
       localStorage.setItem('userEmail', data.user.email);
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('userBalance', Number(data.user.balance || 0).toFixed(2));
+      localStorage.setItem('loggedIn', 'true');
       showAuthMessage('Welcome back!', 'success');
-      setTimeout(() => { window.location.href = '/'; }, 1000);
+      setTimeout(() => { window.location.href = '/index.html'; }, 1000);
     } catch (error) {
       showAuthMessage(error.message || 'Login failed', 'error');
     } finally {
