@@ -161,6 +161,7 @@
     <h2>Welcome Back</h2>
     <input id="loginEmail" type="email" placeholder="Email" autocomplete="email">
     <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
+    <label><input id="rememberMe" type="checkbox" checked style="width:auto;padding:0;margin:0 6px 0 0"> Remember Me</label>
       <button id="loginSubmit" type="submit">Login</button>
     <div class="link" onclick="showSignup()">No account? Create one</div>
     </form>
@@ -185,6 +186,12 @@
   </div>
 
   <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if(localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('user')){
+      window.location.href = '/index.html';
+    }
+  });
+
   function showAuthMessage(message, type){
     const element = document.getElementById('auth-message');
     element.className = type;
@@ -338,6 +345,7 @@
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('userBalance', Number(data.user.balance || 0).toFixed(2));
       localStorage.setItem('loggedIn', 'true');
+      localStorage.setItem('isLoggedIn', 'true');
       showAuthMessage('Welcome back!', 'success');
       setTimeout(() => { window.location.href = '/index.html'; }, 1000);
     } catch (error) {

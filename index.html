@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
   <script>
-  if (!localStorage.getItem("loggedIn")) {
+  const savedUser = localStorage.getItem("user");
+  const savedLogin = localStorage.getItem("isLoggedIn") === "true" || localStorage.getItem("loggedIn") === "true";
+  if (!savedLogin || !savedUser) {
     window.location.href = "login.html";
+  } else {
+    localStorage.setItem("isLoggedIn", "true");
   }
 </script>
   <meta charset="UTF-8">

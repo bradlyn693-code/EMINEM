@@ -2,16 +2,14 @@ body { margin: 0; font-family: Arial; background: #f5f5f5; }
 *, *::before, *::after { box-sizing: border-box; }
 html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
 img, input, button { max-width: 100%; }
-#menuBtn { position: fixed; top: 10px; left: 10px; z-index: 100; font-size: 22px; cursor: pointer; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 6px 12px; }
-#sidebar { position: fixed; left: 0; top: 0; width: 220px; height: 100%; background: #222; color: white; padding: 20px 15px; box-sizing: border-box; }
-#sidebar.hidden { display: none; }
+#menuBtn { display: none; position: fixed; top: 10px; left: 10px; z-index: 200; font-size: 22px; cursor: pointer; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 6px 12px; }
+#sidebar { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: #222; color: white; padding: 20px 15px; box-sizing: border-box; z-index: 150; }
 #sidebar h2 { margin-top: 40px; }
 #closeSidebarBtn { display: none; }
 #panelOverlay { display: none; }
 #sidebar a { display: block; color: white; text-decoration: none; padding: 12px 10px; border-radius: 8px; margin-bottom: 5px; }
 #sidebar a:hover { background: #444; }
-#main { margin-left: 240px; padding: 20px; }
-#main.full { margin-left: 20px; }
+#main { margin-left: 280px; padding: 20px; }
 #petList { display: flex; flex-wrap: wrap; gap: 18px; }
 .card { background: white; border-radius: 14px; overflow: hidden; width: 250px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
 .card img { width: 100%; height: 170px; object-fit: cover; }
@@ -42,7 +40,17 @@ img, input, button { max-width: 100%; }
 .pet-thumbnails img { display: block; width: 100%; height: 75px; object-fit: cover; border-radius: 5px; }
 .photo-loading { display: grid; min-height: 170px; place-items: center; background: #f0f0f0; color: #555; }
 
-@media (max-width:768px) {
+@media (min-width: 768px) and (max-width: 1024px) {
+  #menuBtn { display: block; }
+  #sidebar { width: 260px; height: 100vh; height: 100dvh; overflow-y: auto; transform: translateX(-100%); transition: transform .3s ease; }
+  #sidebar.open { transform: translateX(0); }
+  #sidebar h2 { margin-top: 30px; }
+  #closeSidebarBtn { display: block; position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #444; color: white; font-size: 26px; line-height: 1; cursor: pointer; }
+  #panelOverlay.active { display: block; position: fixed; inset: 0; z-index: 140; background: rgba(0,0,0,.45); }
+  #main, #main.full { width: 100%; margin-left: 0; }
+}
+
+@media (max-width: 767px) {
   html, body { max-width:100%; overflow-x:hidden; }
   #main, #main.full { width:100%; margin-left:0; padding:15px; box-sizing:border-box; }
   #petList { flex-direction:column; align-items:stretch; }
@@ -65,11 +73,10 @@ img, input, button { max-width: 100%; }
   img { max-width:100%; }
 }
 
-@media (max-width: 768px) {
-  #menuBtn { z-index: 200; }
-  #sidebar { position:fixed; left:0; top:0; width:280px; max-width:80vw; height:100vh; height:100dvh; overflow-y:auto; z-index:150; transform:translateX(-100%); transition:transform .25s ease; }
+@media (max-width: 767px) {
+  #menuBtn { display: block; }
+  #sidebar { position:fixed; left:0; top:0; width:min(82vw, 300px); max-width:300px; height:100vh; height:100dvh; overflow-y:auto; transform:translateX(-100%); transition:transform .3s ease; }
   #sidebar.open { transform:translateX(0); }
-  #sidebar.hidden { display:none; }
   #sidebar h2 { margin-top:30px; }
   #closeSidebarBtn { display:block; position:absolute; top:10px; right:10px; width:36px; height:36px; border:0; border-radius:50%; background:#444; color:white; font-size:26px; line-height:1; cursor:pointer; }
   #panelOverlay.active { display:block; position:fixed; inset:0; z-index:140; background:rgba(0,0,0,.45); }

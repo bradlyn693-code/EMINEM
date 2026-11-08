@@ -2,16 +2,21 @@ function toggleSidePanel(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('panelOverlay');
   const menuButton = document.getElementById('menuBtn');
-  if(window.matchMedia('(max-width: 768px)').matches){
-    const isOpen = sidebar.classList.toggle('open');
-    if(overlay) overlay.classList.toggle('active', isOpen);
-    if(menuButton) menuButton.setAttribute('aria-expanded', String(isOpen));
-    return;
-  }
-  const isHidden = sidebar.classList.toggle('hidden');
-  document.getElementById('main').classList.toggle('full', isHidden);
+  if(!window.matchMedia('(max-width: 1024px)').matches) return;
+  const isOpen = sidebar.classList.toggle('open');
+  if(overlay) overlay.classList.toggle('active', isOpen);
+  if(menuButton) menuButton.setAttribute('aria-expanded', String(isOpen));
 }
 function toggleMenu(){ toggleSidePanel(); }
+
+function closeSidePanel(){
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('panelOverlay');
+  const menuButton = document.getElementById('menuBtn');
+  sidebar.classList.remove('open');
+  if(overlay) overlay.classList.remove('active');
+  if(menuButton) menuButton.setAttribute('aria-expanded', 'false');
+}
 
 let allPets = [];
 
@@ -119,40 +124,20 @@ let catList = [
 let kittenNames = ["Mochi","Simba","Oliver","Lily","Milo","Zoe","Felix","Nala","Oreo","Ginger","Shadow","Pepper","Smokey","Angel","Tiger","Snow","Bella","Lucky","Cleo","Jasper","Misty","Pumpkin","Cookie","Midnight","Chloe","Ash"];
 let kittenPrices = [780,1220,1200,1160,1190,1140,1210,670,1150,1180,990,1700,1990,1600,1220,1250,1240,1700,1190,1210,1160,1180,1200,170,1190,1150];
 
+function parrotFallbackImage(bodyColor, accentColor){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="#f3f3f3"/><ellipse cx="390" cy="340" rx="190" ry="145" fill="${bodyColor}"/><circle cx="520" cy="205" r="95" fill="${bodyColor}"/><path d="M600 200l130 45-130 40z" fill="${accentColor}"/><path d="M280 355l-170 145 240-65z" fill="${accentColor}"/><circle cx="550" cy="180" r="12" fill="#222"/></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 let parrotList = [
-  {breed:"African Grey", price: 1200, desc:"Smartest parrot, can talk, grey feathers."},
-  {breed:"Blue Macaw", price: 1500, desc:"Big blue parrot, very rare."},
-  {breed:"Scarlet Macaw", price: 1400, desc:"Red, yellow, blue macaw."},
-  {breed:"Green Macaw", price: 1300, desc:"Large green macaw."},
-  {breed:"Budgie", price: 45, desc:"Small green/yellow parrot, easy to keep."},
-  {breed:"Cockatiel", price: 120, desc:"Yellow crest, whistles tunes."},
-  {breed:"Lovebird", price: 1190, desc:"Small, colorful, loves cuddles."},
-  {breed:"Cockatoo", price: 950, desc:"White crest, very cuddly."},
-  {breed:"Amazon Parrot", price: 800, desc:"Green, talkative."},
-  {breed:"Conure", price: 1350, desc:"Playful, loud, colorful."},
-  {breed:"Eclectus", price: 750, desc:"Male green, female red."},
-  {breed:"Caique", price: 3650, desc:"Clown parrot, playful."},
-  {breed:"Pionus", price: 550, desc:"Quiet, blue head."},
-  {breed:"Quaker", price: 1280, desc:"Green, talks well."},
-  {breed:"Senegal", price: 1320, desc:"Small, calm."},
-  {breed:"Meyers", price: 2300, desc:"Small African parrot."},
-  {breed:"Rosella", price: 1250, desc:"Colorful Australian parrot."},
-  {breed:"Lorikeet", price: 1280, desc:"Rainbow colors, loves nectar."},
-  {breed:"Budgerigar", price: 140, desc:"Small friendly parakeet."},
-  {breed:"Parakeet", price: 1150, desc:"Small green parakeet."},
-  {breed:"Sun Conure", price: 1420, desc:"Bright orange/yellow."},
-  {breed:"Jenday Conure", price: 1380, desc:"Orange head conure."},
-  {breed:"Green Cheek Conure", price: 1300, desc:"Small, quiet conure."},
-  {breed:"Blue Crown Conure", price: 1360, desc:"Blue head conure."},
-  {breed:"Severe Macaw", price: 850, desc:"Small macaw, green."},
-  {breed:"Hahns Macaw", price: 800, desc:"Smallest macaw."},
-  {breed:"Yellow Naped Amazon", price: 900, desc:"Yellow nape, talks."},
-  {breed:"Double Yellow Amazon", price: 950, desc:"Yellow head amazon."},
-  {breed:"Umbrella Cockatoo", price: 1100, desc:"Big white cockatoo."},
-  {breed:"Sulphur Cockatoo", price: 1000, desc:"Yellow crest cockatoo."},
-  {breed:"Goffins Cockatoo", price: 850, desc:"Small white cockatoo."},
-  {breed:"Rose Breasted Cockatoo", price: 1900, desc:"Pink breast cockatoo."},
-  {breed:"Palm Cockatoo", price: 1600, desc:"Black, big beak."}
+  {breed:"African Grey Parrot", price:1200, desc:"Intelligent grey parrot with a vivid red tail.", image:"https://upload.wikimedia.org/wikipedia/commons/6/68/African_Grey_Parrot%2C_peeking_out_from_under_its_wing_-_edit.jpg", fallbackImage:parrotFallbackImage("#777777","#d62828")},
+  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings, golden chest, and a powerful curved beak.", image:"https://upload.wikimedia.org/wikipedia/commons/e/ec/Ara_ararauna_Luc_Viatour.jpg", fallbackImage:parrotFallbackImage("#1769aa","#f5b700")},
+  {breed:"Budgerigar / Budgie", price:45, desc:"A small, lively green-and-yellow budgerigar.", image:"https://upload.wikimedia.org/wikipedia/commons/4/43/Green_budgerigar_parrot_in_mongolia.jpg", fallbackImage:parrotFallbackImage("#3a9d23","#f2d52e")},
+  {breed:"Cockatiel", price:120, desc:"Grey cockatiel with a tall crest and bright orange cheek patches.", image:"https://upload.wikimedia.org/wikipedia/commons/7/74/Nymphicus_hollandicus_MHNT.ZOO.2010.11.148.28.jpg", fallbackImage:parrotFallbackImage("#858585","#ef7d32")},
+  {breed:"Amazon Parrot", price:800, desc:"A sociable green parrot with a yellow crown.", image:"https://upload.wikimedia.org/wikipedia/commons/5/5d/Amazona_albifrons_MHNT.ZOO.2010.11.148.14.jpg", fallbackImage:parrotFallbackImage("#27803a","#e9ce22")},
+  {breed:"Sun Conure", price:1420, desc:"A brilliant conure in glowing orange, yellow, and green.", image:"https://upload.wikimedia.org/wikipedia/commons/2/24/Aratinga_solstitialis_-_Loro_Parque_01.jpg", fallbackImage:parrotFallbackImage("#f28c28","#f3d52c")},
+  {breed:"Lovebird", price:1190, desc:"A small, affectionate green lovebird with a peach-colored face.", image:"https://upload.wikimedia.org/wikipedia/commons/0/0f/Agapornis_personatus_-Serengeti%2C_Tanzania-8.jpg", fallbackImage:parrotFallbackImage("#338a45","#f29b83")},
+  {breed:"White Cockatoo", price:950, desc:"An elegant all-white cockatoo with a large expressive crest.", image:"https://upload.wikimedia.org/wikipedia/commons/8/87/Cacatua_alba_MHNT.ZOO.2010.11.148.17.jpg", fallbackImage:parrotFallbackImage("#f5f5f5","#e5b735")}
 ];
 
 async function fetchWithTimeout(url, timeoutMs = 8000){
@@ -177,12 +162,6 @@ const catFallbackImages = [
   "https://cdn2.thecatapi.com/images/eda.jpg",
   "https://cdn2.thecatapi.com/images/77e.jpg",
   "https://cdn2.thecatapi.com/images/MTg5OTI0Ng.jpg"
-];
-const parrotImages = [
-  "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&q=80&fm=jpg",
-  "https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=800&q=80&fm=jpg",
-  "https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=800&q=80&fm=jpg",
-  "https://images.unsplash.com/photo-1591608971362-f08b2a75731a?w=800&q=80&fm=jpg"
 ];
 const breedPhotos = new Map();
 
@@ -231,7 +210,7 @@ function handlePetImageError(image){
   }else if(pet && (pet.type === "cat" || pet.type === "kitten")){
     image.src = catFallbackImages[0];
   }else if(pet && pet.type === "parrot"){
-    image.src = parrotImages[0];
+    image.src = pet.fallbackImage;
   }else{
     image.src = dogFallbackImages[0];
   }
@@ -302,7 +281,8 @@ function loadPets(){
     const parrot = parrotList[i];
     addPet({
       type:'parrot', name:parrot.breed, breed:parrot.breed, price:parrot.price,
-      age:(4 + (i%10))+" months", desc:parrot.desc, images:parrotImages
+      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image],
+      fallbackImage:parrot.fallbackImage
     });
   }
 
@@ -785,6 +765,8 @@ if (!address || !phone || !email) {
 // ===== SEARCHABLE COUNTRY PICKER WITH REAL FLAGS =====
 document.addEventListener("DOMContentLoaded", () => {
 // FULL COUNTRIES WITH FLAGS - All Asia, Europe, America, Africa, Australia, South America
+let selectedCountry = 'UK';
+
 function flagFromCode(code){
   // Turns "KE" -> 🇰🇪, "US" -> 🇺🇸, "GB" -> 🇬🇧
   return code.toUpperCase().replace(/./g, ch => String.fromCodePoint(127397 + ch.charCodeAt(0)));
@@ -1008,17 +990,21 @@ function renderCountries(filter=""){
   const filtered = countries.filter(c => c.n.toLowerCase().includes(q) || c.d.includes(q));
   list.innerHTML = filtered.map(c => {
     const flag = flagFromCode(c.c);
-    return `<div onclick="selectCountry('${c.c}','${c.d}','${c.n}')" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid #eee">${flag} ${c.d} ${c.n} <small>• ${c.r}</small></div>`;
+    return `<button type="button" class="country-option" data-code="${c.c}" data-dial="${c.d}" data-name="${c.n}" style="display:block;width:100%;padding:8px 10px;text-align:left;background:white;border:0;border-bottom:1px solid #eee;cursor:pointer">${flag} ${c.d} ${c.n} <small>• ${c.r}</small></button>`;
   }).join('');
+  list.querySelectorAll(".country-option").forEach(row => {
+    row.addEventListener("click", () => selectCountry(row.dataset.code, row.dataset.dial, row.dataset.name));
+  });
 }
 
 function selectCountry(code, dial, name){
+  selectedCountry = name;
   const btn = document.getElementById("countryBtn");
   if(btn) btn.innerHTML = flagFromCode(code) + ' ' + dial + ' ' + name + ' ▼';
   const phoneCode = document.getElementById("phoneCode");
   if(phoneCode) phoneCode.value = dial;
-  const selectedCountry = document.getElementById("selectedCountry");
-  if(selectedCountry) selectedCountry.value = name;
+  const selectedCountryInput = document.getElementById("selectedCountry");
+  if(selectedCountryInput) selectedCountryInput.value = selectedCountry;
   const shippingCountry = document.getElementById("shippingCountry");
   if(shippingCountry) shippingCountry.textContent = name;
   const box = document.getElementById("countryList");
@@ -1061,11 +1047,18 @@ renderCountries("");
 document.getElementById('menuBtn').addEventListener('click', toggleSidePanel);
 document.getElementById('closeSidebarBtn').addEventListener('click', toggleSidePanel);
 document.getElementById('panelOverlay').addEventListener('click', toggleSidePanel);
+document.getElementById('sidebar').querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    if(window.matchMedia('(max-width: 1024px)').matches) closeSidePanel();
+  });
+});
 document.getElementById('signOutBtn').addEventListener('click', function() {
   localStorage.removeItem('token');
+  localStorage.removeItem('userEmail');
   localStorage.removeItem('user');
   localStorage.removeItem('userBalance');
-  sessionStorage.clear();
+  localStorage.removeItem('loggedIn');
+  localStorage.removeItem('isLoggedIn');
   window.location.href = 'login.html';
 });
 
