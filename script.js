@@ -281,7 +281,7 @@ function loadPets(){
     const parrot = parrotList[i];
     addPet({
       type:'parrot', name:parrot.breed, breed:parrot.breed, price:parrot.price,
-      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image],
+      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image || parrot.image1 || parrot.fallbackImage],
       fallbackImage:parrot.fallbackImage
     });
   }
@@ -730,7 +730,7 @@ function checkout(){
   // ===== STEP 2: PAY NOW - CREATE ORDER =====
 function payNow() {
   const name = document.getElementById("custName") ? document.getElementById("custName").value.trim() : "";
-  const code = document.getElementById("phoneCode") ? document.getElementById("phoneCode").value : "+254";
+  const code = document.getElementById("phoneCode") ? document.getElementById("phoneCode").value : "+44";
   const phone = document.getElementById("custPhone") ? document.getElementById("custPhone").value.trim() : "";
   const email = document.getElementById("custEmail") ? document.getElementById("custEmail").value.trim() : "";const address = document.getElementById("custAddress") ? document.getElementById("custAddress").value : "";
   const msg = document.getElementById("orderMessage");
