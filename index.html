@@ -9,18 +9,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Pet Shop</title>
+  <meta name="theme-color" content="#ff6b00">
+  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="style.css">
-  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script defer src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body>
 <h1 class="welcome-3d">Welcome to pets world 🐶🦜😸</h1>
 
   <!-- Toggle Button -->
-  <button id="menuBtn">☰</button>
+  <button id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false">☰</button>
+  <button id="installAppBtn" type="button" hidden>Install App</button>
 
   <!-- Side Panel -->
-  
+  <div id="panelOverlay" aria-hidden="true"></div>
    <div id="sidebar">
+  <button id="closeSidebarBtn" type="button" aria-label="Close side panel">×</button>
   <h2>🐾 Pet Shop</h2>
   <a href="#" onclick="goHome()">🏠 Home</a>
   <a href="#" onclick="showPets('dog')">🐶 Dogs</a>
@@ -56,11 +60,6 @@
     <button onclick="feelingLucky()">I'm Feeling Lucky 🍀</button>
   </div>
 </div>
-<h2>🔥 Explore Trending Pets</h2>
-<div id="exploreSection"></div>
-<!-- END OF NEW PART -->
-
-
 
 <!-- ===== STEP 3: HOME PAGE ===== -->
 <section id="homePage" style="text-align:center; padding:30px 15px; background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:15px; margin:15px;">
@@ -74,11 +73,11 @@
 
 <!-- Categories with your exact counts -->
 <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:15px;">
-  <div onclick="showPets('dog')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐶</div><b>Dogs</b><br>147 Pets</div>
-  <div onclick="showPets('cat')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐱</div><b>Cats</b><br>112 Pets</div>
-  <div onclick="showPets('kitten')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐈</div><b>Kittens</b><br>89 Pets</div>
-  <div onclick="showPets('parrot')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🦜</div><b>Parrots</b><br>74 Pets</div>
-  <div onclick="showPets('puppy')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐕</div><b>Puppies</b><br>97 Pets</div>
+  <div onclick="showPets('dog')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐶</div><b>Dogs</b><br><span id="dogCount">0</span> Pets</div>
+  <div onclick="showPets('cat')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐱</div><b>Cats</b><br><span id="catCount">0</span> Pets</div>
+  <div onclick="showPets('kitten')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐈</div><b>Kittens</b><br><span id="kittenCount">0</span> Pets</div>
+  <div onclick="showPets('parrot')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🦜</div><b>Parrots</b><br><span id="parrotCount">0</span> Pets</div>
+  <div onclick="showPets('puppy')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐕</div><b>Puppies</b><br><span id="puppyCount">0</span> Pets</div>
 </div>
 
 <!-- Why Choose Us -->
@@ -98,6 +97,7 @@
   <h2>🛒 Your Cart</h2>
   <div id="cartItems"></div><hr>
   <h3>Total: <span id="cartTotal">$0.00</span></h3>
+  <p id="shippingInfo">Shipping to <span id="shippingCountry">UK</span>: Free</p>
   <p id="balanceInfo"></p>
   <div id="checkoutForm" style="text-align:left; margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px;">
   <h4>Delivery Details</h4>
@@ -120,6 +120,7 @@
   </div>
   <input id="custPhone" placeholder="712345678" style="flex:1;padding:8px;">
   <input type="hidden" id="phoneCode" value="+44">
+  <input type="hidden" id="selectedCountry" value="UK">
 </div>
   </div><br>
   <label>Email</label><br>

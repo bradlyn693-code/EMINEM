@@ -6,6 +6,8 @@ img, input, button { max-width: 100%; }
 #sidebar { position: fixed; left: 0; top: 0; width: 220px; height: 100%; background: #222; color: white; padding: 20px 15px; box-sizing: border-box; }
 #sidebar.hidden { display: none; }
 #sidebar h2 { margin-top: 40px; }
+#closeSidebarBtn { display: none; }
+#panelOverlay { display: none; }
 #sidebar a { display: block; color: white; text-decoration: none; padding: 12px 10px; border-radius: 8px; margin-bottom: 5px; }
 #sidebar a:hover { background: #444; }
 #main { margin-left: 240px; padding: 20px; }
@@ -28,20 +30,25 @@ img, input, button { max-width: 100%; }
 #suggestionsBox{ max-width:600px; margin:0 auto; text-align:left; background:white; border-radius:0 0 15px 15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
 .suggestion{ padding:12px 18px; cursor:pointer; border-bottom:1px solid #eee; }
 .suggestion:hover{ background:#f0f0f0; }
-#exploreSection{ display:flex; gap:15px; overflow-x:auto; padding:10px; }
-.explore-card{ min-width:160px; background:white; border-radius:12px; padding:10px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-.explore-card img{ width:100%; height:120px; object-fit:cover; border-radius:8px; }
+#installAppBtn { position: fixed; top: 60px; right: 15px; z-index: 310; border: 0; border-radius: 18px; padding: 7px 12px; background: #ff6b00; color: white; font-weight: bold; cursor: pointer; }
+#installAppBtn[hidden] { display: none; }
+.pet-photo-button { background: #333 !important; margin-bottom: 8px; }
+.pet-detail-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.65); }
+.pet-detail-panel { width: min(520px, 100%); max-height: 90vh; overflow-y: auto; padding: 20px; border-radius: 14px; background: #fff; }
+.pet-detail-main { display: block; width: 100%; height: min(55vh, 360px); object-fit: cover; border-radius: 10px; }
+.pet-thumbnails { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.pet-thumbnails button { padding: 3px; border: 2px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; }
+.pet-thumbnails button.active { border-color: #ff6b00; }
+.pet-thumbnails img { display: block; width: 100%; height: 75px; object-fit: cover; border-radius: 5px; }
+.photo-loading { display: grid; min-height: 170px; place-items: center; background: #f0f0f0; color: #555; }
 
 @media (max-width:768px) {
   html, body { max-width:100%; overflow-x:hidden; }
-  #sidebar { position:relative; width:100%; height:auto; }
   #main, #main.full { width:100%; margin-left:0; padding:15px; box-sizing:border-box; }
   #petList { flex-direction:column; align-items:stretch; }
   .card { width:100%; box-sizing:border-box; }
   .search-wrapper { flex-direction:column; align-items:stretch; }
   .search-wrapper input { width:100%; box-sizing:border-box; }
-  #exploreSection { flex-wrap:wrap; overflow-x:hidden; }
-  .explore-card { min-width:0; width:100%; box-sizing:border-box; }
   #main > div[style*="display:flex"] { flex-direction:column; align-items:center; }
   #checkoutForm > div { flex-direction:column; }
   #checkoutForm > div > div { flex-direction:column; }
@@ -60,12 +67,16 @@ img, input, button { max-width: 100%; }
 
 @media (max-width: 768px) {
   #menuBtn { z-index: 200; }
-  #sidebar { position:fixed; left:0; top:0; width:min(85vw, 280px); max-width:100%; height:100vh; height:100dvh; overflow-y:auto; z-index:150; }
+  #sidebar { position:fixed; left:0; top:0; width:280px; max-width:80vw; height:100vh; height:100dvh; overflow-y:auto; z-index:150; transform:translateX(-100%); transition:transform .25s ease; }
+  #sidebar.open { transform:translateX(0); }
+  #sidebar.hidden { display:none; }
+  #sidebar h2 { margin-top:30px; }
+  #closeSidebarBtn { display:block; position:absolute; top:10px; right:10px; width:36px; height:36px; border:0; border-radius:50%; background:#444; color:white; font-size:26px; line-height:1; cursor:pointer; }
+  #panelOverlay.active { display:block; position:fixed; inset:0; z-index:140; background:rgba(0,0,0,.45); }
   #sidebar > div, #signOutBtn { max-width:100%; box-sizing:border-box; }
   #main, #main.full { width:100%; max-width:100%; margin-left:0; padding:60px 12px 15px; }
   #petList { width:100%; min-width:0; }
   .card { min-width:0; }
-  #exploreSection { width:100%; min-width:0; }
   .search-wrapper { width:100%; min-width:0; }
   #cartDrawer { width:min(340px, 100%); max-width:100%; }
   #checkoutForm, #checkoutForm > div, #checkoutForm > div > div { min-width:0; max-width:100%; }

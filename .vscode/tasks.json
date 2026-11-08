@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Validate pets app changes",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const fs=require('fs'); const source=fs.readFileSync('script.js','utf8'); new Function(source); new Function(fs.readFileSync('sw.js','utf8')); JSON.parse(fs.readFileSync('manifest.json','utf8')); JSON.parse(fs.readFileSync('vercel.json','utf8')); const read=n=>{const m=source.match(new RegExp('let '+n+' = (\\\\[[\\\\s\\\\S]*?\\\\]);')); if(!m) throw Error('Missing '+n); return Function('return '+m[1])()}; const dogs=read('dogList'), cats=read('catList'), parrots=read('parrotList'), puppies=read('puppyNames'), kittens=read('kittenNames'); const unique=(items,key)=>new Set(items.map(key)).size; const dogCount=unique(dogs,x=>x.breed.toLowerCase()), parrotCount=unique(parrots,x=>x.breed.toLowerCase()==='budgie'?'budgerigar':x.breed.toLowerCase()); const total=dogCount+puppies.length+cats.length+kittens.length+parrotCount; console.log(JSON.stringify({javascript:'valid',serviceWorker:'valid',json:'valid',dogCount,puppyCount:puppies.length,catCount:cats.length,kittenCount:kittens.length,parrotCount,total},null,2)); if(total!==152) process.exit(1);"
+			],
+			"isBackground": false
+		}
+	]
+}

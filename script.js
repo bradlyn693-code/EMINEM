@@ -1,14 +1,19 @@
 function toggleSidePanel(){
-  document.getElementById('sidebar').classList.toggle('hidden');
-  document.getElementById('main').classList.toggle('full');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('panelOverlay');
+  const menuButton = document.getElementById('menuBtn');
+  if(window.matchMedia('(max-width: 768px)').matches){
+    const isOpen = sidebar.classList.toggle('open');
+    if(overlay) overlay.classList.toggle('active', isOpen);
+    if(menuButton) menuButton.setAttribute('aria-expanded', String(isOpen));
+    return;
+  }
+  const isHidden = sidebar.classList.toggle('hidden');
+  document.getElementById('main').classList.toggle('full', isHidden);
 }
 function toggleMenu(){ toggleSidePanel(); }
 
 let allPets = [];
-let usedImgs = new Set();
-
-// ===== COUNTS + ORIGIN YOU WANTED =====
-const COUNTS = { dog:147, cat:112, kitten:89, parrot:74, puppy:97 };
 
 const ORIGIN_MAP = {
   "German Shepherd":"Germany", "Labrador":"Canada", "Golden Retriever":"Scotland",
@@ -32,7 +37,7 @@ function getOrigin(breed){
 }
 
 let dogList = [
-  {breed:"German Shepherd", api:"germanshepherd", desc:"Loyal guard dog, very smart.", price: 1450},
+  {breed:"German Shepherd", api:"german/shepherd", desc:"Loyal guard dog, very smart.", price: 1450},
   {breed:"Labrador", api:"labrador", desc:"Friendly family dog, loves water.", price: 750},
   {breed:"Golden Retriever", api:"retriever/golden", desc:"Gentle golden coat, great with kids.", price: 900},
   {breed:"Bulldog", api:"bulldog/english", desc:"Calm, stocky, loves sleeping.", price: 1100},
@@ -160,42 +165,103 @@ async function fetchWithTimeout(url, timeoutMs = 8000){
   }
 }
 
-async function getUniqueDog(api){
-  for(let t=0; t<5; t++){
-    try{
-      let res = await fetchWithTimeout(`https://dog.ceo/api/breed/${api}/images/random`);
-      if(!res.ok) continue;
-      let d = await res.json();
-      if(!usedImgs.has(d.message)){ usedImgs.add(d.message); return d.message; }
-    }catch(e){}
-  }
-  return "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&q=80";
+const dogFallbackImages = [
+  "https://images.dog.ceo/breeds/german-shepherd/n02106662_20711.jpg",
+  "https://images.dog.ceo/breeds/german-shepherd/img_20200801_005827_704.jpg",
+  "https://images.dog.ceo/breeds/german-shepherd/n02106662_1451.jpg",
+  "https://images.dog.ceo/breeds/german-shepherd/n02106662_10858.jpg"
+];
+const germanShepherdFallback = "https://images.dog.ceo/breeds/german-shepherd/n02106662_20711.jpg";
+const catFallbackImages = [
+  "https://cdn2.thecatapi.com/images/avc.jpg",
+  "https://cdn2.thecatapi.com/images/eda.jpg",
+  "https://cdn2.thecatapi.com/images/77e.jpg",
+  "https://cdn2.thecatapi.com/images/MTg5OTI0Ng.jpg"
+];
+const parrotImages = [
+  "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&q=80&fm=jpg",
+  "https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=800&q=80&fm=jpg",
+  "https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=800&q=80&fm=jpg",
+  "https://images.unsplash.com/photo-1591608971362-f08b2a75731a?w=800&q=80&fm=jpg"
+];
+const breedPhotos = new Map();
+
+function getBreedPhotos(key, load){
+  if(!breedPhotos.has(key)) breedPhotos.set(key, load());
+  return breedPhotos.get(key);
 }
 
-async function getUniqueCat(code){
-  for(let t=0; t<5; t++){
-    try{
-      let res = await fetchWithTimeout(`https://api.thecatapi.com/v1/images/search?breed_ids=${code}&limit=1`);
-      if(!res.ok) continue;
-      let d = await res.json();
-      if(d[0] && !usedImgs.has(d[0].url)){ usedImgs.add(d[0].url); return d[0].url; }
-    }catch(e){}
+async function getDogImages(api){
+  try{
+    const response = await fetchWithTimeout(`https://dog.ceo/api/breed/${api}/images/random/4`);
+    if(!response.ok) throw new Error(`Dog image API returned ${response.status} for ${api}`);
+    const data = await response.json();
+    const images = Array.isArray(data.message) ? [...new Set(data.message)] : [];
+    if(data.status === "success" && images.length >= 4) return images.slice(0, 4);
+    throw new Error(`Dog image API returned fewer than four photos for ${api}`);
+  }catch(error){
+    console.warn(`Using real-photo fallback for dog breed ${api}:`, error);
+    return dogFallbackImages;
   }
-  return "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80";
+}
+
+async function getCatImages(code){
+  try{
+    const response = await fetchWithTimeout(`https://api.thecatapi.com/v1/images/search?breed_ids=${encodeURIComponent(code)}&limit=4&mime_types=jpg`);
+    if(!response.ok) throw new Error(`Cat image API returned ${response.status} for ${code}`);
+    const data = await response.json();
+    const images = Array.isArray(data)
+      ? [...new Set(data.map(item => item.url).filter(url => /^https:\/\/[^/]+\/.+\.jpg(?:\?.*)?$/i.test(url)))]
+      : [];
+    if(images.length >= 4) return images.slice(0, 4);
+    throw new Error(`Cat image API returned fewer than four JPG photos for ${code}`);
+  }catch(error){
+    console.warn(`Using real-photo fallback for cat breed ${code}:`, error);
+    return catFallbackImages;
+  }
+}
+
+function handlePetImageError(image){
+  if(image.dataset.fallbackApplied) return;
+  image.dataset.fallbackApplied = "true";
+  const index = Number(image.dataset.petIndex);
+  const pet = allPets[index];
+  if(pet && pet.breed.toLowerCase().includes("german shepherd")){
+    image.src = germanShepherdFallback;
+  }else if(pet && (pet.type === "cat" || pet.type === "kitten")){
+    image.src = catFallbackImages[0];
+  }else if(pet && pet.type === "parrot"){
+    image.src = parrotImages[0];
+  }else{
+    image.src = dogFallbackImages[0];
+  }
 }
 
 function loadPets(){
   if(allPets.length) return;
   const imageTasks = [];
-  function addPet(pet, getImage){
-    const index = allPets.push(pet) - 1;
-    if(getImage){
+  const seenPets = new Set();
+  function addPet(pet, getImages){
+    const normalizedBreed = pet.breed.toLowerCase().trim() === "budgie"
+      ? "budgerigar"
+      : pet.breed.toLowerCase().trim();
+    const duplicateKey = pet.type === "puppy" || pet.type === "kitten"
+      ? `${pet.type}|${normalizedBreed}|${pet.name.toLowerCase().trim()}`
+      : `${pet.type}|${normalizedBreed}`;
+    if(seenPets.has(duplicateKey)) return;
+    seenPets.add(duplicateKey);
+
+    const index = allPets.length;
+    allPets.push({...pet, id:`pet-${index + 1}`, images:pet.images.slice(0, 4)});
+    if(getImages){
       imageTasks.push(async () => {
-        const image = await getImage();
-        if(image){
-          allPets[index].img = image;
-          document.querySelectorAll(`[data-pet-index="${index}"]`).forEach((img) => {
-            img.src = image;
+        const images = await getImages();
+        if(images.length === 4){
+          allPets[index].images = images;
+          document.querySelectorAll(`[data-pet-index="${index}"]`).forEach((image) => {
+            const photoIndex = Number(image.dataset.photoIndex || 0);
+            image.dataset.fallbackApplied = "";
+            image.src = images[photoIndex] || images[0];
           });
         }
       });
@@ -203,38 +269,48 @@ function loadPets(){
   }
 
   for(let i=0; i<dogList.length; i++){
-    let b = dogList[i];
-    addPet({type:'dog', name: b.breed, breed: b.breed, price: b.price, age: (2 + (i%10))+" months", desc: b.desc, img: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&q=80"}, () => getUniqueDog(b.api));
+    const dog = dogList[i];
+    addPet({
+      type:'dog', name:dog.breed, breed:dog.breed, price:dog.price,
+      age:(2 + (i%10))+" months", desc:dog.desc, images:dogFallbackImages
+    }, () => getBreedPhotos(`dog:${dog.api}`, () => getDogImages(dog.api)));
   }
   for(let i=0; i<24; i++){
-    let b = dogList[i];
-    addPet({type:'puppy', name: puppyNames[i], breed: b.breed+" Puppy", price: puppyPrices[i], age: (2 + (i%4))+" months", desc: "Baby "+b.breed+" puppy named "+puppyNames[i]+". "+b.desc, img: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&q=80"}, () => getUniqueDog(b.api));
+    const dog = dogList[i];
+    addPet({
+      type:'puppy', name:puppyNames[i], breed:dog.breed+" Puppy", price:puppyPrices[i],
+      age:(2 + (i%4))+" months", desc:"Baby "+dog.breed+" puppy named "+puppyNames[i]+". "+dog.desc,
+      images:dogFallbackImages
+    }, () => getBreedPhotos(`dog:${dog.api}`, () => getDogImages(dog.api)));
   }
   for(let i=0; i<catList.length; i++){
-    let c = catList[i];
-    addPet({type:'cat', name: c.breed, breed: c.breed, price: c.price, age: (3 + (i%8))+" months", desc: c.desc, img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80"}, () => getUniqueCat(c.code));
+    const cat = catList[i];
+    addPet({
+      type:'cat', name:cat.breed, breed:cat.breed, price:cat.price,
+      age:(3 + (i%8))+" months", desc:cat.desc, images:catFallbackImages
+    }, () => getBreedPhotos(`cat:${cat.code}`, () => getCatImages(cat.code)));
   }
   for(let i=0; i<26; i++){
-    let c = catList[i % catList.length];
-    addPet({type:'kitten', name: kittenNames[i], breed: c.breed+" Kitten", price: kittenPrices[i], age: (2 + (i%4))+" months", desc: "Kitten "+kittenNames[i]+" - "+c.desc, img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80"}, () => getUniqueCat(c.code));
+    const cat = catList[i % catList.length];
+    addPet({
+      type:'kitten', name:kittenNames[i], breed:cat.breed+" Kitten", price:kittenPrices[i],
+      age:(2 + (i%4))+" months", desc:"Kitten "+kittenNames[i]+" - "+cat.desc,
+      images:catFallbackImages
+    }, () => getBreedPhotos(`cat:${cat.code}`, () => getCatImages(cat.code)));
   }
-  let parrotImgs = [
-    "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&q=80",
-    "https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=400&q=80",
-    "https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=400&q=80",
-    "https://images.unsplash.com/photo-1591608971362-f08b2a75731a?w=400&q=80",
-    "https://images.unsplash.com/photo-1574068468668-a05a11f871da?w=400&q=80",
-    "https://images.unsplash.com/photo-1549608276-5786777e6587?w=400&q=80",
-    "https://images.unsplash.com/photo-1591198936750-16d8e15edb9e?w=400&q=80",
-    "https://images.unsplash.com/photo-1619468007294-22b6c7e0a2e0?w=400&q=80"
-  ];
   for(let i=0; i<parrotList.length; i++){
-    let p = parrotList[i];
-    let img = parrotImgs[i % parrotImgs.length];
-    addPet({type:'parrot', name: p.breed, breed: p.breed, price: p.price, age: (4 + (i%10))+" months", desc: p.desc, img: img});
+    const parrot = parrotList[i];
+    addPet({
+      type:'parrot', name:parrot.breed, breed:parrot.breed, price:parrot.price,
+      age:(4 + (i%10))+" months", desc:parrot.desc, images:parrotImages
+    });
+  }
+
+  for(const type of ["dog", "cat", "kitten", "parrot", "puppy"]){
+    const count = document.getElementById(`${type}Count`);
+    if(count) count.textContent = allPets.filter(pet => pet.type === type).length;
   }
   showPets('all');
-  showExplore();
 
   let nextImageTask = 0;
   const workers = Array.from({length: 6}, async () => {
@@ -247,24 +323,73 @@ function loadPets(){
 }
 
 function showPets(type){
-  let list = document.getElementById('petList');
-  let title = document.getElementById('pageTitle');
-  let filtered = type === 'all' ? allPets : allPets.filter(p => p.type === type);
+  const list = document.getElementById('petList');
+  const title = document.getElementById('pageTitle');
+  const filtered = type === 'all' ? allPets : allPets.filter(pet => pet.type === type);
   title.innerText = type === 'all' ? 'All Pets (' + allPets.length + ')' : type.charAt(0).toUpperCase() + type.slice(1) + ' (' + filtered.length + ')';
-  list.innerHTML = filtered.map(p => `
-    <div class="card">
-      <img src="${p.img}" loading="lazy" alt="${p.name}" data-pet-index="${allPets.indexOf(p)}">
-      <div class="card-body">
-        <span class="health">✓ HEALTH CHECKED</span>
-        <h3>${p.name}</h3>
-        <p class="age">${p.age} • ${p.breed}</p>
-        <p class="desc">${p.desc}</p>
-        <div class="price">${formatUsd(p.price)}</div>
-        <button onclick="addToCart('${p.name}')">🛒 Add to Cart</button>
+  list.innerHTML = filtered.map(pet => {
+    const index = allPets.indexOf(pet);
+    return `
+      <div class="card">
+        <img src="${pet.images[0]}" loading="lazy" alt="${pet.name}" data-pet-index="${index}" onerror="handlePetImageError(this)">
+        <div class="card-body">
+          <span class="health">✓ HEALTH CHECKED</span>
+          <h3>${pet.name}</h3>
+          <p class="age">${pet.age} • ${pet.breed}</p>
+          <p class="desc">${pet.desc}</p>
+          <div class="price">${formatUsd(pet.price)}</div>
+          <button type="button" class="pet-photo-button" onclick="openPetDetails('${pet.id}')">View 4 Photos</button>
+          <button type="button" onclick="addToCart('${pet.id}')">🛒 Add to Cart</button>
+        </div>
       </div>
+    `;
+  }).join('');
+}
+
+function openPetDetails(petId){
+  const pet = allPets.find(item => item.id === petId);
+  if(!pet) return;
+  let modal = document.getElementById("petDetailModal");
+  if(!modal){
+    modal = document.createElement("div");
+    modal.id = "petDetailModal";
+    modal.className = "pet-detail-overlay";
+    modal.addEventListener("click", event => {
+      if(event.target === modal) modal.remove();
+    });
+    document.body.appendChild(modal);
+  }
+  const index = allPets.indexOf(pet);
+  modal.innerHTML = `
+    <div class="pet-detail-panel" role="dialog" aria-modal="true" aria-label="${pet.name} photos">
+      <button type="button" onclick="document.getElementById('petDetailModal').remove()" aria-label="Close photos" style="float:right">Close</button>
+      <h2>${pet.name}</h2>
+      <img id="petDetailMain" class="pet-detail-main" src="${pet.images[0]}" alt="${pet.name}" data-pet-index="${index}" data-photo-index="0" onerror="handlePetImageError(this)">
+      <div class="pet-thumbnails">
+        ${pet.images.slice(0, 4).map((image, photoIndex) => `
+          <button type="button" class="${photoIndex === 0 ? 'active' : ''}" onclick="selectPetPhoto('${pet.id}', ${photoIndex})" aria-label="Show photo ${photoIndex + 1}">
+            <img src="${image}" alt="${pet.name}, photo ${photoIndex + 1}" data-pet-index="${index}" data-photo-index="${photoIndex}" onerror="handlePetImageError(this)">
+          </button>
+        `).join('')}
+      </div>
+      <p>${pet.age} • ${pet.breed}</p>
+      <div class="price">${formatUsd(pet.price)}</div>
+      <button type="button" onclick="addToCart('${pet.id}')">🛒 Add to Cart</button>
     </div>
-  `).join('');
-} 
+  `;
+}
+
+function selectPetPhoto(petId, photoIndex){
+  const pet = allPets.find(item => item.id === petId);
+  const modal = document.getElementById("petDetailModal");
+  const mainImage = document.getElementById("petDetailMain");
+  if(!pet || !modal || !mainImage || !pet.images[photoIndex]) return;
+  mainImage.src = pet.images[photoIndex];
+  mainImage.dataset.photoIndex = String(photoIndex);
+  modal.querySelectorAll(".pet-thumbnails button").forEach((button, index) => {
+    button.classList.toggle("active", index === photoIndex);
+  });
+}
 
 loadPets();
 
@@ -274,88 +399,23 @@ function displaySearchResults(list) {
   let el = document.getElementById("petList");
   let title = document.getElementById("pageTitle");
   title.innerText = "Search Results (" + list.length + ")";
-  el.innerHTML = list.map(p => `
+  el.innerHTML = list.map(p => {
+    const index = allPets.indexOf(p);
+    return `
     <div class="card">
-      <img src="${p.img}" loading="lazy" alt="${p.name}">
+      <img src="${p.images[0]}" loading="lazy" alt="${p.name}" data-pet-index="${index}" onerror="handlePetImageError(this)">
       <div class="card-body">
         <span class="health">✓ HEALTH CHECKED</span>
         <h3>${p.name}</h3>
         <p class="age">${p.age} • ${p.breed}</p>
         <p class="desc">${p.desc}</p>
         <div class="price">${formatUsd(p.price)}</div>
-        <button>Add to Cart</button>
+        <button type="button" class="pet-photo-button" onclick="openPetDetails('${p.id}')">View 4 Photos</button>
+        <button type="button" onclick="addToCart('${p.id}')">🛒 Add to Cart</button>
       </div>
     </div>
-  `).join("");
-}
-
-async function googleSearch() {
-  let input = document.getElementById("searchInput").value.trim().toLowerCase();
-  let box = document.getElementById("suggestionsBox");
-
-  if (input.length === 0) {
-    box.innerHTML = "";
-    showPets('all');
-    showExplore();
-    return;
-  }
-
-  // 1. SEARCH INSIDE YOUR allPets FIRST - NO REDIRECT
-  let filtered = allPets.filter(p =>
-    p.name.toLowerCase().includes(input) ||
-    p.breed.toLowerCase().includes(input) ||
-    p.type.toLowerCase().includes(input)
-  );
-
-  box.innerHTML = filtered.slice(0,5).map(p =>
-    `<div class="suggestion" onclick="selectSuggestion('${p.name}')">🔍 ${p.name} - ${formatUsd(p.price)}</div>`
-  ).join("");
-
-  if (filtered.length > 0) {
-    displaySearchResults(filtered);
-    return;
-  }
-
-  // 2. NOT FOUND - FIND IT ONLINE BUT STAY ON YOUR SITE, SAME THEME
-  let list = document.getElementById("petList");
-  list.innerHTML = `<p style="text-align:center; padding:30px;">🔍 Searching for <b>${input}</b> in extended catalog...</p>`;
-  
-  let price = 150 + (input.length * 37);
-  if (price > 1200) price = 1200;
-  let img = "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400";
-  let type = "dog";
-
-  try {
-    if (input.includes("cat") || input.includes("persian") || input.includes("siamese") || input.includes("maine")) {
-      let r = await fetchWithTimeout("https://api.thecatapi.com/v1/images/search");
-      let d = await r.json();
-      img = d[0].url; type = "cat";
-    } else if (input.includes("parrot") || input.includes("bird") || input.includes("macaw") || input.includes("cockatoo")) {
-      img = "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400"; type = "parrot";
-    } else if (input.includes("fish") || input.includes("goldfish") || input.includes("betta")) {
-      img = "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?w=400"; type = "fish";
-    } else if (input.includes("rabbit") || input.includes("bunny")) {
-      img = "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400"; type = "rabbit";
-    } else {
-      let r = await fetchWithTimeout(`https://dog.ceo/api/breed/${input.split(" ")[0]}/images/random`);
-      let d = await r.json();
-      if (d.message) img = d.message;
-    }
-  } catch(e){}
-
-  let newPet = {
-    type: type,
-    name: input.charAt(0).toUpperCase() + input.slice(1),
-    breed: input.charAt(0).toUpperCase() + input.slice(1),
-    price: price,
-    img: img,
-    age: "1 year",
-    desc: "Found in extended catalog. Healthy and ready for a new home."
-  };
-
-  allPets.push(newPet);
-  displaySearchResults([newPet]);
-  box.innerHTML = `<div class="suggestion">✅ Found "${newPet.name}" - ${formatUsd(newPet.price)} - Added to store</div>`;
+  `;
+  }).join("");
 }
 
 function selectSuggestion(name){
@@ -372,16 +432,6 @@ function feelingLucky(){
   document.getElementById("searchInput").value = random.name;
   googleSearch();
 }
-function showExplore(){
-  let box = document.getElementById("exploreSection");
-  if(!box) return;
-  let trending = [...allPets].sort(()=>0.5-Math.random()).slice(0,8);
-  box.innerHTML = trending.map(p=>`
-    <div class="explore-card" onclick="selectSuggestion('${p.name}')">
-      <img src="${p.img}"><p><b>${p.name}</b></p><p>🔥 ${formatUsd(p.price)}</p>
-    </div>`).join("");
-}
-
 // ===== STEP 2: FAST + ORIGIN + AGE + SMART SEARCH =====
 
 // ===== STEP 4: FIX 0 PETS - WAIT FOR API =====
@@ -422,11 +472,11 @@ function goHome(){
 
 // 1. Remove duplicates - keep only 1 of each pet name
 function removeDuplicates(list){
-  let seen = {};
+  const seen = new Set();
   return list.filter(p=>{
-    let key = (p.name||p.breed||"").toLowerCase().trim() + "|" + (p.origin||"").toLowerCase().trim();
-    if(seen[key]) return false;
-    seen[key]=true;
+    const key = `${p.type}|${(p.breed||"").toLowerCase().trim()}|${(p.name||"").toLowerCase().trim()}`;
+    if(seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }
@@ -517,6 +567,28 @@ function setBalance(value){
 }
 
 let walletPaymentPending = false;
+let cachedPaystackKeyPromise = null;
+
+function getPaystackPublicKey(){
+  if(!cachedPaystackKeyPromise){
+    cachedPaystackKeyPromise = fetch('/api/config')
+      .then(async response => {
+        const config = await response.json();
+        const key = typeof config.paystackPublicKey === 'string'
+          ? config.paystackPublicKey.trim()
+          : '';
+        if(!response.ok || !/^pk_(test|live)_/.test(key)){
+          throw new Error(config.message || 'Payment service is not configured.');
+        }
+        return key;
+      })
+      .catch(error => {
+        cachedPaystackKeyPromise = null;
+        throw error;
+      });
+  }
+  return cachedPaystackKeyPromise;
+}
 
 function updateWalletUI(){
   const formattedBalance = formatUsd(getBalance());
@@ -582,14 +654,7 @@ async function topUpWallet(){
   walletPaymentPending = true;
   showWalletMessage('Preparing secure payment...', 'error');
   try{
-    const configResponse = await fetch('/api/config');
-    const config = await configResponse.json();
-    const paystackPublicKey = typeof config.paystackPublicKey === 'string'
-      ? config.paystackPublicKey.trim()
-      : '';
-    if(!configResponse.ok || !/^pk_(test|live)_/.test(paystackPublicKey)){
-      throw new Error(config.message || 'Payment service is not configured.');
-    }
+    const paystackPublicKey = await getPaystackPublicKey();
 
     let paymentCompleted = false;
     const reference = window.crypto?.randomUUID
@@ -649,8 +714,8 @@ async function topUpWallet(){
 }
 
 let cart = [];
-function addToCart(petName){
-  const pet = allPets.find(p => p.name === petName);
+function addToCart(petId){
+  const pet = allPets.find(p => p.id === petId);
   if(!pet) return alert("Pet not found");
   cart.push(pet);
   updateCartUI();
@@ -950,20 +1015,26 @@ function renderCountries(filter=""){
 function selectCountry(code, dial, name){
   const btn = document.getElementById("countryBtn");
   if(btn) btn.innerHTML = flagFromCode(code) + ' ' + dial + ' ' + name + ' ▼';
+  const phoneCode = document.getElementById("phoneCode");
+  if(phoneCode) phoneCode.value = dial;
+  const selectedCountry = document.getElementById("selectedCountry");
+  if(selectedCountry) selectedCountry.value = name;
+  const shippingCountry = document.getElementById("shippingCountry");
+  if(shippingCountry) shippingCountry.textContent = name;
   const box = document.getElementById("countryList");
   if(box) box.innerHTML = '';
   const search = document.getElementById("countrySearch");
   if(search) search.value = '';
+  const dropdown = document.getElementById("countryDrop");
+  if(dropdown) dropdown.style.display = "none";
+  updateCartUI();
 }
 
-renderCountries();{
- 
-}
+renderCountries();
 // Delegated - works even if checkout is created later
 document.addEventListener("click", (e) => {
   const btn = e.target.closest("#countryBtn");
   if (btn) {
-    e.stopPropagation();
     const d = document.getElementById("countryDrop");
     const show = d.style.display === "none" || d.style.display === "";
     d.style.display = show ? "block" : "none";
@@ -988,10 +1059,42 @@ renderCountries("");
 });
 
 document.getElementById('menuBtn').addEventListener('click', toggleSidePanel);
+document.getElementById('closeSidebarBtn').addEventListener('click', toggleSidePanel);
+document.getElementById('panelOverlay').addEventListener('click', toggleSidePanel);
 document.getElementById('signOutBtn').addEventListener('click', function() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   localStorage.removeItem('userBalance');
   sessionStorage.clear();
   window.location.href = 'login.html';
+});
+
+let installPromptEvent = null;
+const installAppButton = document.getElementById("installAppBtn");
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  installPromptEvent = event;
+  installAppButton.hidden = false;
+});
+installAppButton.addEventListener("click", async () => {
+  if(!installPromptEvent) return;
+  installPromptEvent.prompt();
+  await installPromptEvent.userChoice;
+  installPromptEvent = null;
+  installAppButton.hidden = true;
+});
+window.addEventListener("appinstalled", () => {
+  installPromptEvent = null;
+  installAppButton.hidden = true;
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .catch(error => console.error("Service worker registration failed:", error));
+  });
+}
+
+window.addEventListener("load", () => {
+  getPaystackPublicKey().catch(error => console.warn("Paystack configuration prefetch failed:", error));
 });
