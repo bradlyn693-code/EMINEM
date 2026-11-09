@@ -1095,3 +1095,84 @@ if("serviceWorker" in navigator){
 window.addEventListener("load", () => {
   getPaystackPublicKey().catch(error => console.warn("Paystack configuration prefetch failed:", error));
 });
+// --- INSTALL APP - LOGIN PAGE ---
+let deferredPrompt = null;
+const installWrap = document.getElementById('installWrap');
+const installBtn = document.getElementById('installBtn');
+const installHelp = document.getElementById('installHelp');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installWrap) installWrap.style.display = 'block';
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (installWrap) installWrap.style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  if (installWrap) installWrap.style.display = 'none';
+});
+
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+if (isIOS && installWrap && installHelp && installBtn) {
+  installWrap.style.display = 'block';
+  installBtn.style.display = 'none';
+  installHelp.style.display = 'block';
+}
+
+// --- FIX COUNTRY PICKER ---
+const countryBtn = document.getElementById('countryBtn');
+const countryDrop = document.getElementById('countryDrop');
+const countryList = document.getElementById('countryList');
+const countrySearch = document.getElementById('countrySearch');
+const selectedCountryInput = document.getElementById('selectedCountry');
+const phoneCodeInput = document.getElementById('phoneCode');
+const countryBtnFlag = document.getElementById('countryBtnFlag');
+const shippingCountrySpan = document.getElementById('shippingCountry');
+
+if (countryBtn && countryDrop) {
+  countryBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    countryDrop.style.display = countryDrop.style.display === 'block' ? 'none' : 'block';
+    if (countrySearch) countrySearch.focus();
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#countryPicker')) {
+      countryDrop.style.display = 'none';
+    }
+  });
+}
+
+if (countryList) {
+  countryList.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-country]');
+    if (!item) return;
+    const code = item.dataset.code || '';
+    const name = item.dataset.country || item.textContent.trim();
+    const flag = item.dataset.flag || '';
+    if (selectedCountryInput) selectedCountryInput.value = name;
+    if (phoneCodeInput && code) phoneCodeInput.value = code;
+    if (shippingCountrySpan) shippingCountrySpan.textContent = name;
+    if (countryBtnFlag && flag) countryBtnFlag.src = flag;
+    const btnName = document.getElementById('countryBtnName');
+    if (btnName) btnName.textContent = name;
+    countryDrop.style.display = 'none';
+  });
+}
+
+if (countrySearch && countryList) {
+  countrySearch.addEventListener('input', () => {
+    const q = countrySearch.value.toLowerCase();
+    countryList.querySelectorAll('[data-country]').forEach(el => {
+      el.style.display = el.dataset.country.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
