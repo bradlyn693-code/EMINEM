@@ -1150,7 +1150,27 @@ if (countryBtn && countryDrop) {
     }
   });
 }
-
+// --- BUILD COUNTRY LIST (was missing) ---
+function renderCountryList(filter = '') {
+  if (!countryList) return;
+  const q = filter.toLowerCase().trim();
+  const list = (typeof countries !== 'undefined' ? countries : []).filter(c => {
+    return !q || c.n.toLowerCase().includes(q) || c.d.includes(q);
+  });
+  countryList.innerHTML = list.map(c => {
+    const flagUrl = 'https://flagcdn.com/w40/' + c.c.toLowerCase() + '.png';
+    return '<div class="country-item" data-country="' + c.n + '" data-code="' + c.d + '" data-flag="' + flagUrl + '" style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;">'
+      + '<img src="' + flagUrl + '" style="width:22px;height:16px;object-fit:cover;">'
+      + '<span>' + c.n + '</span>'
+      + '<span style="margin-left:auto;color:#888;">' + c.d + '</span></div>';
+  }).join('');
+}
+renderCountryList();
+if (countrySearch) {
+  countrySearch.addEventListener('input', (e) => {
+    renderCountryList(e.target.value);
+  });
+}
 if (countryList) {
   countryList.addEventListener('click', (e) => {
     const item = e.target.closest('[data-country]');

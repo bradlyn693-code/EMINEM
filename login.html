@@ -385,7 +385,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 if (installBtn) {
   installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
+   if (!deferredPrompt) {
+  if (installHelp) {
+    installHelp.style.display = 'block';
+    installHelp.textContent = 'In Chrome tap the 3 dots > Add to Home screen / Install app. If My Pet App is already on your home screen, it is already installed.';
+  }
+  return;
+}
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     deferredPrompt = null;
