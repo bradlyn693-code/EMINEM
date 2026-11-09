@@ -130,14 +130,14 @@ function parrotFallbackImage(bodyColor, accentColor){
 }
 
 let parrotList = [
-  {breed:"African Grey Parrot", price:1200, desc:"Intelligent grey parrot with a vivid red tail.", image:"https://upload.wikimedia.org/wikipedia/commons/6/68/African_Grey_Parrot%2C_peeking_out_from_under_its_wing_-_edit.jpg", fallbackImage:parrotFallbackImage("#777777","#d62828")},
-  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings, golden chest, and a powerful curved beak.", image:"https://upload.wikimedia.org/wikipedia/commons/e/ec/Ara_ararauna_Luc_Viatour.jpg", fallbackImage:parrotFallbackImage("#1769aa","#f5b700")},
-  {breed:"Budgerigar / Budgie", price:45, desc:"A small, lively green-and-yellow budgerigar.", image:"https://upload.wikimedia.org/wikipedia/commons/4/43/Green_budgerigar_parrot_in_mongolia.jpg", fallbackImage:parrotFallbackImage("#3a9d23","#f2d52e")},
-  {breed:"Cockatiel", price:120, desc:"Grey cockatiel with a tall crest and bright orange cheek patches.", image:"https://upload.wikimedia.org/wikipedia/commons/7/74/Nymphicus_hollandicus_MHNT.ZOO.2010.11.148.28.jpg", fallbackImage:parrotFallbackImage("#858585","#ef7d32")},
-  {breed:"Amazon Parrot", price:800, desc:"A sociable green parrot with a yellow crown.", image:"https://upload.wikimedia.org/wikipedia/commons/5/5d/Amazona_albifrons_MHNT.ZOO.2010.11.148.14.jpg", fallbackImage:parrotFallbackImage("#27803a","#e9ce22")},
-  {breed:"Sun Conure", price:1420, desc:"A brilliant conure in glowing orange, yellow, and green.", image:"https://upload.wikimedia.org/wikipedia/commons/2/24/Aratinga_solstitialis_-_Loro_Parque_01.jpg", fallbackImage:parrotFallbackImage("#f28c28","#f3d52c")},
-  {breed:"Lovebird", price:1190, desc:"A small, affectionate green lovebird with a peach-colored face.", image:"https://upload.wikimedia.org/wikipedia/commons/0/0f/Agapornis_personatus_-Serengeti%2C_Tanzania-8.jpg", fallbackImage:parrotFallbackImage("#338a45","#f29b83")},
-  {breed:"White Cockatoo", price:950, desc:"An elegant all-white cockatoo with a large expressive crest.", image:"https://upload.wikimedia.org/wikipedia/commons/8/87/Cacatua_alba_MHNT.ZOO.2010.11.148.17.jpg", fallbackImage:parrotFallbackImage("#f5f5f5","#e5b735")}
+  {breed:"African Grey Parrot", price:1200, desc:"Intelligent...", img:"https://picsum.photos/seed/africangrey/400/300", bodyColor:"#808080", accentColor:"#FF0000"},
+  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings...", img:"https://picsum.photos/seed/macaw/400/300", bodyColor:"#0066FF", accentColor:"#FFCC00"},
+  {breed:"Budgerigar / Budgie", price:45, desc:"A small, live...", img:"https://picsum.photos/seed/budgie/400/300", bodyColor:"#00CC66", accentColor:"#FFFF00"},
+  {breed:"Cockatiel", price:120, desc:"Grey cockatiel...", img:"https://picsum.photos/seed/cockatiel/400/300", bodyColor:"#999999", accentColor:"#FF9900"},
+  {breed:"Amazon Parrot", price:800, desc:"A sociable green...", img:"https://picsum.photos/seed/amazon/400/300", bodyColor:"#009900", accentColor:"#FF0000"},
+  {breed:"Sun Conure", price:1420, desc:"A brilliant conure...", img:"https://picsum.photos/seed/sunconure/400/300", bodyColor:"#FF9900", accentColor:"#FFFF00"},
+  {breed:"Lovebird", price:1190, desc:"A small, affectionate...", img:"https://picsum.photos/seed/lovebird/400/300", bodyColor:"#FF3399", accentColor:"#00CCFF"},
+  {breed:"White Cockatoo", price:950, desc:"An elegant all-white...", img:"https://picsum.photos/seed/cockatoo/400/300", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
 ];
 
 async function fetchWithTimeout(url, timeoutMs = 8000){
@@ -281,7 +281,7 @@ function loadPets(){
     const parrot = parrotList[i];
     addPet({
       type:'parrot', name:parrot.breed, breed:parrot.breed, price:parrot.price,
-      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image || parrot.image1 || parrot.fallbackImage],
+      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image],
       fallbackImage:parrot.fallbackImage
     });
   }
@@ -765,7 +765,7 @@ if (!address || !phone || !email) {
 // ===== SEARCHABLE COUNTRY PICKER WITH REAL FLAGS =====
 document.addEventListener("DOMContentLoaded", () => {
 // FULL COUNTRIES WITH FLAGS - All Asia, Europe, America, Africa, Australia, South America
-let selectedCountry = 'UK';
+let selectedCountry = localStorage.getItem("selectedCountry") || "UK";
 
 function flagFromCode(code){
   // Turns "KE" -> 🇰🇪, "US" -> 🇺🇸, "GB" -> 🇬🇧
@@ -999,6 +999,7 @@ function renderCountries(filter=""){
 
 function selectCountry(code, dial, name){
   selectedCountry = name;
+  localStorage.setItem("selectedCountry", name);
   const btn = document.getElementById("countryBtn");
   if(btn) btn.innerHTML = flagFromCode(code) + ' ' + dial + ' ' + name + ' ▼';
   const phoneCode = document.getElementById("phoneCode");
@@ -1016,6 +1017,9 @@ function selectCountry(code, dial, name){
   updateCartUI();
 }
 
+const initialCountry = countries.find(country => country.n === selectedCountry)
+  || countries.find(country => country.n === "UK");
+selectCountry(initialCountry.c, initialCountry.d, initialCountry.n);
 renderCountries();
 // Delegated - works even if checkout is created later
 document.addEventListener("click", (e) => {
