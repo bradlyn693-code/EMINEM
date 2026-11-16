@@ -13,6 +13,68 @@
 <body>                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <!DOCTYPE html>
 <style>
   .hidden { display: none !important; }
+  /* --- FIX LAYOUT - DO NOT TOUCH BACKEND --- */
+#loginBox, #signupBox, #verifyEmailBox, #forgotBox, #resetBox {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  border-radius: 24px !important;
+  text-align: center !important;
+}
+#loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden, #resetBox.hidden {
+  display: none !important;
+}
+#loginBox h2, #signupBox h2, #verifyEmailBox h2 {
+  text-align: center !important;
+  margin: 0 0 8px 0 !important;
+}
+#loginBox input, #signupBox input, #verifyEmailBox input, #forgotBox input, #resetBox input {
+  width: 100% !important;
+  padding: 14px 16px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+#loginBox button, #signupBox button, #verifyEmailBox button {
+  width: 100% !important;
+  padding: 14px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #ff6b9d !important;
+  color: #fff !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+#loginBox a, #signupBox a {
+  text-align: center !important;
+  display: block !important;
+}
+
+/* --- KILL POPUP, MAKE IT INLINE --- */
+#forgotModal, #resetModal, #resetPasswordModal, div[id*="reset"], div[id*="Reset"] {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  background: transparent !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+  z-index: auto !important;
+}
+#forgotModal.hidden, #resetModal.hidden {
+  display: none !important;
+}
 body {
     margin: 0;
     background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200') !important;
@@ -181,7 +243,15 @@ body {
       <button id="verifySubmit" type="submit">Verify Email</button>
       <button id="resendCode" type="button" disabled>Resend code in 30s</button>
       <div class="link" onclick="showLogin()">Back to Login</div>
+    
     </form>
+<div id="forgotModal" class="hidden">  <!-- your pasted Reset - NEW -->
+  ...
+  <h3>Reset Password</h3>
+  ...
+  <button id="fpClose">Close</button>
+</div>
+
     <div id="auth-message" role="status" aria-live="polite"></div>
   </div>
 
@@ -410,8 +480,10 @@ if (isIOS && installWrap && installHelp && installBtn) {
  // --- FORGOT PASSWORD ---
 document.getElementById('forgotLink').addEventListener('click', function(e){
   e.preventDefault();
-  document.getElementById('forgotModal').style.display = 'flex';
-  document.getElementById('forgotStep1').style.display = 'block';
+  document.getElementById('loginBox').classList.add('hidden');
+document.getElementById('signupBox').classList.add('hidden');
+document.getElementById('verifyEmailBox').classList.add('hidden');
+document.getElementById('forgotModal').classList.remove('hidden');
   document.getElementById('forgotStep2').style.display = 'none';
   document.getElementById('forgotMsg').textContent = '';
 });
@@ -451,57 +523,32 @@ document.getElementById('resetPassBtn').addEventListener('click', async function
     const data = await res.json();
     if(res.ok){
       alert('Password reset! Now login with your new password.');
-      document.getElementById('forgotModal').style.display = 'none';
+      document.getElementById('forgotModal').classList.add('hidden'); document.getElementById('loginBox').classList.remove('hidden');
     } else alert(data.message || 'Reset failed');
   }catch(err){ alert('Reset failed'); }
 });
  </script>
   <div class="ribbon-footer">Welcome to Pets World ♥️😻</div>
-  <!-- FORGOT PASSWORD POPUP -->
-
-<!-- FORGOT PASSWORD -->
-<a href="#" id="forgotLink" style="display:block;text-align:center;margin-top:10px;color:#007bff;">Forgot password?</a>
-
-<div id="forgotModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:white;padding:20px;border-radius:12px;width:90%;max-width:380px;">
-    <h3>Reset Password</h3>
-    <div id="step1">
-      <p>Enter your account email</p>
-      <input id="fpEmail" type="email" placeholder="Your email" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;">
-      <button id="fpSendBtn" style="width:100%;padding:10px;background:#28a745;color:white;border:none;border-radius:8px;">Send Code</button>
-    </div>
-    <div id="step2" style="display:none;">
-      <p>Code sent to <b id="fpEmailShow"></b></p>
-      <input id="fpCode" type="text" placeholder="Enter 6-digit code" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;">
-      <input id="fpNewPass" type="password" placeholder="New password" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;">
-      <input id="fpConfirmPass" type="password" placeholder="Confirm new password" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;">
-      <button id="fpResetBtn" style="width:100%;padding:10px;background:#007bff;color:white;border:none;border-radius:8px;">Reset Password</button>
-    </div>
-    <p id="fpMsg" style="color:red;text-align:center;margin-top:10px;"></p>
-    <button id="fpClose" style="width:100%;padding:8px;margin-top:5px;background:#eee;border:none;border-radius:8px;">Close</button>
-  </div>
-</div>
+ 
 
 <script>
 const forgotModal = document.getElementById('forgotModal');
-document.getElementById('forgotLink').onclick = (e) => { e.preventDefault(); forgotModal.style.display='flex'; };
-document.getElementById('fpClose').onclick = () => { forgotModal.style.display='none'; };
+document.getElementById('forgotLink').onclick = (e) => { e.preventDefault();
+document.getElementById('loginBox').classList.add('hidden');
+document.getElementById('signupBox').classList.add('hidden');
+document.getElementById('verifyEmailBox').classList.add('hidden');
+forgotModal.classList.remove('hidden'); };
+document.getElementById('fpClose').onclick = () => { forgotModal.classList.add('hidden'); document.getElementById('loginBox').classList.remove('hidden'); };
 document.getElementById('fpSendBtn').onclick = async () => {
-  const email = document.getElementById('fpEmail').value.trim().toLowerCase();
-  const msg = document.getElementById('fpMsg');
-  if(!email){ msg.textContent='Please enter your email'; return; }
-  msg.style.color='black'; msg.textContent='Sending...';
-  const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email}) });
-  const data = await res.json();
-  if(!data.success){
-    if(res.status===404){ msg.innerHTML = data.message + ' <a href="index.html">Create one</a>'; }
-    else { msg.textContent = data.message; }
-    return;
-  }
-  msg.style.color='green'; msg.textContent='Code sent! Check your Gmail.';
-  document.getElementById('fpEmailShow').textContent = email;
-  document.getElementById('step1').style.display='none';
-  document.getElementById('step2').style.display='block';
+const email = document.getElementById('fpEmail').value.trim();
+const msg = document.getElementById('fpMsg');
+if(!email){ msg.textContent='Please enter your email'; return; }
+msg.style.color='black'; msg.textContent='Sending...';
+try{
+const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({email}) });
+const data = await res.json();
+msg.textContent = data.message || 'Check your email for reset link';
+} catch(err){ msg.textContent='Failed to send, try again'; }
 };
 document.getElementById('fpResetBtn').onclick = async () => {
   const email = document.getElementById('fpEmail').value.trim().toLowerCase();
