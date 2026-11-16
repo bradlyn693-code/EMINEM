@@ -1,3 +1,4 @@
+const CAT_API_KEY = "live_PaA0XuGjhvPCepwdAIHk8LXkDJHjUT6tEjfNzOZTufFWUOeaLMQd9CXkVhTx2gVO";
 function toggleSidePanel(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('panelOverlay');
@@ -78,7 +79,7 @@ let dogList = [
   {breed:"Afghan Hound", api:"hound/afghan", desc:"Long silky hair, elegant.", price: 1100},
   {breed:"Greyhound", api:"greyhound/italian", desc:"Fastest dog, slim.", price: 1950},
   {breed:"Whippet", api:"whippet", desc:"Small greyhound.", price: 1300},
-  {breed:"Bull Terrier", api:"bullterrier", desc:"Egg head, loyal.", price:1800},
+  
   {breed:"Bull Terrier", api:"terrier/bull", desc:"Egg head, playful.", price: 1700},
   {breed:"Fox Terrier", api:"terrier/fox", desc:"Wiry, energetic.", price: 1050},
   {breed:"Jack Russell", api:"terrier/russell", desc:"Tiny, hyper, smart.", price: 780},
@@ -120,6 +121,22 @@ let catList = [
   {breed:"Siberian", code:"sibe", desc:"Thick triple coat.", price: 600},
   {breed:"Manx", code:"manx", desc:"No tail.", price: 1400}
 ];
+// === LOAD REAL CAT IMAGES WITH API KEY ===
+async function loadCatImagesFromAPI() {
+  for (const cat of catList) {
+    try {
+      const res = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${cat.code}&limit=5`, {
+        headers: { "x-api-key": CAT_API_KEY }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        cat.images = data.map(d => d.url);
+        cat.image = cat.images[0];
+      }
+    } catch(e) { console.log("fail", cat.breed); }
+  }
+}
+loadCatImagesFromAPI();
 
 let kittenNames = ["Mochi","Simba","Oliver","Lily","Milo","Zoe","Felix","Nala","Oreo","Ginger","Shadow","Pepper","Smokey","Angel","Tiger","Snow","Bella","Lucky","Cleo","Jasper","Misty","Pumpkin","Cookie","Midnight","Chloe","Ash"];
 let kittenPrices = [780,1220,1200,1160,1190,1140,1210,670,1150,1180,990,1700,1990,1600,1220,1250,1240,1700,1190,1210,1160,1180,1200,170,1190,1150];
@@ -156,7 +173,10 @@ const dogFallbackImages = [
   "https://images.dog.ceo/breeds/german-shepherd/n02106662_1451.jpg",
   "https://images.dog.ceo/breeds/german-shepherd/n02106662_10858.jpg"
 ];
-const germanShepherdFallback = "https://images.dog.ceo/breeds/german-shepherd/n02106662_20711.jpg";
+function getDogFallbackImages(index){
+  return Array.from({length:4}, (_, photoIndex) =>
+    `https://placedog.net/500/500?id=${index * 4 + photoIndex + 1}`);
+}
 const catFallbackImages = [
   "https://cdn2.thecatapi.com/images/avc.jpg",
   "https://cdn2.thecatapi.com/images/eda.jpg",
@@ -170,7 +190,7 @@ function getBreedPhotos(key, load){
   return breedPhotos.get(key);
 }
 
-async function getDogImages(api){
+async function getDogImages(api, fallbackImages){
   try{
     const response = await fetchWithTimeout(`https://dog.ceo/api/breed/${api}/images/random/4`);
     if(!response.ok) throw new Error(`Dog image API returned ${response.status} for ${api}`);
@@ -180,7 +200,7 @@ async function getDogImages(api){
     throw new Error(`Dog image API returned fewer than four photos for ${api}`);
   }catch(error){
     console.warn(`Using real-photo fallback for dog breed ${api}:`, error);
-    return dogFallbackImages;
+    return fallbackImages;
   }
 }
 
@@ -205,11 +225,11 @@ function handlePetImageError(image){
   image.dataset.fallbackApplied = "true";
   const index = Number(image.dataset.petIndex);
   const pet = allPets[index];
-  if(pet && pet.breed.toLowerCase().includes("german shepherd")){
-    image.src = germanShepherdFallback;
-  }else if(pet && (pet.type === "cat" || pet.type === "kitten")){
+  if(pet && (pet.type === "cat" || pet.type === "kitten")){
     image.src = catFallbackImages[0];
   }else if(pet && pet.type === "parrot"){
+    image.src = pet.fallbackImage;
+  }else if(pet && pet.type === "dog"){
     image.src = pet.fallbackImage;
   }else{
     image.src = dogFallbackImages[0];
@@ -249,10 +269,12 @@ function loadPets(){
 
   for(let i=0; i<dogList.length; i++){
     const dog = dogList[i];
+    const fallbackImages = getDogFallbackImages(i);
     addPet({
       type:'dog', name:dog.breed, breed:dog.breed, price:dog.price,
-      age:(2 + (i%10))+" months", desc:dog.desc, images:dogFallbackImages
-    }, () => getBreedPhotos(`dog:${dog.api}`, () => getDogImages(dog.api)));
+      age:(2 + (i%10))+" months", desc:dog.desc, images:fallbackImages,
+      fallbackImage:fallbackImages[0]
+    }, () => getBreedPhotos(`dog:${dog.api}`, () => getDogImages(dog.api, fallbackImages)));
   }
   for(let i=0; i<24; i++){
     const dog = dogList[i];
@@ -1071,14 +1093,16 @@ const installAppButton = document.getElementById("installAppBtn");
 window.addEventListener("beforeinstallprompt", event => {
   event.preventDefault();
   installPromptEvent = event;
-  installAppButton.hidden = false;
 });
 installAppButton.addEventListener("click", async () => {
-  if(!installPromptEvent) return;
-  installPromptEvent.prompt();
-  await installPromptEvent.userChoice;
+  if(!installPromptEvent){
+    alert("To install manually, open the Chrome menu and choose Add to Home screen or Install app.");
+    return;
+  }
+  const promptEvent = installPromptEvent;
+  await promptEvent.prompt();
+  await promptEvent.userChoice;
   installPromptEvent = null;
-  installAppButton.hidden = true;
 });
 window.addEventListener("appinstalled", () => {
   installPromptEvent = null;
@@ -1126,73 +1150,4 @@ if (isIOS && installWrap && installHelp && installBtn) {
   installWrap.style.display = 'block';
   installBtn.style.display = 'none';
   installHelp.style.display = 'block';
-}
-
-// --- FIX COUNTRY PICKER ---
-const countryBtn = document.getElementById('countryBtn');
-const countryDrop = document.getElementById('countryDrop');
-const countryList = document.getElementById('countryList');
-const countrySearch = document.getElementById('countrySearch');
-const selectedCountryInput = document.getElementById('selectedCountry');
-const phoneCodeInput = document.getElementById('phoneCode');
-const countryBtnFlag = document.getElementById('countryBtnFlag');
-const shippingCountrySpan = document.getElementById('shippingCountry');
-
-if (countryBtn && countryDrop) {
-  countryBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    countryDrop.style.display = countryDrop.style.display === 'block' ? 'none' : 'block';
-    if (countrySearch) countrySearch.focus();
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#countryPicker')) {
-      countryDrop.style.display = 'none';
-    }
-  });
-}
-// --- BUILD COUNTRY LIST (was missing) ---
-function renderCountryList(filter = '') {
-  if (!countryList) return;
-  const q = filter.toLowerCase().trim();
-  const list = (typeof countries !== 'undefined' ? countries : []).filter(c => {
-    return !q || c.n.toLowerCase().includes(q) || c.d.includes(q);
-  });
-  countryList.innerHTML = list.map(c => {
-    const flagUrl = 'https://flagcdn.com/w40/' + c.c.toLowerCase() + '.png';
-    return '<div class="country-item" data-country="' + c.n + '" data-code="' + c.d + '" data-flag="' + flagUrl + '" style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;">'
-      + '<img src="' + flagUrl + '" style="width:22px;height:16px;object-fit:cover;">'
-      + '<span>' + c.n + '</span>'
-      + '<span style="margin-left:auto;color:#888;">' + c.d + '</span></div>';
-  }).join('');
-}
-renderCountryList();
-if (countrySearch) {
-  countrySearch.addEventListener('input', (e) => {
-    renderCountryList(e.target.value);
-  });
-}
-if (countryList) {
-  countryList.addEventListener('click', (e) => {
-    const item = e.target.closest('[data-country]');
-    if (!item) return;
-    const code = item.dataset.code || '';
-    const name = item.dataset.country || item.textContent.trim();
-    const flag = item.dataset.flag || '';
-    if (selectedCountryInput) selectedCountryInput.value = name;
-    if (phoneCodeInput && code) phoneCodeInput.value = code;
-    if (shippingCountrySpan) shippingCountrySpan.textContent = name;
-    if (countryBtnFlag && flag) countryBtnFlag.src = flag;
-    const btnName = document.getElementById('countryBtnName');
-    if (btnName) btnName.textContent = name;
-    countryDrop.style.display = 'none';
-  });
-}
-
-if (countrySearch && countryList) {
-  countrySearch.addEventListener('input', () => {
-    const q = countrySearch.value.toLowerCase();
-    countryList.querySelectorAll('[data-country]').forEach(el => {
-      el.style.display = el.dataset.country.toLowerCase().includes(q) ? '' : 'none';
-    });
-  });
 }

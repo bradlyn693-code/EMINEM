@@ -1,5 +1,7 @@
                                                                                                                                                                                                                                                                                                                                                                             <!DOCTYPE html>
 <html lang="en">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ffffff">
 <head>
   <script>
   const savedUser = localStorage.getItem("user");
@@ -18,12 +20,94 @@
   <link rel="stylesheet" href="style.css">
   <script defer src="https://js.paystack.co/v1/inline.js"></script>
 </head>
+<script>
+// === COUNTRY SELECTOR FIX ===
+const COUNTRIES = [
+  {name:"Kenya", code:"KE", dial:"+254"},
+  {name:"United States", code:"US", dial:"+1"},
+  {name:"United Kingdom", code:"GB", dial:"+44"},
+  {name:"Tanzania", code:"TZ", dial:"+255"},
+  {name:"Uganda", code:"UG", dial:"+256"},
+  {name:"South Africa", code:"ZA", dial:"+27"},
+  {name:"Nigeria", code:"NG", dial:"+234"},
+  {name:"Ghana", code:"GH", dial:"+233"},
+  {name:"Canada", code:"CA", dial:"+1"},
+  {name:"Australia", code:"AU", dial:"+61"},
+  {name:"India", code:"IN", dial:"+91"},
+  {name:"Germany", code:"DE", dial:"+49"},
+  {name:"France", code:"FR", dial:"+33"},
+  {name:"Netherlands", code:"NL", dial:"+31"},
+  {name:"United Arab Emirates", code:"AE", dial:"+971"},
+];
+
+const countryBtn = document.getElementById('countryBtn');
+const countryDrop = document.getElementById('countryDrop');
+const countryList = document.getElementById('countryList');
+const countrySearch = document.getElementById('countrySearch');
+const countryBtnFlag = document.getElementById('countryBtnFlag');
+const phoneCode = document.getElementById('phoneCode');
+const selectedCountry = document.getElementById('selectedCountry');
+
+function renderCountries(filter=""){
+  if(!countryList) return;
+  countryList.innerHTML = "";
+  COUNTRIES.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()) || c.dial.includes(filter))
+  .forEach(c => {
+    const div = document.createElement('div');
+    div.style.cssText = "padding:8px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:1px solid #eee;";
+    div.innerHTML = `<img src="https://flagcdn.com/w20/${c.code.toLowerCase()}.png" style="width:20px;"> <span>${c.name}</span> <span style="margin-left:auto;color:#666;">${c.dial}</span>`;
+    div.onclick = (e) => {
+      e.stopPropagation();
+      // Update button
+      if(countryBtnFlag) countryBtnFlag.src = `https://flagcdn.com/w20/${c.code.toLowerCase()}.png`;
+      // Update text in button if there is a span, otherwise keep flag only
+      const label = countryBtn.querySelector('span');
+      if(label) label.textContent = c.dial + " " + c.name;
+      if(phoneCode) phoneCode.value = c.dial;
+      if(selectedCountry) selectedCountry.value = c.name;
+      if(countryDrop) countryDrop.style.display = 'none';
+      console.log("Country selected:", c.name, c.dial);
+    };
+    countryList.appendChild(div);
+  });
+  if(countryList.innerHTML === "") countryList.innerHTML = "<div style='padding:10px;'>No country found</div>";
+}
+
+if(countryBtn){
+  // Remove old broken listeners by cloning button
+  const newBtn = countryBtn.cloneNode(true);
+  countryBtn.parentNode.replaceChild(newBtn, countryBtn);
+  newBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const drop = document.getElementById('countryDrop');
+    const isOpen = drop.style.display === 'block';
+    drop.style.display = isOpen ? 'none' : 'block';
+    if(!isOpen){
+      renderCountries("");
+      const search = document.getElementById('countrySearch');
+      if(search){ search.value = ""; setTimeout(()=>search.focus(), 50); }
+    }
+  });
+}
+if(countrySearch){
+  countrySearch.addEventListener('input', (e) => renderCountries(e.target.value));
+  countrySearch.addEventListener('click', (e) => e.stopPropagation());
+}
+document.addEventListener('click', (e) => {
+  if(countryDrop && !e.target.closest('#countryPicker') && !e.target.closest('#countryDrop')){
+    countryDrop.style.display = 'none';
+  }
+});
+renderCountries("");
+// === COUNTRY SELECTOR FIX END ===
+</script>
 <body>
 <h1 class="welcome-3d">Welcome to pets world 🐶🦜😸</h1>
 
   <!-- Toggle Button -->
   <button id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false">☰</button>
-  <button id="installAppBtn" type="button" hidden>Install App</button>
+  <button id="installAppBtn" type="button">Install App</button>
 
   <!-- Side Panel -->
   <div id="panelOverlay" aria-hidden="true"></div>
@@ -137,3 +221,41 @@
 </div>
 <button onclick="openCart()" style="position:fixed;top:15px;right:15px;z-index:300;background:#111;color:#fff;padding:10px 14px;border-radius:8px">🛒 Cart (<span id="cartCount">0</span>)</button>
 <script src="script.js"></script>
+<script>
+// NEW SMART SEARCH - Overrides script.js - Uses Backend, $1000-$2790
+async function googleSearch() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  const main = document.getElementById('main');
+  main.innerHTML = '<h1>Searching for "' + query + '"...</h1><p>Asking backend Dog API...</p>';
+  try {
+    const res = await fetch('http://127.0.0.1:3000/api/dogs/search?q=' + encodeURIComponent(query));
+    const data = await res.json();
+    const pets = Array.isArray(data) ? data : (data.results || data.pets || []);
+    if (!pets.length) {
+      main.innerHTML = '<h1>No results for "' + query + '"</h1><button onclick="location.reload()">Back</button>';
+      return;
+    }
+    let html = '<h1>Results for "' + query + '" (' + pets.length + ')</h1><button onclick="location.reload()">Back</button><div style="display:flex;flex-wrap:wrap;gap:16px">';
+    pets.forEach(pet => {
+      const breedName = pet.name || pet.breed || query;
+      const img = pet.image || pet.imageUrl || (pet.images && pet.images[0]) || '';
+      let hash = 0;
+      for (let i = 0; i < breedName.length; i++) hash += breedName.charCodeAt(i) * (i + 1);
+      const price = 1000 + (hash % 1791);
+      const puppyPrice = Math.max(1000, price - 150);
+      html += `<div style="border:1px solid #ddd;border-radius:12px;padding:12px;width:300px">
+        <img src="${img}" style="width:100%;border-radius:10px">
+        <h3>✅ HEALTH CHECKED</h3><h2>${breedName}</h2><p>${pet.temperament || 'Loyal, friendly pet'}</p>
+        <h3>$${price}.00</h3><button>Add to Cart</button><hr>
+        <img src="${img}" style="width:100%;border-radius:10px">
+        <h3>✅ HEALTH CHECKED</h3><h2>${breedName} Puppy</h2>
+        <h3>$${puppyPrice}.00</h3><button>Add to Cart</button></div>`;
+    });
+    html += '</div>';
+    main.innerHTML = html;
+  } catch (err) {
+    main.innerHTML = '<h1>Backend not running</h1><p>Start with: node server.js</p><p>' + err.message + '</p>';
+  }
+}
+</script>
