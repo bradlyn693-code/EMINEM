@@ -35,7 +35,37 @@
 #loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden {
   display: none !important;
 }
-
+/* --- FIX RESET PASSWORD BOX ONLY --- */
+#forgotBox {
+  align-items: stretch !important;
+  text-align: left !important;
+  padding: 20px 20px !important;
+  overflow: hidden !important;
+}
+#forgotBox > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex-shrink: 0 !important;
+}
+#forgotBox h2 {
+  font-size: 22px !important;
+  margin: 0 0 10px 0 !important;
+  text-align: left !important;
+}
+#forgotBox p {
+  margin: 0 0 10px 0 !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+#forgotBox input {
+  margin-bottom: 10px !important;
+}
+#forgotBox button {
+  width: 100% !important;
+  margin-top: 6px !important;
+}
 #loginBox h2, #signupBox h2, #verifyEmailBox h2 {
   text-align: center !important;
   margin: 0 0 8px 0 !important;
