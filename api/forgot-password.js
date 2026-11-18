@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
       auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
     });
 
-    const link = `https://y-pets-shop.vercel.app/reset-password.html?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
+    const link = `https://my-pets-shop.vercel.app/reset-password.html?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
