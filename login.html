@@ -281,11 +281,13 @@ body {
       <div class="link" onclick="showLogin()">Back to Login</div>
     
     </form>
-<div id="forgotModal" class="hidden">  <!-- your pasted Reset - NEW -->
-  ...
-  <h3>Reset Password</h3>
-  ...
-  <button id="fpClose">Close</button>
+<div id="forgotModal" class="hidden">
+  <h2>Reset Password</h2>
+  <p style="text-align:center; font-size:14px; margin:0 0 12px;">Enter your email and we'll send you a reset link.</p>
+  <input id="fpEmail" type="email" placeholder="Email" autocomplete="email">
+  <button id="fpSend" type="button">Send Reset Link</button>
+  <div class="link" id="fpBack">Back to Login</div>
+  <button id="fpClose" type="button" style="margin-top:10px;">Close</button>
 </div>
 
     <div id="auth-message" role="status" aria-live="polite"></div>
