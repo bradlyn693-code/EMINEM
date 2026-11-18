@@ -14,7 +14,7 @@
 <style>
   .hidden { display: none !important; }
   /* --- NEW BOXES ONLY - BACKEND NOT TOUCHED --- */
-#loginBox, #signupBox, #verifyEmailBox, #forgotBox {
+#loginBox, #signupBox, #verifyEmailBox{
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
@@ -35,7 +35,7 @@
 #loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden {
   display: none !important;
 }
-/* --- FIX RESET PASSWORD BOX ONLY --- */
+* --- FIX RESET PASSWORD BOX ONLY --- */
 #forgotBox {
   align-items: stretch !important;
   text-align: left !important;
@@ -65,7 +65,7 @@
 #forgotBox button {
   width: 100% !important;
   margin-top: 6px !important;
-}
+ }
 #loginBox h2, #signupBox h2, #verifyEmailBox h2 {
   text-align: center !important;
   margin: 0 0 8px 0 !important;
