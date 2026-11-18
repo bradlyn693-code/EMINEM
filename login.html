@@ -51,6 +51,15 @@
 .box:has(#forgotModal:not(.hidden)) #installWrap {
   display: none !important;
 }
+/* --- MAKE RESET TALLER --- */
+.box:has(#forgotModal:not(.hidden)) {
+  height: auto !important;
+  padding: 20px !important;
+}
+#forgotModal { gap: 16px !important; padding: 10px 0 !important; }
+#forgotModal button { margin: 0 !important; padding: 14px !important; height: auto !important; }
+#fpBack { text-align: center !important; margin: 4px 0 !important; display: block !important; }
+ 
 #loginBox h2, #signupBox h2, #verifyEmailBox h2 {
   text-align: center !important;
   margin: 0 0 8px 0 !important;
