@@ -13,19 +13,27 @@
 <body>                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <!DOCTYPE html>
 <style>
   .hidden { display: none !important; }
-  /* --- FIX LAYOUT - DO NOT TOUCH BACKEND --- */
-#loginBox, #signupBox, #verifyEmailBox, #forgotBox, #resetBox {
+  /* --- NEW BOXES ONLY - BACKEND NOT TOUCHED --- */
+#loginBox, #signupBox, #verifyEmailBox, #forgotBox {
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
   width: 100% !important;
   max-width: 420px !important;
   margin: 0 auto !important;
-  padding: 24px !important;
+  padding: 28px 24px !important;
   box-sizing: border-box !important;
-  background: #fff !important;
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
+  border-top: 4px solid #ff6b00 !important;
   border-radius: 24px !important;
   text-align: center !important;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+#loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden {
+  display: none !important;
 }
 #loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden, #resetBox.hidden {
   display: none !important;
