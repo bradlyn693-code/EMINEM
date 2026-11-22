@@ -1,24 +1,91 @@
-                                                                                                                                                                                                                                                                                                                                                                            <!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <script>
-  const savedUser = localStorage.getItem("user");
-  const savedLogin = localStorage.getItem("isLoggedIn") === "true" || localStorage.getItem("loggedIn") === "true";
-  if (!savedLogin || !savedUser) {
-    window.location.href = "login.html";
-  } else {
-    localStorage.setItem("isLoggedIn", "true");
-  }
-</script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Pet Shop</title>
-  <meta name="theme-color" content="#ff6b00">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="style.css">
-  <script defer src="https://js.paystack.co/v1/inline.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pets</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+body{min-height:100vh;overflow:hidden;background:linear-gradient(rgba(15,23,42,.75),rgba(15,23,42,.85)),url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80') center/cover;color:#fff;display:flex;align-items:center;justify-content:center}
+.bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:22px;animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+.wrap{width:100%;max-width:400px;position:relative;z-index:2}
+.card{padding:28px 26px;border-radius:24px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden;transition:all .6s ease}
+/* LANDING */
+#landing{text-align:center;max-height:600px;opacity:1;transition:all .6s ease}
+#landing.collapsed{max-height:0;opacity:0;padding:0;margin:0;transform:scale(.9);pointer-events:none}
+#landing h1{font-size:32px} #landing p{margin:12px 0;font-size:14px;opacity:.9}
+.pets{font-size:44px;margin:10px 0}
+/* SIGNUP - hidden at start */
+#signup{max-height:0;opacity:0;transform:translateY(20px);pointer-events:none;transition:all .6s ease}
+#signup.show{max-height:800px;opacity:1;transform:translateY(0);pointer-events:auto}
+h2{text-align:center;font-size:26px;margin-bottom:4px}.sub{text-align:center;font-size:13px;opacity:.9;margin-bottom:12px}
+input{width:100%;padding:13px;margin:7px 0;border-radius:14px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#fff;outline:none}
+input::placeholder{color:rgba(255,255,255,.85)}
+button{width:100%;padding:13px;border:0;border-radius:14px;margin-top:12px;cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:16px}
+button.link{background:none;box-shadow:none;color:#a7f3d0;font-size:13px}
+#msg{margin-top:12px;min-height:20px;text-align:center;font-size:14px;border-radius:10px;padding:8px}
+#msg.ok{background:rgba(34,197,94,.35)}#msg.err{background:rgba(239,68,68,.4)}
+.hidden{display:none}.foot{text-align:center;font-size:13px;margin-top:12px}a{color:#a7f3d0}
+</style>
 </head>
 <body>
+<div class="bubble" style="width:70px;height:70px;left:8%;top:15%">🐾</div>
+<div class="bubble" style="width:50px;height:50px;left:85%;top:20%">🐶</div>
+<div class="bubble" style="width:90px;height:90px;left:12%;bottom:12%">🐱</div>
+<div class="bubble" style="width:45px;height:45px;left:78%;bottom:18%">🐾</div>
+
+<div class="wrap"><div class="card">
+
+<!-- 1. LANDING PAGE - shows first -->
+<div id="landing">
+  <div class="pets">🐶🐱🐾</div>
+  <h1>Welcome to Pets 🐾</h1>
+  <p>Find your best friend. Adopt, love, play.</p>
+  <p>🐶 🐱 🦴 🐾</p>
+  <button onclick="goToSignup()">Let's Go ➜</button>
+  <button class="link" onclick="location.href='login.html'">Already have an account? Login</button>
+</div>
+
+<!-- 2. SIGNUP - hidden until Let's Go -->
+<div id="signup">
+  <h2>Create account</h2><p class="sub">Join Pets in seconds</p>
+  <input id="name" placeholder="👤 Full name">
+  <input id="email" type="email" placeholder="✉️ Email">
+  <input id="password" type="password" placeholder="🔒 Password - 6+ characters">
+  <button onclick="doSignup()">Create account</button>
+  <button class="link" onclick="location.href='login.html'">Already have an account? Login</button>
+  <div id="msg"></div>
+</div>
+
+</div></div>
+
+<script>
+function goToSignup(){
+  // Collapse landing, show signup
+  document.getElementById('landing').classList.add('collapsed');
+  setTimeout(()=>{
+    document.getElementById('landing').style.display='none';
+    document.getElementById('signup').classList.add('show');
+  }, 400);
+}
+function setMsg(t,ok){const m=document.getElementById('msg');m.textContent=t;m.className=ok?'ok':(t?'err':'');}
+async function doSignup(){
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  if(!name||!email||!password){setMsg('Fill all fields');return;}
+  if(password.length<6){setMsg('Password must be 6+ characters');return;}
+  setMsg('Creating...');
+  try{
+    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){setMsg(d.error||'Could not create account');return;}
+    setMsg('Check your Email for the verification code',true);
+    // Go to verify page - or show code box here if you have one
+    setTimeout(()=>{ location.href='login.html'; },1200);
+  }catch(e){setMsg('Cannot reach server');}
+}
+</script>
 <h1 class="welcome-3d">Welcome to pets world 🐶🦜😸</h1>
 
   <!-- Toggle Button -->
@@ -137,3 +204,5 @@
 </div>
 <button onclick="openCart()" style="position:fixed;top:15px;right:15px;z-index:300;background:#111;color:#fff;padding:10px 14px;border-radius:8px">🛒 Cart (<span id="cartCount">0</span>)</button>
 <script src="script.js"></script>
+</body>
+</html>
