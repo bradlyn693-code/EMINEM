@@ -79,7 +79,7 @@ async function doLogin(){
     if(!r.ok){setMsg(d.error||'Account doesn\'t exist');return;}
     if(d.token) localStorage.setItem('token',d.token);
     setMsg('Welcome back ✅',true);
-    setTimeout(()=>location.href='index.html',900);
+    setTimeout(()=>location.href='pets.html',900);
   }catch(e){setMsg('Cannot reach server');}
 }
 
