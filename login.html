@@ -4,21 +4,222 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login - Pets</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
-background:linear-gradient(rgba(15,23,42,.75),rgba(15,23,42,.85)),url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80') center/cover}
-.bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:22px;animation:float 6s ease-in-out infinite;z-index:1}
-.b1{width:70px;height:70px;left:8%;top:15%}.b2{width:50px;height:50px;left:85%;top:20%;animation-delay:1s}.b3{width:90px;height:90px;left:12%;bottom:12%;animation-delay:2s}.b4{width:45px;height:45px;left:78%;bottom:18%;animation-delay:.5s}.b5{width:60px;height:60px;left:45%;top:6%;animation-delay:1.5s}.b6{width:40px;height:40px;left:90%;bottom:35%;animation-delay:2.5s}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
-.box{position:relative;z-index:2;width:100%;max-width:400px;padding:28px 26px;border-radius:24px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);box-shadow:0 20px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.5);backdrop-filter:blur(16px);color:#fff}
-.logo{font-size:42px;text-align:center}h2{text-align:center;font-size:26px;margin:6px 0 4px}.sub{text-align:center;font-size:13px;opacity:.9;margin-bottom:16px}
-input{width:100%;padding:13px 14px;margin:7px 0;border-radius:14px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#fff;outline:none;font-size:15px}
-input::placeholder{color:rgba(255,255,255,.85)}
-button{width:100%;padding:13px;border:0;border-radius:14px;margin-top:12px;cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:16px;box-shadow:0 8px 20px rgba(34,197,94,.45)}
-button.link{background:none;box-shadow:none;color:#a7f3d0;padding:6px;font-size:13px}
-#msg{margin-top:12px;min-height:20px;font-size:14px;text-align:center;border-radius:10px;padding:8px}
-#msg.ok{background:rgba(34,197,94,.35)}#msg.err{background:rgba(239,68,68,.4)}
-.hidden{display:none}.foot{text-align:center;font-size:13px;margin-top:14px}a{color:#a7f3d0;font-weight:700}
+  .hidden { display: none !important; }
+  /* --- NEW BOXES ONLY - BACKEND NOT TOUCHED --- */
+#loginBox, #signupBox, #verifyEmailBox{
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  padding: 28px 24px !important;
+  box-sizing: border-box !important;
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255,255,255,0.9) !important;
+  border-top: 4px solid #ff6b00 !important;
+  border-radius: 24px !important;
+  text-align: center !important;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+#loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden {
+  display: none !important;
+}
+/* --- FIX RESET MODAL ONLY --- */
+#forgotModal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#forgotModal.hidden { display: none !important; }
+#forgotModal h2 { text-align: center !important; margin: 0 0 8px 0 !important; }
+#forgotModal input { width: 100% !important; }
+#forgotModal button { width: 100% !important; margin-top: 6px !important; }
+.box:has(#forgotModal:not(.hidden)) #loginBox,
+.box:has(#forgotModal:not(.hidden)) #signupBox,
+.box:has(#forgotModal:not(.hidden)) #verifyEmailBox,
+.box:has(#forgotModal:not(.hidden)) #installWrap {
+  display: none !important;
+}
+/* --- MAKE RESET TALLER --- */
+.box:has(#forgotModal:not(.hidden)) {
+  height: auto !important;
+  padding: 20px !important;
+}
+#forgotModal { gap: 16px !important; padding: 10px 0 !important; }
+#forgotModal button { margin: 0 !important; padding: 14px !important; height: auto !important; }
+#fpBack { text-align: center !important; margin: 4px 0 !important; display: block !important; }
+ 
+#loginBox h2, #signupBox h2, #verifyEmailBox h2 {
+  text-align: center !important;
+  margin: 0 0 8px 0 !important;
+}
+#loginBox input, #signupBox input, #verifyEmailBox input, #forgotBox input, #resetBox input {
+  width: 100% !important;
+  padding: 14px 16px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+#loginBox button, #signupBox button, #verifyEmailBox button {
+  width: 100% !important;
+  padding: 14px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #ff6b9d !important;
+  color: #fff !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+#loginBox a, #signupBox a {
+  text-align: center !important;
+  display: block !important;
+}
+
+/* --- KILL POPUP, MAKE IT INLINE --- */
+#forgotModal, #resetModal, #resetPasswordModal, div[id*="reset"], div[id*="Reset"] {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  background: transparent !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+  z-index: auto !important;
+}
+#forgotModal.hidden, #resetModal.hidden {
+  display: none !important;
+}
+body {
+    margin: 0;
+    background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #landing {
+    position: fixed; inset: 0; z-index: 20;
+    background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200');
+    background-size: cover; background-position: center;
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 40px; transition: transform 0.9s ease-in;
+  }
+  #landing.fall { transform: translateY(100%); }
+  #landing{ overflow:hidden; }
+.fall-text{
+  padding:28px 42px; margin:20px;
+  font-size:54px; font-weight:900; color:#fff; text-align:center;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.6);
+  border-radius:30px;
+  box-shadow:0 25px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.8);
+  text-shadow:0 0 25px #fff, 0 0 45px #00e5ff;
+}
+.bubble{
+  position:absolute; bottom:-50px; border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  border:1px solid rgba(255,255,255,0.6);
+  animation:rise 3s linear infinite;
+  pointer-events:none;
+}
+.bubble:nth-child(1){left:10%; width:60px; height:60px;}
+.bubble:nth-child(2){left:25%; width:35px; height:35px;}
+.bubble:nth-child(3){left:50%; width:80px; height:80px;}
+.bubble:nth-child(4){left:70%; width:45px; height:45px;}
+.bubble:nth-child(5){left:85%; width:65px; height:65px;}
+@keyframes rise{to{transform:translateY(-110vh); opacity:0;}}
+.landing-footer{
+  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
+  width:max-content; max-width:92%;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center;
+  padding:10px 22px;
+  font-size:14px; font-weight:600; color:#fff; text-align:center;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+  z-index:5;
+}
+.email-3d{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px;
+  background:linear-gradient(135deg,#ff6ec4,#7873f5,#00e5ff);
+  border-radius:50px;
+  color:#fff; text-decoration:none; font-weight:800;
+  box-shadow:0 4px 0 #ff6ec4, 0 8px 0 #7873f5, 0 10px 15px rgba(0,0,0,0.4);
+  transform:perspective(400px) rotateX(10deg);
+}
+.email-3d:active{ transform:translateY(3px); box-shadow:0 1px 0 #ff6ec4, 0 3px 0 #7873f5; }
+.landing-footer{
+  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
+  width:max-content; max-width:92%;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center;
+  padding:10px 22px;
+  font-size:14px; font-weight:600; color:#fff; text-align:center;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+  z-index:5;
+}
+.email-3d{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px;
+  background:linear-gradient(135deg,#ff6ec4,#7873f5,#00e5ff);
+  border-radius:50px;
+  color:#fff; text-decoration:none; font-weight:800;
+  box-shadow:0 4px 0 #ff6ec4, 0 8px 0 #7873f5, 0 10px 15px rgba(0,0,0,0.4);
+  transform:perspective(400px) rotateX(10deg);
+}
+.email-3d:active{ transform:translateY(3px); box-shadow:0 1px 0 #ff6ec4, 0 3px 0 #7873f5; }
+  #letsGoBtn {
+    padding: 16px 50px; font-size: 26px; font-weight: 900; color: white;
+    background: linear-gradient(#ff7eb6, #ff2e7e); border: none; border-radius: 50px;
+    cursor: pointer; box-shadow: 0 8px 0 #a8004a, 0 15px 25px rgba(0,0,0,0.4);
+  }
+  /* Make YOUR existing .box look fancy - we don't replace it */
+  .box {
+    background: rgba(255,255,255,0.85) !important;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,46,126,0.35) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25) !important;
+    border-radius: 22px !important;
+  }
+  .box button {
+    background: linear-gradient(#ff7eb6, #ff2e7e) !important;
+    border-radius: 50px !important;
+    box-shadow: 0 6px 0 #a8004a !important;
+  }
+  .ribbon-footer {
+    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 5;
+    text-align: center; padding: 14px;
+    background: linear-gradient(#e84393, #c2185b);
+    color: white; font-weight: bold; font-size: 18px;
+  }
+</style>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+  input, button, img { max-width: 100%; }
+  @media (max-width: 768px) {
+    body { display: block; padding: 12px; }
+    .box { width: 100%; max-width: 380px; margin: 12px auto; }
+    #landing { max-width: 100%; }
+    .fall-text { max-width: 100%; font-size: clamp(30px, 9vw, 54px); padding: 20px; }
+    .landing-footer { width: max-content; max-width: 100%; }
+    .ribbon-footer { box-sizing: border-box; }
+  }
 </style>
 </head>
 <body>
@@ -35,12 +236,30 @@ button.link{background:none;box-shadow:none;color:#a7f3d0;padding:6px;font-size:
 <button class="link" onclick="showStep('step-forgot')">Forgot password?</button>
 </div>
 
-<!-- RESET PASSWORD - EMAIL -->
-<div id="step-forgot" class="hidden">
-<h2>Reset password</h2><p class="sub">Enter your email to receive a code</p>
-<input id="forgotEmail" type="email" placeholder="✉️ Email">
-<button onclick="sendResetCode()">Send code 📩</button>
-<button class="link" onclick="showStep('step-login')">← Back to login</button>
+    <form id="signupBox" class="hidden" novalidate>
+      <h2>Create Account</h2>
+      <input id="regName" type="text" placeholder="Full Name">
+      <input id="regEmail" type="email" placeholder="Email" autocomplete="email">
+      <input id="regPass" type="password" placeholder="Password (min 6)" autocomplete="current-password">
+      <button id="signupSubmit" type="submit">Sign Up</button>
+      <div class="link" onclick="showLogin()">Already have account? Login</div>
+    </form>
+    <form id="verifyEmailBox" class="hidden" novalidate>
+      <h2>Verify Your Email</h2>
+      <p id="verificationAddress" style="text-align:center;overflow-wrap:anywhere"></p>
+      <input id="verificationCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code">
+      <button id="verifySubmit" type="submit">Verify Email</button>
+      <button id="resendCode" type="button" disabled>Resend code in 30s</button>
+      <div class="link" onclick="showLogin()">Back to Login</div>
+    
+    </form>
+<div id="forgotModal" class="hidden">
+  <h2>Reset Password</h2>
+  <p style="text-align:center; font-size:14px; margin:0 0 12px;">Enter your email and we'll send you a reset link.</p>
+  <input id="fpEmail" type="email" placeholder="Email" autocomplete="email">
+  <button id="fpSend" type="button">Send Reset Link</button>
+  <div class="link" id="fpBack">Back to Login</div>
+  <button id="fpClose" type="button" style="margin-top:10px;">Close</button>
 </div>
 
 <!-- ENTER CODE - AUTO VERIFY -->
@@ -112,19 +331,59 @@ document.getElementById('resetCode').addEventListener('input', async (e)=>{
   }
 });
 
-async function doResetPassword(){
-  const np=document.getElementById('newPass').value,cp=document.getElementById('confirmNewPass').value,code=document.getElementById('resetCode').value.trim();
-  if(np.length<6){setMsg('Password must be 6+ characters');return;}
-  if(np!==cp){setMsg('Passwords do not match');return;}
-  setMsg('Saving...');
-  try{
-    const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail,code,newPassword:np})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){setMsg(d.error||'Wrong / expired code');return;}
-    setMsg('password changed successfully ✍️',true);
-    setTimeout(()=>{showStep('step-login');setMsg('');},1200);
-  }catch(e){setMsg('Cannot reach server');}
-}
+<script>
+const forgotModal = document.getElementById('forgotModal');
+document.getElementById('forgotLink').onclick = (e) => { e.preventDefault();
+document.getElementById('loginBox').classList.add('hidden');
+document.getElementById('signupBox').classList.add('hidden');
+document.getElementById('verifyEmailBox').classList.add('hidden');
+forgotModal.classList.remove('hidden'); };
+document.getElementById('fpClose').onclick = () => { forgotModal.classList.add('hidden'); document.getElementById('loginBox').classList.remove('hidden'); };
+document.getElementById('fpSendBtn').onclick = async () => {
+const email = document.getElementById('fpEmail').value.trim();
+const msg = document.getElementById('fpMsg');
+if(!email){ msg.textContent='Please enter your email'; return; }
+msg.style.color='black'; msg.textContent='Sending...';
+try{
+const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({email}) });
+const data = await res.json();
+msg.textContent = data.message || 'Check your email for reset link';
+} catch(err){ msg.textContent='Failed to send, try again'; }
+};
+document.getElementById('fpResetBtn').onclick = async () => {
+  const email = document.getElementById('fpEmail').value.trim().toLowerCase();
+  const code = document.getElementById('fpCode').value.trim();
+  const newPassword = document.getElementById('fpNewPass').value;
+  const confirm = document.getElementById('fpConfirmPass').value;
+  const msg = document.getElementById('fpMsg');
+  if(!code){ msg.textContent='Please enter the code'; return; }
+  if(newPassword.length < 6){ msg.textContent='Password must be at least 6 characters'; return; }
+  if(newPassword !== confirm){ msg.textContent='Passwords do not match! Please retype.'; return; }
+  msg.style.color='black'; msg.textContent='Resetting...';
+  const res = await fetch('/api/auth/reset-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, code, newPassword}) });
+  const data = await res.json();
+  if(!data.success){ msg.style.color='red'; msg.textContent=data.message; return; }
+  msg.style.color='green'; msg.textContent='Password reset! Please login with new password.';
+  setTimeout(()=>{ forgotModal.style.display='none'; location.reload(); }, 1500);
+};
+document.getElementById('fpSend')?.addEventListener('click', async () => {
+  const email = document.getElementById('fpEmail').value.trim();
+  if(!email) return alert('Enter your email first');
+  const btn = document.getElementById('fpSend');
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    alert(data.message || 'Check your email for the reset code');
+  } catch(err) {
+    alert('Could not send code');
+  }
+  btn.textContent = 'Send Reset Link'; btn.disabled = false;
+});
 </script>
 </body>
-</html>
+  </html>
