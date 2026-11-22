@@ -1,261 +1,90 @@
-                                                                                                                                                                                                                                                                                                                                                                            <!DOCTYPE html>
-<html lang="en">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ffffff">
+<!DOCTYPE html>
+<html>
 <head>
-  <script>
-  const savedUser = localStorage.getItem("user");
-  const savedLogin = localStorage.getItem("isLoggedIn") === "true" || localStorage.getItem("loggedIn") === "true";
-  if (!savedLogin || !savedUser) {
-    window.location.href = "login.html";
-  } else {
-    localStorage.setItem("isLoggedIn", "true");
-  }
-</script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Pet Shop</title>
-  <meta name="theme-color" content="#ff6b00">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="style.css">
-  <script defer src="https://js.paystack.co/v1/inline.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pets</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+body{min-height:100vh;overflow:hidden;background:linear-gradient(rgba(15,23,42,.75),rgba(15,23,42,.85)),url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80') center/cover;color:#fff;display:flex;align-items:center;justify-content:center}
+.bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:22px;animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+.wrap{width:100%;max-width:400px;position:relative;z-index:2}
+.card{padding:28px 26px;border-radius:24px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden;transition:all .6s ease}
+/* LANDING */
+#landing{text-align:center;max-height:600px;opacity:1;transition:all .6s ease}
+#landing.collapsed{max-height:0;opacity:0;padding:0;margin:0;transform:scale(.9);pointer-events:none}
+#landing h1{font-size:32px} #landing p{margin:12px 0;font-size:14px;opacity:.9}
+.pets{font-size:44px;margin:10px 0}
+/* SIGNUP - hidden at start */
+#signup{max-height:0;opacity:0;transform:translateY(20px);pointer-events:none;transition:all .6s ease}
+#signup.show{max-height:800px;opacity:1;transform:translateY(0);pointer-events:auto}
+h2{text-align:center;font-size:26px;margin-bottom:4px}.sub{text-align:center;font-size:13px;opacity:.9;margin-bottom:12px}
+input{width:100%;padding:13px;margin:7px 0;border-radius:14px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#fff;outline:none}
+input::placeholder{color:rgba(255,255,255,.85)}
+button{width:100%;padding:13px;border:0;border-radius:14px;margin-top:12px;cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:16px}
+button.link{background:none;box-shadow:none;color:#a7f3d0;font-size:13px}
+#msg{margin-top:12px;min-height:20px;text-align:center;font-size:14px;border-radius:10px;padding:8px}
+#msg.ok{background:rgba(34,197,94,.35)}#msg.err{background:rgba(239,68,68,.4)}
+.hidden{display:none}.foot{text-align:center;font-size:13px;margin-top:12px}a{color:#a7f3d0}
+</style>
 </head>
-<script>
-// === COUNTRY SELECTOR FIX ===
-const COUNTRIES = [
-  {name:"Kenya", code:"KE", dial:"+254"},
-  {name:"United States", code:"US", dial:"+1"},
-  {name:"United Kingdom", code:"GB", dial:"+44"},
-  {name:"Tanzania", code:"TZ", dial:"+255"},
-  {name:"Uganda", code:"UG", dial:"+256"},
-  {name:"South Africa", code:"ZA", dial:"+27"},
-  {name:"Nigeria", code:"NG", dial:"+234"},
-  {name:"Ghana", code:"GH", dial:"+233"},
-  {name:"Canada", code:"CA", dial:"+1"},
-  {name:"Australia", code:"AU", dial:"+61"},
-  {name:"India", code:"IN", dial:"+91"},
-  {name:"Germany", code:"DE", dial:"+49"},
-  {name:"France", code:"FR", dial:"+33"},
-  {name:"Netherlands", code:"NL", dial:"+31"},
-  {name:"United Arab Emirates", code:"AE", dial:"+971"},
-];
-
-const countryBtn = document.getElementById('countryBtn');
-const countryDrop = document.getElementById('countryDrop');
-const countryList = document.getElementById('countryList');
-const countrySearch = document.getElementById('countrySearch');
-const countryBtnFlag = document.getElementById('countryBtnFlag');
-const phoneCode = document.getElementById('phoneCode');
-const selectedCountry = document.getElementById('selectedCountry');
-
-function renderCountries(filter=""){
-  if(!countryList) return;
-  countryList.innerHTML = "";
-  COUNTRIES.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()) || c.dial.includes(filter))
-  .forEach(c => {
-    const div = document.createElement('div');
-    div.style.cssText = "padding:8px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:1px solid #eee;";
-    div.innerHTML = `<img src="https://flagcdn.com/w20/${c.code.toLowerCase()}.png" style="width:20px;"> <span>${c.name}</span> <span style="margin-left:auto;color:#666;">${c.dial}</span>`;
-    div.onclick = (e) => {
-      e.stopPropagation();
-      // Update button
-      if(countryBtnFlag) countryBtnFlag.src = `https://flagcdn.com/w20/${c.code.toLowerCase()}.png`;
-      // Update text in button if there is a span, otherwise keep flag only
-      const label = countryBtn.querySelector('span');
-      if(label) label.textContent = c.dial + " " + c.name;
-      if(phoneCode) phoneCode.value = c.dial;
-      if(selectedCountry) selectedCountry.value = c.name;
-      if(countryDrop) countryDrop.style.display = 'none';
-      console.log("Country selected:", c.name, c.dial);
-    };
-    countryList.appendChild(div);
-  });
-  if(countryList.innerHTML === "") countryList.innerHTML = "<div style='padding:10px;'>No country found</div>";
-}
-
-if(countryBtn){
-  // Remove old broken listeners by cloning button
-  const newBtn = countryBtn.cloneNode(true);
-  countryBtn.parentNode.replaceChild(newBtn, countryBtn);
-  newBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const drop = document.getElementById('countryDrop');
-    const isOpen = drop.style.display === 'block';
-    drop.style.display = isOpen ? 'none' : 'block';
-    if(!isOpen){
-      renderCountries("");
-      const search = document.getElementById('countrySearch');
-      if(search){ search.value = ""; setTimeout(()=>search.focus(), 50); }
-    }
-  });
-}
-if(countrySearch){
-  countrySearch.addEventListener('input', (e) => renderCountries(e.target.value));
-  countrySearch.addEventListener('click', (e) => e.stopPropagation());
-}
-document.addEventListener('click', (e) => {
-  if(countryDrop && !e.target.closest('#countryPicker') && !e.target.closest('#countryDrop')){
-    countryDrop.style.display = 'none';
-  }
-});
-renderCountries("");
-// === COUNTRY SELECTOR FIX END ===
-</script>
 <body>
-<h1 class="welcome-3d">Welcome to pets world 🐶🦜😸</h1>
+<div class="bubble" style="width:70px;height:70px;left:8%;top:15%">🐾</div>
+<div class="bubble" style="width:50px;height:50px;left:85%;top:20%">🐶</div>
+<div class="bubble" style="width:90px;height:90px;left:12%;bottom:12%">🐱</div>
+<div class="bubble" style="width:45px;height:45px;left:78%;bottom:18%">🐾</div>
 
-  <!-- Toggle Button -->
-  <button id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false">☰</button>
-  <button id="installAppBtn" type="button">Install App</button>
+<div class="wrap"><div class="card">
 
-  <!-- Side Panel -->
-  <div id="panelOverlay" aria-hidden="true"></div>
-   <div id="sidebar">
-  <button id="closeSidebarBtn" type="button" aria-label="Close side panel">×</button>
-  <h2>🐾 Pet Shop</h2>
-  <a href="#" onclick="goHome()">🏠 Home</a>
-  <a href="#" onclick="showPets('dog')">🐶 Dogs</a>
-  <a href="#" onclick="showPets('cat')">🐱 Cat</a>
-  <a href="#" onclick="showPets('kitten')">🐱 Kittens</a>
-  <a href="#" onclick="showPets('parrot')">🦜 Parrots</a>
-  <a href="#" onclick="showPets('puppy')">🐶 Puppies</a>
-  <a href="#" onclick="openWallet()">💰 Wallet</a>
-    <!-- SIGN OUT - BOTTOM OF SIDEBAR -->
-  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
-    <button id="signOutBtn" type="button" style="width:100%; padding:12px; border:none; border-radius:50px; background:linear-gradient(#ff7eb6,#ff2e7e); color:white; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 4px 0 #a8004a;">
-      🚪 Sign Out
-    </button>
-  </div>
+<!-- 1. LANDING PAGE - shows first -->
+<div id="landing">
+  <div class="pets">🐶🐱🐾</div>
+  <h1>Welcome to Pets 🐾</h1>
+  <p>Find your best friend. Adopt, love, play.</p>
+  <p>🐶 🐱 🦴 🐾</p>
+  <button onclick="goToSignup()">Let's Go ➜</button>
+  <button class="link" onclick="location.href='login.html'">Already have an account? Login</button>
 </div>
 
-  <!-- Main Content -->
-  <div id="main">
-    <h1 id="pageTitle">All Pets</h1>
-   <p>Click the ≡ button to open / close the side panel.</p>
-
-<!-- PASTE THIS NEW PART ONLY -->
-<div class="google-search-box">
-  <h1>Find Your Perfect Pet 🐾</h1>
-  <div class="search-wrapper">
-    <span>🔍</span>
-    <input type="text" id="searchInput" placeholder="Search pets... e.g. German Shepherd" onkeyup="googleSearch()" autocomplete="off">
-    <span onclick="clearSearch()">❌</span>
-  </div>
-  <div id="suggestionsBox"></div>
-  <div class="search-buttons">
-    <button onclick="googleSearch()">Search</button>
-    <button onclick="feelingLucky()">I'm Feeling Lucky 🍀</button>
-  </div>
+<!-- 2. SIGNUP - hidden until Let's Go -->
+<div id="signup">
+  <h2>Create account</h2><p class="sub">Join Pets in seconds</p>
+  <input id="name" placeholder="👤 Full name">
+  <input id="email" type="email" placeholder="✉️ Email">
+  <input id="password" type="password" placeholder="🔒 Password - 6+ characters">
+  <button onclick="doSignup()">Create account</button>
+  <button class="link" onclick="location.href='login.html'">Already have an account? Login</button>
+  <div id="msg"></div>
 </div>
 
-<!-- ===== STEP 3: HOME PAGE ===== -->
-<section id="homePage" style="text-align:center; padding:30px 15px; background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:15px; margin:15px;">
-  <h1 style="font-size:32px; margin:0;">🐾 Find Your New Best Friend</h1>
-  <p style="font-size:16px; color:#555;">Healthy, vaccinated pets from trusted breeders. Dogs, Cats, Kittens, Parrots & Puppies.</p>
-  <input id="homeSearch" placeholder="Search e.g. Belgian Malinois..." style="padding:12px; width:80%; max-width:400px; border-radius:25px; border:1px solid #ccc; font-size:16px;" onkeyup="if(event.key==='Enter'){document.getElementById('searchInput').value=this.value; googleSearch(); document.getElementById('homePage').style.display='none';}">
-  <br><br>
-  <button onclick="document.getElementById('searchInput').value=document.getElementById('homeSearch').value; googleSearch(); document.getElementById('homePage').style.display='none';" style="padding:12px 30px; background:#ff6b00; color:white; border:none; border-radius:25px; font-size:16px; cursor:pointer;">🔍 Search Pets</button>
-  <button onclick="showPets('all'); document.getElementById('homePage').style.display='none';" style="padding:12px 25px; background:white; border:1px solid #ff6b00; color:#ff6b00; border-radius:25px; font-size:16px; cursor:pointer; margin-left:10px;">View All Pets</button>
-</section>
+</div></div>
 
-<!-- Categories with your exact counts -->
-<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:15px;">
-  <div onclick="showPets('dog')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐶</div><b>Dogs</b><br><span id="dogCount">0</span> Pets</div>
-  <div onclick="showPets('cat')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐱</div><b>Cats</b><br><span id="catCount">0</span> Pets</div>
-  <div onclick="showPets('kitten')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐈</div><b>Kittens</b><br><span id="kittenCount">0</span> Pets</div>
-  <div onclick="showPets('parrot')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🦜</div><b>Parrots</b><br><span id="parrotCount">0</span> Pets</div>
-  <div onclick="showPets('puppy')" style="background:white; border-radius:12px; padding:15px; width:110px; text-align:center; cursor:pointer; box-shadow:0 2px 8px #ddd;"><div style="font-size:30px;">🐕</div><b>Puppies</b><br><span id="puppyCount">0</span> Pets</div>
-</div>
-
-<!-- Why Choose Us -->
-<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:15px; text-align:center;">
-  <div style="background:#e8f5e9; padding:12px; border-radius:10px; width:150px;">✅ <b>Health Checked</b><br>All pets vaccinated</div>
-  <div style="background:#e3f2fd; padding:12px; border-radius:10px; width:150px;">🌍 <b>Origin Shown</b><br>Know where it comes from</div>
-  <div style="background:#fff3e0; padding:12px; border-radius:10px; width:150px;">🚚 <b>Fast Delivery</b><br>Safe pet transport</div>
-  <div style="background:#fce4ec; padding:12px; border-radius:10px; width:150px;">💬 <b>Support</b><br>Help after purchase</div>
-</div>
-
-<div style="text-align:center; margin:10px;">
-  <button onclick="document.getElementById('homePage').style.display='none'; showPets('all');" style="background:none; border:none; color:#ff6b00; cursor:pointer; font-size:14px;">⬇️ Scroll down to see all pets or click a category above</button>
-</div><div id="petList"></div>
- 
-
-<div id="cartDrawer" style="display:none;position:fixed;right:0;top:0;width:340px;max-width:90%;height:100%;background:#fff;padding:20px;z-index:200;overflow-y:auto">
-  <h2>🛒 Your Cart</h2>
-  <div id="cartItems"></div><hr>
-  <h3>Total: <span id="cartTotal">$0.00</span></h3>
-  <p id="shippingInfo">Shipping to <span id="shippingCountry">UK</span>: Free</p>
-  <p id="balanceInfo"></p>
-  <div id="checkoutForm" style="text-align:left; margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px;">
-  <h4>Delivery Details</h4>
-  <label>Full Name</label><br>
-  <input id="custName" placeholder="e.g. gabriel james" style="width:100%;padding:8px;margin:5px 0;"><br>
-  <label>Delivery Address</label><br>
-  <input id="custAddress" placeholder="e.g. Lodwar, Turkana, Kenya - Estate / House No." style="width:100%;padding:8px;margin:5px 0;"><br>
-  <label>Telephone</label><br>
-  <div style="display:flex; gap:5px;">
-    
-<div style="display:flex;gap:5px;position:relative;">
-  <div id="countryPicker" style="position:relative;">
-    <button type="button" id="countryBtn" style="padding:8px;width:150px;text-align:left;background:white;border:1px solid #ccc;cursor:pointer;display:flex;align-items:center;gap:6px;">
-      <img id="countryBtnFlag" src="https://flagcdn.com/w20/gb.png" style="width:20px;"> <span id="countryBtnText">+44 UK</span> ▼
-    </button>
-    <div id="countryDrop" style="display:none;position:absolute;top:100%;left:0;width:260px;background:white;border:1px solid #ccc;z-index:999;box-shadow:0 4px 10px rgba(0,0,0,0.2);">
-      <input id="countrySearch" placeholder="🔍 Search country... USA, UK, Kenya" style="width:100%;padding:10px;box-sizing:border-box;border:none;border-bottom:1px solid #eee;outline:none;">
-      <div id="countryList" style="max-height:250px;overflow-y:auto;"></div>
-    </div>
-  </div>
-  <input id="custPhone" placeholder="Phone number" style="flex:1;padding:8px;">
-  <input type="hidden" id="phoneCode" value="+44">
-  <input type="hidden" id="selectedCountry">
-</div>
-  </div><br>
-  <label>Email</label><br>
-  <input id="custEmail" type="email" placeholder="e.g. john@gmail.com" style="width:100%;padding:8px;margin:5px 0;"><br>
-  <button id="payBtn" onclick="payNow()" style="width:100%;padding:12px;background:green;color:white;border:none;border-radius:6px;font-size:16px;margin-top:10px;">Pay Now</button>
-  <p id="orderMessage" style="color:green; font-weight:bold;"></p>
-</div>
-  <button id="checkoutBtn" onclick="checkout()" style="background:#ff6b00;color:#fff;width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold">Pay From Wallet & Checkout</button>
-  <button onclick="closeCart()" style="width:100%;padding:12px;margin-top:10px">Close Cart</button>
-</div>
-<button onclick="openCart()" style="position:fixed;top:15px;right:15px;z-index:300;background:#111;color:#fff;padding:10px 14px;border-radius:8px">🛒 Cart (<span id="cartCount">0</span>)</button>
-<script src="script.js"></script>
 <script>
-// NEW SMART SEARCH - Overrides script.js - Uses Backend, $1000-$2790
-async function googleSearch() {
-  const query = document.getElementById('searchInput').value.trim();
-  if (!query) return;
-  const main = document.getElementById('main');
-  main.innerHTML = '<h1>Searching for "' + query + '"...</h1><p>Asking backend Dog API...</p>';
-  try {
-    const res = await fetch('http://127.0.0.1:3000/api/dogs/search?q=' + encodeURIComponent(query));
-    const data = await res.json();
-    const pets = Array.isArray(data) ? data : (data.results || data.pets || []);
-    if (!pets.length) {
-      main.innerHTML = '<h1>No results for "' + query + '"</h1><button onclick="location.reload()">Back</button>';
-      return;
-    }
-    let html = '<h1>Results for "' + query + '" (' + pets.length + ')</h1><button onclick="location.reload()">Back</button><div style="display:flex;flex-wrap:wrap;gap:16px">';
-    pets.forEach(pet => {
-      const breedName = pet.name || pet.breed || query;
-      const img = pet.image || pet.imageUrl || (pet.images && pet.images[0]) || '';
-      let hash = 0;
-      for (let i = 0; i < breedName.length; i++) hash += breedName.charCodeAt(i) * (i + 1);
-      const price = 1000 + (hash % 1791);
-      const puppyPrice = Math.max(1000, price - 150);
-      html += `<div style="border:1px solid #ddd;border-radius:12px;padding:12px;width:300px">
-        <img src="${img}" style="width:100%;border-radius:10px">
-        <h3>✅ HEALTH CHECKED</h3><h2>${breedName}</h2><p>${pet.temperament || 'Loyal, friendly pet'}</p>
-        <h3>$${price}.00</h3><button>Add to Cart</button><hr>
-        <img src="${img}" style="width:100%;border-radius:10px">
-        <h3>✅ HEALTH CHECKED</h3><h2>${breedName} Puppy</h2>
-        <h3>$${puppyPrice}.00</h3><button>Add to Cart</button></div>`;
-    });
-    html += '</div>';
-    main.innerHTML = html;
-  } catch (err) {
-    main.innerHTML = '<h1>Backend not running</h1><p>Start with: node server.js</p><p>' + err.message + '</p>';
-  }
+function goToSignup(){
+  // Collapse landing, show signup
+  document.getElementById('landing').classList.add('collapsed');
+  setTimeout(()=>{
+    document.getElementById('landing').style.display='none';
+    document.getElementById('signup').classList.add('show');
+  }, 400);
+}
+function setMsg(t,ok){const m=document.getElementById('msg');m.textContent=t;m.className=ok?'ok':(t?'err':'');}
+async function doSignup(){
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  if(!name||!email||!password){setMsg('Fill all fields');return;}
+  if(password.length<6){setMsg('Password must be 6+ characters');return;}
+  setMsg('Creating...');
+  try{
+    const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){setMsg(d.error||'Could not create account');return;}
+    setMsg('Check your Email for the verification code',true);
+    // Go to verify page - or show code box here if you have one
+    setTimeout(()=>{ location.href='login.html'; },1200);
+  }catch(e){setMsg('Cannot reach server');}
 }
 </script>
+</body>
+</html>

@@ -10,9 +10,14 @@ img, input, button { max-width: 100%; }
 #sidebar a { display: block; color: white; text-decoration: none; padding: 12px 10px; border-radius: 8px; margin-bottom: 5px; }
 #sidebar a:hover { background: #444; }
 #main { margin-left: 280px; padding: 20px; }
-#petList { display: flex; flex-wrap: wrap; gap: 18px; }
+#petList, #searchResults { display: flex; flex-wrap: wrap; gap: 18px; }
+#petList[hidden], #searchResults[hidden] { display: none; }
 .card { background: white; border-radius: 14px; overflow: hidden; width: 250px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
 .card img { width: 100%; height: 170px; object-fit: cover; }
+.search-pet-gallery { position: relative; }
+.search-pet-gallery .gallery-arrow { position: absolute; top: 50%; width: auto; padding: 4px 11px; border-radius: 50%; background: #0009; color: white; font-size: 24px; line-height: 1; transform: translateY(-50%); }
+.search-pet-gallery .gallery-previous { left: 8px; }
+.search-pet-gallery .gallery-next { right: 8px; }
 .card-body { padding: 12px; text-align: left; flex: 1; display: flex; flex-direction: column; }
 .health { background: #e6f9e6; color: #1a7a1a; font-size: 11px; font-weight: bold; padding: 5px 8px; border-radius: 20px; align-self: flex-start; }
 .card h3 { margin: 10px 0 4px; font-size: 16px; }
@@ -53,7 +58,7 @@ img, input, button { max-width: 100%; }
 @media (max-width: 767px) {
   html, body { max-width:100%; overflow-x:hidden; }
   #main, #main.full { width:100%; margin-left:0; padding:15px; box-sizing:border-box; }
-  #petList { flex-direction:column; align-items:stretch; }
+  #petList, #searchResults { flex-direction:column; align-items:stretch; }
   .card { width:100%; box-sizing:border-box; }
   .search-wrapper { flex-direction:column; align-items:stretch; }
   .search-wrapper input { width:100%; box-sizing:border-box; }
@@ -61,6 +66,7 @@ img, input, button { max-width: 100%; }
   #checkoutForm > div { flex-direction:column; }
   #checkoutForm > div > div { flex-direction:column; }
   input:not([type="hidden"]),
+  select,
   #checkoutForm button,
   .search-buttons button,
   #homePage button,

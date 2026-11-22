@@ -7,7 +7,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-const { createHash, randomInt } = require('crypto');
+const { createHash, randomBytes, randomInt, timingSafeEqual } = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -93,6 +93,61 @@ app.get('/api/cats/search', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Cat API failed' }); }
 });
 
+app.get('/api/search', async (req, res) => {
+  const type = String(req.query.type || '').toLowerCase();
+  const query = String(req.query.q || '').trim();
+  if (type !== 'dog' && type !== 'cat') {
+    return res.status(400).json({ error: 'Type must be dog or cat' });
+  }
+  if (!query) return res.status(400).json({ error: 'Search query is required' });
+
+  const apiKey = type === 'dog' ? DOG_API_KEY : CAT_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ error: `${type.toUpperCase()}_API_KEY is not configured` });
+  }
+
+  const apiBase = type === 'dog' ? 'https://api.thedogapi.com/v1' : 'https://api.thecatapi.com/v1';
+  try {
+    const breedResponse = await fetch(
+      `${apiBase}/breeds/search?q=${encodeURIComponent(query)}`,
+      { headers: { 'x-api-key': apiKey } }
+    );
+    if (!breedResponse.ok) throw new Error(`Breed search returned ${breedResponse.status}`);
+
+    const breeds = await breedResponse.json();
+    if (!Array.isArray(breeds) || breeds.length === 0) {
+      return res.json({ error: 'No pet found' });
+    }
+
+    const breed = breeds[0];
+    const imageResponse = await fetch(
+      `${apiBase}/images/search?breed_ids=${encodeURIComponent(breed.id)}&limit=4`,
+      { headers: { 'x-api-key': apiKey } }
+    );
+    if (!imageResponse.ok) throw new Error(`Image search returned ${imageResponse.status}`);
+    const imageResults = await imageResponse.json();
+    const images = Array.isArray(imageResults)
+      ? imageResults.map(image => image.url).filter(url => typeof url === 'string').slice(0, 4)
+      : [];
+
+    const pet = {
+      name: breed.name,
+      temperament: breed.temperament || '',
+      life_span: breed.life_span || '',
+      images,
+      price: type === 'dog' ? randomInt(1235, 2571) : randomInt(1310, 2367),
+      type
+    };
+    if (type === 'dog') pet.weight = breed.weight?.metric ? `${breed.weight.metric} kg` : '';
+    else pet.description = breed.description || '';
+
+    return res.json(pet);
+  } catch (error) {
+    console.error(`${type} search failed:`, error.message);
+    return res.status(502).json({ error: 'Pet search failed' });
+  }
+});
+
 const PARROT_BREEDS = {
   'african grey': { name: 'African Grey Parrot', temperament: 'Intelligent, Talkative, Social', life_span: '40-60 years', origin: 'Africa', weight: '0.4 kg' },
   'macaw': { name: 'Macaw Parrot', temperament: 'Playful, Loud, Affectionate', life_span: '50-60 years', origin: 'South America', weight: '1.2 kg' },
@@ -153,16 +208,19 @@ function isDatabaseUnavailable(error) {
 
 async function ensureUsersTable() {
   if (usersTableReady) return;
+  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not configured');
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGSERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
-      verfied BOOLEAN NOT NULL DEFAULT TRUE,
+      verified BOOLEAN NOT NULL DEFAULT TRUE,
       verification_code_hash TEXT,
       verification_code_expires_at TIMESTAMPTZ,
       verification_attempts INTEGER NOT NULL DEFAULT 0,
+      reset_token TEXT,
+      reset_expires TIMESTAMPTZ,
       wallet_balance NUMERIC(12,2) NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -173,7 +231,19 @@ async function ensureUsersTable() {
       ADD COLUMN IF NOT EXISTS verification_code_hash TEXT,
       ADD COLUMN IF NOT EXISTS verification_code_expires_at TIMESTAMPTZ,
       ADD COLUMN IF NOT EXISTS verification_attempts INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS reset_token TEXT,
+      ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ,
       ADD COLUMN IF NOT EXISTS wallet_balance NUMERIC(12,2) NOT NULL DEFAULT 0
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_pending_signups (
+      email TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      verification_code_hash TEXT NOT NULL,
+      verification_expires TIMESTAMPTZ NOT NULL,
+      verification_attempts INTEGER NOT NULL DEFAULT 0
+    )
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS wallet_transactions (
@@ -267,6 +337,289 @@ function requireLogin(req, res, next) {
   }
 }
 
+function hashesMatch(value, hashedValue) {
+  const expected = Buffer.from(hashedValue || '', 'hex');
+  const actual = Buffer.from(hashVerificationCode(value), 'hex');
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
+}
+
+async function sendPasswordResetLink(email, token) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('EMAIL_USER or EMAIL_PASS is not configured');
+  }
+  const baseUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+  const resetUrl = new URL('/reset-password', baseUrl);
+  resetUrl.searchParams.set('token', token);
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+  });
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Reset your Pets password',
+    text: `Use this link to reset your password. It expires in 15 minutes:\n\n${resetUrl.toString()}\n\nIf you did not request this, ignore this email.`
+  });
+}
+
+app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
+  const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = req.body?.password;
+  const confirmPassword = req.body?.confirmPassword;
+  if (!name) return res.status(400).json({ success: false, error: 'Please enter your full name' });
+  if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
+  if (typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  }
+  if (confirmPassword !== undefined && password !== confirmPassword) {
+    return res.status(400).json({ success: false, error: 'Passwords do not match' });
+  }
+
+  let client;
+  try {
+    await ensureUsersTable();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const code = createVerificationCode();
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const saved = await client.query(
+      `INSERT INTO users(
+         name,email,password_hash,verified,verification_code_hash,
+         verification_code_expires_at,verification_attempts
+       ) VALUES($1,$2,$3,FALSE,$4,NOW() + INTERVAL '10 minutes',0)
+       ON CONFLICT(email) DO UPDATE SET
+         name=EXCLUDED.name,password_hash=EXCLUDED.password_hash,verified=FALSE,
+         verification_code_hash=EXCLUDED.verification_code_hash,
+         verification_code_expires_at=EXCLUDED.verification_code_expires_at,
+         verification_attempts=0
+       WHERE users.verified=FALSE
+       RETURNING id`,
+      [name, email, passwordHash, hashVerificationCode(code)]
+    );
+    if (!saved.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: 'An account already exists for this email. Please log in.' });
+    }
+    await sendVerificationCode(email, code);
+    await client.query('COMMIT');
+    return res.status(200).json({ success: true, needsVerification: true, email });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Signup rollback error:', rollbackError.message));
+    if (error.isEmailDeliveryError) {
+      console.error('Signup email error:', error.cause?.message || error.message);
+      return res.status(502).json({ success: false, error: 'Could not send verification email. Check email settings and try again.' });
+    }
+    console.error('Signup error:', error.message);
+    const unavailable = isDatabaseUnavailable(error);
+    return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Account creation failed' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post('/api/auth/verify', async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
+  if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ success: false, error: 'Enter the 6-digit verification code' });
+
+  let client;
+  try {
+    await ensureUsersTable();
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const result = await client.query(
+      `SELECT id,verified,verification_code_hash,
+              verification_code_expires_at,verification_attempts
+       FROM users WHERE email=$1 FOR UPDATE`,
+      [email]
+    );
+    if (!result.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'No account found for this email. Please create an account.' });
+    }
+    const user = result.rows[0];
+    if (user.verified) {
+      await client.query('COMMIT');
+      return res.json({ success: true, message: 'Account is already verified.' });
+    }
+    if (!user.verification_code_expires_at || new Date(user.verification_code_expires_at) <= new Date()) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, error: 'Verification code expired. Please resend a new code.' });
+    }
+    if (user.verification_attempts >= 5) {
+      await client.query('ROLLBACK');
+      return res.status(429).json({ success: false, error: 'Too many attempts. Please resend a new code.' });
+    }
+    if (!hashesMatch(code, user.verification_code_hash)) {
+      await client.query('UPDATE users SET verification_attempts=verification_attempts+1 WHERE id=$1', [user.id]);
+      await client.query('COMMIT');
+      return res.status(400).json({ success: false, error: 'Incorrect verification code. Please try again.' });
+    }
+    await client.query(
+      `UPDATE users SET verified=TRUE,verification_code_hash=NULL,
+       verification_code_expires_at=NULL,verification_attempts=0 WHERE id=$1`,
+      [user.id]
+    );
+    await client.query('COMMIT');
+    return res.json({ success: true });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Verification rollback error:', rollbackError.message));
+    console.error('Email verification error:', error.message);
+    const unavailable = isDatabaseUnavailable(error);
+    return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Email verification failed' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post('/api/auth/resend-code', async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
+  try {
+    await ensureUsersTable();
+    const result = await pool.query('SELECT id,verified FROM users WHERE email=$1', [email]);
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: 'No account found for this email.' });
+    }
+    if (result.rows[0].verified) {
+      return res.status(409).json({ success: false, error: 'This account is already verified. Please log in.' });
+    }
+    await issueVerificationCode(result.rows[0].id, email);
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Resend verification code error:', error.cause?.message || error.message);
+    const unavailable = isDatabaseUnavailable(error);
+    return res.status(unavailable ? 503 : 502).json({
+      success: false,
+      error: unavailable ? 'Database unavailable' : 'Could not send verification email. Check email settings and try again.'
+    });
+  }
+});
+
+app.post(['/api/auth/forgot-password', '/api/forgot-password'], async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
+  try {
+    await ensureUsersTable();
+    const result = await pool.query(
+      'SELECT id FROM users WHERE email=$1 AND verified=TRUE',
+      [email]
+    );
+    if (!result.rows.length) {
+  return res.status(404).json({ success: false, error: "Account doesn't exist" });
+}
+   // NEW: 6-digit code, not a link
+const code = String(Math.floor(100000 + Math.random() * 900000));
+const codeHash = createHash('sha256').update(code).digest('hex');
+await pool.query(
+  `UPDATE users SET reset_token=$1, reset_expires=NOW() + INTERVAL '10 minutes' WHERE id=$2`,
+  [codeHash, result.rows[0].id]
+);
+try {
+  // Send the CODE via EMAIL_USER / EMAIL_PASS
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Pets - Your reset code',
+    text: `Your reset code is ${code}. It expires in 10 minutes.`
+  });
+} catch (error) {
+ await pool.query(`UPDATE users SET reset_token=NULL, reset_expires=NULL WHERE id=$1`, [result.rows[0].id]);
+  console.error('Password reset email error:', error.message);
+  return res.status(502).json({ success: false, error: 'Could not send code' });
+}
+return res.json({ success: true, message: 'Check your email for the verification code' });
+  } catch (error) {
+    console.error('Forgot password error:', error.message);
+    const unavailable = isDatabaseUnavailable(error);
+    return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Could not process the reset request' });
+  }
+});
+
+app.post(['/api/auth/reset-password', '/api/reset-password'], async (req, res) => {
+  const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+  const password = req.body?.newPassword;
+  const confirmPassword = req.body?.confirmPassword;
+  if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).json({ success: false, error: 'Reset link is invalid or expired' });
+  if (typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  }
+  if (confirmPassword !== undefined && (typeof confirmPassword !== 'string' || password !== confirmPassword)) {
+    return res.status(400).json({ success: false, error: 'Passwords do not match' });
+  }
+  let client;
+  try {
+    await ensureUsersTable();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const updated = await client.query(
+      `UPDATE users SET password_hash=$1,reset_token=NULL,reset_expires=NULL
+       WHERE reset_token=$2 AND reset_expires>NOW() AND verified=TRUE RETURNING id`,
+      [passwordHash, tokenHash]
+    );
+    if (!updated.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, error: 'Reset link is invalid or expired' });
+    }
+    await client.query('COMMIT');
+    return res.json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Password reset rollback error:', rollbackError.message));
+    console.error('Password reset error:', error.message);
+    const unavailable = isDatabaseUnavailable(error);
+    return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Could not reset the password' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post(['/api/auth/login', '/api/login'], async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = req.body?.password;
+  if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
+  if (typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ success: false, message: 'Please enter your password' });
+  }
+  if (!process.env.JWT_SECRET) return res.status(503).json({ success: false, message: 'Account service is not configured' });
+  try {
+    await ensureUsersTable();
+    const result = await pool.query(
+      'SELECT id,name,email,password_hash,verified,wallet_balance FROM users WHERE email=$1',
+      [email]
+    );
+    if (!result.rows.length) return res.status(401).json({ success: false, message: 'No account? Create one' });
+    const user = result.rows[0];
+    if (!await bcrypt.compare(password, user.password_hash)) {
+      return res.status(401).json({ success: false, message: 'Wrong password, try again' });
+    }
+    if (!user.verified) {
+      return res.status(403).json({
+        success: false,
+        message: 'This account is not verified. Please verify your email before logging in.'
+      });
+    }
+    return res.json({
+      success: true,
+      token: createToken(user.id),
+      user: { id: user.id, name: user.name, email: user.email, balance: Number(user.wallet_balance || 0) }
+    });
+  } catch (error) {
+    console.error('Login error:', error.message);
+    const unavailable = isDatabaseUnavailable(error);
+    return res.status(unavailable ? 503 : 500).json({ success: false, message: unavailable ? 'Database unavailable' : 'Login failed' });
+  }
+});
+
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// Legacy auth handlers removed; active handlers above share the users schema.
+/*
 app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
   const { name, email, password } = req.body || {};
   const cleanName = typeof name === 'string' ? name.trim() : '';
@@ -573,6 +926,7 @@ app.post(['/api/auth/login', '/api/login'], async (req, res) => {
   }
 });
 
+*/
 app.post('/api/wallet/verify', requireLogin, async (req, res) => {
   const reference = typeof req.body?.reference === 'string' ? req.body.reference.trim() : '';
   if (!reference) {
@@ -660,6 +1014,68 @@ app.post('/api/wallet/verify', requireLogin, async (req, res) => {
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
+});
+// ---------- PETS SEARCH - Dog + Cat API ----------
+function priceInRange(seed, min, max){
+  let h = 0; for(let c of seed) h = (h*31 + c.charCodeAt(0)) % 100000;
+  return min + (h % (max - min + 1));
+}
+
+app.get('/api/pets/search', async (req, res) => {
+  const q = (req.query.q || 'dog').toLowerCase();
+  const isCat = q.includes('cat') || q.includes('kitten') || q.includes('kitty');
+  try {
+    if (isCat) {
+      const searchTerm = q.replace('cat','').replace('kitten','').replace('kitty','').trim() || 'persian';
+      const breedRes = await fetch(`https://api.thecatapi.com/v1/breeds/search?q=${encodeURIComponent(searchTerm)}`, { headers: { 'x-api-key': process.env.CAT_API_KEY } });
+      let breeds = await breedRes.json();
+      if (!breeds.length) breeds = [{ id: 'pers', name: 'Persian', description: 'Sweet, calm and fluffy companion.', temperament: 'Calm, Affectionate', origin: 'Iran', life_span: '12 - 17' }];
+      const out = [];
+      for (let b of breeds.slice(0, 6)) {
+        const imgRes = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${b.id}&limit=4`, { headers: { 'x-api-key': process.env.CAT_API_KEY } });
+        const imgs = await imgRes.json();
+        const photos = imgs.map(i => i.url).filter(Boolean);
+        if (!photos.length) continue;
+        out.push({
+          id: b.id, type: 'cat', name: b.name, breed: b.name,
+          description: b.description || 'Lovely cat looking for a home.',
+          temperament: b.temperament || 'Friendly',
+          origin: b.origin || 'Unknown',
+          life: b.life_span || '12 - 15',
+          price: priceInRange(b.id + b.name, 975, 2200),
+          photos, mainPhoto: photos[0]
+        });
+      }
+      return res.json(out);
+    } else {
+      const searchTerm = q.replace('dog','').replace('puppy','').replace('puppies','').trim() || 'labrador';
+      const breedRes = await fetch(`https://api.thedogapi.com/v1/breeds/search?q=${encodeURIComponent(searchTerm)}`, { headers: { 'x-api-key': process.env.DOG_API_KEY } });
+      let breeds = await breedRes.json();
+      if (!breeds.length) breeds = [{ id: 1, name: 'Labrador', bred_for: 'Retrieving', breed_group: 'Sporting', life_span: '10 - 12 years', temperament: 'Friendly, Active, Outgoing', reference_image_id: 'BJa4kxc4X' }];
+      const out = [];
+      for (let b of breeds.slice(0, 6)) {
+        let photos = [];
+        const imgRes = await fetch(`https://api.thedogapi.com/v1/images/search?breed_ids=${b.id}&limit=4`, { headers: { 'x-api-key': process.env.DOG_API_KEY } });
+        const imgs = await imgRes.json();
+        photos = imgs.map(i => i.url).filter(Boolean);
+        if (!photos.length) {
+          const fb = await fetch('https://dog.ceo/api/breed/labrador/images/random/4').then(r=>r.json()).catch(()=>({message:[]}));
+          photos = fb.message || [];
+        }
+        if (!photos.length) continue;
+        out.push({
+          id: String(b.id), type: 'dog', name: b.name, breed: b.name,
+          description: `A wonderful ${b.name}. ${b.bred_for ? 'Bred for ' + b.bred_for + '.' : ''} Great companion for families.`,
+          temperament: b.temperament || 'Friendly, Loyal',
+          origin: b.origin || b.breed_group || 'Unknown',
+          life: b.life_span || '10 - 13 years',
+          price: priceInRange(String(b.id) + b.name, 1152, 2710),
+          photos, mainPhoto: photos[0]
+        });
+      }
+      return res.json(out);
+    }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Pet search failed' }); }
 });
 
 if (require.main === module) {

@@ -1,573 +1,130 @@
- <!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Pet Shop</title>
-<meta name="theme-color" content="#ff6b00">
-<link rel="manifest" href="/manifest.json">
-<link rel="stylesheet" href="style.css">
-<script defer src="https://js.paystack.co/v1/inline.js"></script>
-
-</head>
-<body>                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <!DOCTYPE html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login - Pets</title>
 <style>
-  .hidden { display: none !important; }
-  /* --- FIX LAYOUT - DO NOT TOUCH BACKEND --- */
-#loginBox, #signupBox, #verifyEmailBox, #forgotBox, #resetBox {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  width: 100% !important;
-  max-width: 420px !important;
-  margin: 0 auto !important;
-  padding: 24px !important;
-  box-sizing: border-box !important;
-  background: #fff !important;
-  border-radius: 24px !important;
-  text-align: center !important;
-}
-#loginBox.hidden, #signupBox.hidden, #verifyEmailBox.hidden, #forgotBox.hidden, #resetBox.hidden {
-  display: none !important;
-}
-#loginBox h2, #signupBox h2, #verifyEmailBox h2 {
-  text-align: center !important;
-  margin: 0 0 8px 0 !important;
-}
-#loginBox input, #signupBox input, #verifyEmailBox input, #forgotBox input, #resetBox input {
-  width: 100% !important;
-  padding: 14px 16px !important;
-  border: 1px solid #ddd !important;
-  border-radius: 12px !important;
-  font-size: 16px !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-}
-#loginBox button, #signupBox button, #verifyEmailBox button {
-  width: 100% !important;
-  padding: 14px !important;
-  border: none !important;
-  border-radius: 999px !important;
-  background: #ff6b9d !important;
-  color: #fff !important;
-  font-size: 17px !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-}
-#loginBox a, #signupBox a {
-  text-align: center !important;
-  display: block !important;
-}
-
-/* --- KILL POPUP, MAKE IT INLINE --- */
-#forgotModal, #resetModal, #resetPasswordModal, div[id*="reset"], div[id*="Reset"] {
-  position: static !important;
-  inset: auto !important;
-  transform: none !important;
-  background: transparent !important;
-  display: block !important;
-  width: 100% !important;
-  max-width: 420px !important;
-  margin: 0 auto !important;
-  box-shadow: none !important;
-  z-index: auto !important;
-}
-#forgotModal.hidden, #resetModal.hidden {
-  display: none !important;
-}
-body {
-    margin: 0;
-    background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200') !important;
-    background-size: cover !important;
-    background-position: center !important;
-    min-height: 100vh;
-    overflow: hidden;
-  }
-  #landing {
-    position: fixed; inset: 0; z-index: 20;
-    background-image: url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200');
-    background-size: cover; background-position: center;
-    display: flex; flex-direction: column; align-items: center;
-    padding-top: 40px; transition: transform 0.9s ease-in;
-  }
-  #landing.fall { transform: translateY(100%); }
-  #landing{ overflow:hidden; }
-.fall-text{
-  padding:28px 42px; margin:20px;
-  font-size:54px; font-weight:900; color:#fff; text-align:center;
-  background:rgba(255,255,255,0.18);
-  backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.6);
-  border-radius:30px;
-  box-shadow:0 25px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.8);
-  text-shadow:0 0 25px #fff, 0 0 45px #00e5ff;
-}
-.bubble{
-  position:absolute; bottom:-50px; border-radius:50%;
-  background:rgba(255,255,255,0.25);
-  border:1px solid rgba(255,255,255,0.6);
-  animation:rise 3s linear infinite;
-  pointer-events:none;
-}
-.bubble:nth-child(1){left:10%; width:60px; height:60px;}
-.bubble:nth-child(2){left:25%; width:35px; height:35px;}
-.bubble:nth-child(3){left:50%; width:80px; height:80px;}
-.bubble:nth-child(4){left:70%; width:45px; height:45px;}
-.bubble:nth-child(5){left:85%; width:65px; height:65px;}
-@keyframes rise{to{transform:translateY(-110vh); opacity:0;}}
-.landing-footer{
-  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
-  width:max-content; max-width:92%;
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center;
-  padding:10px 22px;
-  font-size:14px; font-weight:600; color:#fff; text-align:center;
-  background:rgba(255,255,255,0.18);
-  backdrop-filter:blur(15px);
-  border:1px solid rgba(255,255,255,0.5);
-  border-radius:50px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.25);
-  z-index:5;
-}
-.email-3d{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:5px 12px;
-  background:linear-gradient(135deg,#ff6ec4,#7873f5,#00e5ff);
-  border-radius:50px;
-  color:#fff; text-decoration:none; font-weight:800;
-  box-shadow:0 4px 0 #ff6ec4, 0 8px 0 #7873f5, 0 10px 15px rgba(0,0,0,0.4);
-  transform:perspective(400px) rotateX(10deg);
-}
-.email-3d:active{ transform:translateY(3px); box-shadow:0 1px 0 #ff6ec4, 0 3px 0 #7873f5; }
-.landing-footer{
-  position:absolute; bottom:15px; left:50%; transform:translateX(-50%);
-  width:max-content; max-width:92%;
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center;
-  padding:10px 22px;
-  font-size:14px; font-weight:600; color:#fff; text-align:center;
-  background:rgba(255,255,255,0.18);
-  backdrop-filter:blur(15px);
-  border:1px solid rgba(255,255,255,0.5);
-  border-radius:50px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.25);
-  z-index:5;
-}
-.email-3d{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:5px 12px;
-  background:linear-gradient(135deg,#ff6ec4,#7873f5,#00e5ff);
-  border-radius:50px;
-  color:#fff; text-decoration:none; font-weight:800;
-  box-shadow:0 4px 0 #ff6ec4, 0 8px 0 #7873f5, 0 10px 15px rgba(0,0,0,0.4);
-  transform:perspective(400px) rotateX(10deg);
-}
-.email-3d:active{ transform:translateY(3px); box-shadow:0 1px 0 #ff6ec4, 0 3px 0 #7873f5; }
-  #letsGoBtn {
-    padding: 16px 50px; font-size: 26px; font-weight: 900; color: white;
-    background: linear-gradient(#ff7eb6, #ff2e7e); border: none; border-radius: 50px;
-    cursor: pointer; box-shadow: 0 8px 0 #a8004a, 0 15px 25px rgba(0,0,0,0.4);
-  }
-  /* Make YOUR existing .box look fancy - we don't replace it */
-  .box {
-    background: rgba(255,255,255,0.85) !important;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255,46,126,0.35) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.25) !important;
-    border-radius: 22px !important;
-  }
-  .box button {
-    background: linear-gradient(#ff7eb6, #ff2e7e) !important;
-    border-radius: 50px !important;
-    box-shadow: 0 6px 0 #a8004a !important;
-  }
-  .ribbon-footer {
-    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 5;
-    text-align: center; padding: 14px;
-    background: linear-gradient(#e84393, #c2185b);
-    color: white; font-weight: bold; font-size: 18px;
-  }
-</style>
-<style>
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-  input, button, img { max-width: 100%; }
-  @media (max-width: 768px) {
-    body { display: block; padding: 12px; }
-    .box { width: 100%; max-width: 380px; margin: 12px auto; }
-    #landing { max-width: 100%; }
-    .fall-text { max-width: 100%; font-size: clamp(30px, 9vw, 54px); padding: 20px; }
-    .landing-footer { width: max-content; max-width: 100%; }
-    .ribbon-footer { box-sizing: border-box; }
-  }
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+background:linear-gradient(rgba(15,23,42,.75),rgba(15,23,42,.85)),url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80') center/cover}
+.bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:22px;animation:float 6s ease-in-out infinite;z-index:1}
+.b1{width:70px;height:70px;left:8%;top:15%}.b2{width:50px;height:50px;left:85%;top:20%;animation-delay:1s}.b3{width:90px;height:90px;left:12%;bottom:12%;animation-delay:2s}.b4{width:45px;height:45px;left:78%;bottom:18%;animation-delay:.5s}.b5{width:60px;height:60px;left:45%;top:6%;animation-delay:1.5s}.b6{width:40px;height:40px;left:90%;bottom:35%;animation-delay:2.5s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+.box{position:relative;z-index:2;width:100%;max-width:400px;padding:28px 26px;border-radius:24px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);box-shadow:0 20px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.5);backdrop-filter:blur(16px);color:#fff}
+.logo{font-size:42px;text-align:center}h2{text-align:center;font-size:26px;margin:6px 0 4px}.sub{text-align:center;font-size:13px;opacity:.9;margin-bottom:16px}
+input{width:100%;padding:13px 14px;margin:7px 0;border-radius:14px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#fff;outline:none;font-size:15px}
+input::placeholder{color:rgba(255,255,255,.85)}
+button{width:100%;padding:13px;border:0;border-radius:14px;margin-top:12px;cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:16px;box-shadow:0 8px 20px rgba(34,197,94,.45)}
+button.link{background:none;box-shadow:none;color:#a7f3d0;padding:6px;font-size:13px}
+#msg{margin-top:12px;min-height:20px;font-size:14px;text-align:center;border-radius:10px;padding:8px}
+#msg.ok{background:rgba(34,197,94,.35)}#msg.err{background:rgba(239,68,68,.4)}
+.hidden{display:none}.foot{text-align:center;font-size:13px;margin-top:14px}a{color:#a7f3d0;font-weight:700}
 </style>
 </head>
-<body><!-- LANDING - ONLY VISUAL -->
-<div id="landing">
-  <span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span>
-  <h1 class="fall-text">Welcome to pets world 🪩🐶🦜</h1>
-  <button id="letsGoBtn" type="button">LET'S GO 🐾</button>
-  <div class="landing-footer">
-    <a class="email-3d" href="mailto:pets457@gmail.com">✉️ pets457@gmail.com</a>
-    <span>• Terms & conditions apply</span>
-    <span>• © 2026 petsshopworld. All rights reserved.</span>
-  </div>
-</div>
+<body>
+<div class="bubble b1">🐾</div><div class="bubble b2">🐶</div><div class="bubble b3">🐱</div><div class="bubble b4">🐾</div><div class="bubble b5">🦴</div><div class="bubble b6">🐾</div>
 <div class="box">
-    <form id="loginBox" novalidate>
-    <h2>Welcome Back</h2>
-    <input id="loginEmail" type="email" placeholder="Email" autocomplete="email">
-    <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
-    <label><input id="rememberMe" type="checkbox" checked style="width:auto;padding:0;margin:0 6px 0 0"> Remember Me</label>
-    <div style="text-align:right; margin: 6px 0 10px;">
-  <a href="#" id="forgotLink" style="font-size:13px; color:#6a4cff; text-decoration:underline;">Forgot Password?</a>
-</div>
-      <button id="loginSubmit" type="submit">Login</button>
-    <div class="link" onclick="showSignup()">No account? Create one</div>
-    </form>
-    <div id="installWrap" style="text-align:center; margin-top:15px;">
-  <button id="installBtn" type="button" style="width:100%; padding:12px; border:none; border-radius:10px; background:#111; color:#fff; font-size:16px;">⬇️ Install App</button>
-  <p id="installHelp" style="display:none; font-size:13px; color:#555; margin-top:8px;">On iPhone: Tap Share > Add to Home Screen</p>
+<div class="logo">🐶🐱</div>
+
+<!-- LOGIN -->
+<div id="step-login">
+<h2>Welcome back</h2><p class="sub">Login to your Pets account</p>
+<input id="email" type="email" placeholder="✉️ Email">
+<input id="password" type="password" placeholder="🔒 Password">
+<button onclick="doLogin()">Continue ➜</button>
+<button class="link" onclick="showStep('step-forgot')">Forgot password?</button>
 </div>
 
-    <form id="signupBox" class="hidden" novalidate>
-      <h2>Create Account</h2>
-      <input id="regName" type="text" placeholder="Full Name">
-      <input id="regEmail" type="email" placeholder="Email" autocomplete="email">
-      <input id="regPass" type="password" placeholder="Password (min 6)" autocomplete="current-password">
-      <button id="signupSubmit" type="submit">Sign Up</button>
-      <div class="link" onclick="showLogin()">Already have account? Login</div>
-    </form>
-    <form id="verifyEmailBox" class="hidden" novalidate>
-      <h2>Verify Your Email</h2>
-      <p id="verificationAddress" style="text-align:center;overflow-wrap:anywhere"></p>
-      <input id="verificationCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code">
-      <button id="verifySubmit" type="submit">Verify Email</button>
-      <button id="resendCode" type="button" disabled>Resend code in 30s</button>
-      <div class="link" onclick="showLogin()">Back to Login</div>
-    
-    </form>
-<div id="forgotModal" class="hidden">  <!-- your pasted Reset - NEW -->
-  ...
-  <h3>Reset Password</h3>
-  ...
-  <button id="fpClose">Close</button>
+<!-- RESET PASSWORD - EMAIL -->
+<div id="step-forgot" class="hidden">
+<h2>Reset password</h2><p class="sub">Enter your email to receive a code</p>
+<input id="forgotEmail" type="email" placeholder="✉️ Email">
+<button onclick="sendResetCode()">Send code 📩</button>
+<button class="link" onclick="showStep('step-login')">← Back to login</button>
 </div>
 
-    <div id="auth-message" role="status" aria-live="polite"></div>
-  </div>
+<!-- ENTER CODE - AUTO VERIFY -->
+<div id="step-code" class="hidden">
+<h2>Enter code</h2><p class="sub">We sent a code to <b id="showEmail"></b></p>
+<input id="resetCode" inputmode="numeric" maxlength="6" placeholder="🔑 6-digit code" style="text-align:center;font-size:20px;letter-spacing:6px">
+<p class="sub">Type the 6 digits — it will verify automatically</p>
+<button class="link" onclick="showStep('step-forgot')">← Wrong email?</button>
+</div>
 
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if(localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('user')){
-      window.location.href = '/index.html';
-    }
-  });
+<!-- NEW PASSWORD -->
+<div id="step-newpass" class="hidden">
+<h2>New password</h2><p class="sub">Create a new 6+ character password</p>
+<input id="newPass" type="password" placeholder="🔒 New password">
+<input id="confirmNewPass" type="password" placeholder="🔒 Confirm new password">
+<button onclick="doResetPassword()">Change password</button>
+<button class="link" onclick="showStep('step-login')">Back to login</button>
+</div>
 
-  function showAuthMessage(message, type){
-    const element = document.getElementById('auth-message');
-    element.className = type;
-    element.textContent = message;
-  }
-  function showSignup(){
-    document.getElementById('loginBox').classList.add('hidden');
-    document.getElementById('verifyEmailBox').classList.add('hidden');
-    document.getElementById('signupBox').classList.remove('hidden');
-    showAuthMessage('', '');
-  }
-  function showLogin(){
-    document.getElementById('signupBox').classList.add('hidden');
-    document.getElementById('verifyEmailBox').classList.add('hidden');
-    document.getElementById('loginBox').classList.remove('hidden');
-    showAuthMessage('', '');
-  }
-  let verificationEmail = '';
-  let resendCountdown;
-  function showVerification(email){
-    verificationEmail = email;
-    document.getElementById('loginBox').classList.add('hidden');
-    document.getElementById('signupBox').classList.add('hidden');
-    document.getElementById('verifyEmailBox').classList.remove('hidden');
-    document.getElementById('verificationAddress').textContent = email;
-    document.getElementById('verificationCode').value = '';
-    startResendCountdown();
-  }
-  function startResendCountdown(){
-    const button = document.getElementById('resendCode');
-    let remaining = 30;
-    clearInterval(resendCountdown);
-    button.disabled = true;
-    button.textContent = `Resend code in ${remaining}s`;
-    resendCountdown = setInterval(() => {
-      remaining -= 1;
-      if(remaining <= 0){
-        clearInterval(resendCountdown);
-        button.disabled = false;
-        button.textContent = 'Resend Code';
-      }else{
-        button.textContent = `Resend code in ${remaining}s`;
-      }
-    }, 1000);
-  }
-  document.getElementById('loginEmail').value = localStorage.getItem('userEmail') || '';
-
-  async function signup(event){
-    event.preventDefault();
-    const account = {
-      name: document.getElementById('regName').value.trim(),
-      email: document.getElementById('regEmail').value.trim().toLowerCase(),
-      password: document.getElementById('regPass').value
-    };
-    const button = document.getElementById('signupSubmit');
-    button.disabled = true;
-    button.textContent = 'Sending code...';
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(account)
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.error || data.message || 'Account creation failed');
-      if(response.ok && data.needsVerification){
-        const email = data.email || account.email;
-        showVerification(email);
-        showAuthMessage(`Verification code sent to ${email}. Check inbox / spam.`, 'success');
-      }else{
-        showAuthMessage(data.message || 'Account created successfully.', 'success');
-      }
-    } catch (error) {
-      showAuthMessage(error.message || 'Account creation failed', 'error');
-    } finally {
-      button.disabled = false;
-      button.textContent = 'Sign Up';
-    }
-  }
-  async function verifyEmail(event){
-    event.preventDefault();
-    const code = document.getElementById('verificationCode').value.trim();
-    const button = document.getElementById('verifySubmit');
-    button.disabled = true;
-    button.textContent = 'Verifying...';
-    try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: verificationEmail, code })
-      });
-      const data = await response.json();
-      if(!response.ok || !data.success) throw new Error(data.error || data.message || 'Email verification failed');
-      clearInterval(resendCountdown);
-      document.getElementById('verifyEmailBox').classList.add('hidden');
-      document.getElementById('loginBox').classList.remove('hidden');
-      document.getElementById('loginEmail').value = verificationEmail;
-      showAuthMessage('Email verified! Please log in.', 'success');
-      
-    } catch (error) {
-      showAuthMessage(error.message || 'Email verification failed', 'error');
-    } finally {
-      button.disabled = false;
-      button.textContent = 'Verify Email';
-    }
-  }
-  async function resendVerificationCode(){
-    const button = document.getElementById('resendCode');
-    button.disabled = true;
-    button.textContent = 'Sending code...';
-    try {
-      const response = await fetch('/api/auth/resend-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: verificationEmail })
-      });
-      const data = await response.json();
-      if(!response.ok || !data.success) throw new Error(data.error || data.message || 'Could not resend code');
-      showAuthMessage('New code sent. Check inbox / spam.', 'success');
-      startResendCountdown();
-    } catch (error) {
-      showAuthMessage(error.message || 'Could not resend code', 'error');
-      button.disabled = false;
-      button.textContent = 'Resend Code';
-    }
-  }
-  async function login(event){
-    event.preventDefault();
-    const credentials = {
-      email: document.getElementById('loginEmail').value.trim().toLowerCase(),
-      password: document.getElementById('loginPass').value
-    };
-    const button = document.getElementById('loginSubmit');
-    button.disabled = true;
-    button.textContent = 'Logging in...';
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials)
-      });
-      const data = await response.json();
-      if(response.ok && data.needsVerification){
-        showVerification(credentials.email);
-        showAuthMessage('Please verify your email first. A code was sent to your inbox.', 'success');
-        return;
-      }
-      if (!response.ok || !data.success) throw new Error(data.error || data.message || 'Login failed');
-        const remember = document.getElementById('rememberMe').checked;
-  const storage = remember ? localStorage : sessionStorage;
-  storage.setItem('token', data.token);
-  storage.setItem('userEmail', data.user.email);
-  storage.setItem('user', JSON.stringify(data.user));
-  storage.setItem('userBalance', Number(data.user.balance || 0));
-  storage.setItem('loggedIn', 'true');
-  storage.setItem('isLoggedIn', 'true');
-      showAuthMessage('Welcome back!', 'success');
-      setTimeout(() => { window.location.href = '/index.html'; }, 1000);
-    } catch (error) {
-      showAuthMessage(error.message || 'Login failed', 'error');
-    } finally {
-      button.disabled = false;
-      button.textContent = 'Login';
-    }
-  }
-  document.getElementById('loginBox').addEventListener('submit', login);
-  document.getElementById('signupBox').addEventListener('submit', signup);
-  document.getElementById('verifyEmailBox').addEventListener('submit', verifyEmail);
-  document.getElementById('resendCode').addEventListener('click', resendVerificationCode);
-
-  document.getElementById('letsGoBtn').addEventListener('click', function() {
-    document.getElementById('landing').classList.add('fall');
-    setTimeout(() => {
-      document.getElementById('landing').style.display = 'none';
-      document.body.style.overflow = 'auto';
-    }, 900);
-  });
-  // --- INSTALL APP ---
-let deferredPrompt = null;
-const installWrap = document.getElementById('installWrap');
-const installBtn = document.getElementById('installBtn');
-const installHelp = document.getElementById('installHelp');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (installWrap) installWrap.style.display = 'block';
-});
-
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-   if (!deferredPrompt) {
-  if (installHelp) {
-    installHelp.style.display = 'block';
-    installHelp.textContent = 'In Chrome tap the 3 dots > Add to Home screen / Install app. If My Pet App is already on your home screen, it is already installed.';
-  }
-  return;
-}
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    if (installWrap) installWrap.style.display = 'none';
-  });
-}
-
-window.addEventListener('appinstalled', () => {
-  if (installWrap) installWrap.style.display = 'none';
-});
-
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-if (isIOS && installWrap && installHelp && installBtn) {
-  installWrap.style.display = 'block';
-  installBtn.style.display = 'none';
-  installHelp.style.display = 'block';
-}
- // --- FORGOT PASSWORD ---
-document.getElementById('forgotLink').addEventListener('click', function(e){
-  e.preventDefault();
-  document.getElementById('loginBox').classList.add('hidden');
-document.getElementById('signupBox').classList.add('hidden');
-document.getElementById('verifyEmailBox').classList.add('hidden');
-document.getElementById('forgotModal').classList.remove('hidden');
-  document.getElementById('forgotStep2').style.display = 'none';
-  document.getElementById('forgotMsg').textContent = '';
-});
-
-document.getElementById('sendCodeBtn').addEventListener('click', async function(){
-  const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-  if(!email) return alert('Enter your email first');
-  this.textContent = 'Sending...'; this.disabled = true;
-  try{
-    const res = await fetch('/api/auth/forgot-password', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    document.getElementById('forgotMsg').textContent = data.message || 'Code sent! Check your email.';
-    if(res.ok){
-      document.getElementById('forgotStep1').style.display = 'none';
-      document.getElementById('forgotStep2').style.display = 'block';
-    }
-  }catch(err){ alert('Could not send code'); }
-  this.textContent = 'Send Verification Code'; this.disabled = false;
-});
-
-document.getElementById('resetPassBtn').addEventListener('click', async function(){
-  const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-  const code = document.getElementById('forgotCode').value.trim();
-  const newPassword = document.getElementById('newPass').value;
-  const confirmPassword = document.getElementById('confirmPass').value;
-  if(!code) return alert('Enter the code from your email');
-  if(newPassword.length < 6) return alert('New password must be at least 6 characters');
-  if(newPassword !== confirmPassword) return alert('Passwords do not match!');
-  try{
-    const res = await fetch('/api/auth/reset-password', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email, code, newPassword })
-    });
-    const data = await res.json();
-    if(res.ok){
-      alert('Password reset! Now login with your new password.');
-      document.getElementById('forgotModal').classList.add('hidden'); document.getElementById('loginBox').classList.remove('hidden');
-    } else alert(data.message || 'Reset failed');
-  }catch(err){ alert('Reset failed'); }
-});
- </script>
-  <div class="ribbon-footer">Welcome to Pets World ♥️😻</div>
- 
+<div id="msg"></div>
+<p class="foot">No account? <a href="signup.html">Create account</a></p>
+</div>
 
 <script>
-const forgotModal = document.getElementById('forgotModal');
-document.getElementById('forgotLink').onclick = (e) => { e.preventDefault();
-document.getElementById('loginBox').classList.add('hidden');
-document.getElementById('signupBox').classList.add('hidden');
-document.getElementById('verifyEmailBox').classList.add('hidden');
-forgotModal.classList.remove('hidden'); };
-document.getElementById('fpClose').onclick = () => { forgotModal.classList.add('hidden'); document.getElementById('loginBox').classList.remove('hidden'); };
-document.getElementById('fpSendBtn').onclick = async () => {
-const email = document.getElementById('fpEmail').value.trim();
-const msg = document.getElementById('fpMsg');
-if(!email){ msg.textContent='Please enter your email'; return; }
-msg.style.color='black'; msg.textContent='Sending...';
-try{
-const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({email}) });
-const data = await res.json();
-msg.textContent = data.message || 'Check your email for reset link';
-} catch(err){ msg.textContent='Failed to send, try again'; }
-};
-document.getElementById('fpResetBtn').onclick = async () => {
-  const email = document.getElementById('fpEmail').value.trim().toLowerCase();
-  const code = document.getElementById('fpCode').value.trim();
-  const newPassword = document.getElementById('fpNewPass').value;
-  const confirm = document.getElementById('fpConfirmPass').value;
-  const msg = document.getElementById('fpMsg');
-  if(!code){ msg.textContent='Please enter the code'; return; }
-  if(newPassword.length < 6){ msg.textContent='Password must be at least 6 characters'; return; }
-  if(newPassword !== confirm){ msg.textContent='Passwords do not match! Please retype.'; return; }
-  msg.style.color='black'; msg.textContent='Resetting...';
-  const res = await fetch('/api/auth/reset-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, code, newPassword}) });
-  const data = await res.json();
-  if(!data.success){ msg.style.color='red'; msg.textContent=data.message; return; }
-  msg.style.color='green'; msg.textContent='Password reset! Please login with new password.';
-  setTimeout(()=>{ forgotModal.style.display='none'; location.reload(); }, 1500);
-};
-</script>
-<!-- FORGOT PASSWORD END -->
+let forgotEmail="";
+function showStep(id){['step-login','step-forgot','step-code','step-newpass'].forEach(s=>document.getElementById(s).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');}
+function setMsg(t,ok){const m=document.getElementById('msg');m.textContent=t;m.className=ok?'ok':(t?'err':'');}
 
+async function doLogin(){
+  const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;
+  if(!email||!password){setMsg('Fill email and password');return;}
+  setMsg('Checking...');
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){setMsg(d.error||'Account doesn\'t exist');return;}
+    if(d.token) localStorage.setItem('token',d.token);
+    setMsg('Welcome back ✅',true);
+    setTimeout(()=>location.href='index.html',900);
+  }catch(e){setMsg('Cannot reach server');}
+}
+
+async function sendResetCode(){
+  forgotEmail=document.getElementById('forgotEmail').value.trim();
+  if(!forgotEmail){setMsg('Enter email');return;}
+  setMsg('Sending code...');
+  try{
+    const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){setMsg(d.error||'Account doesn\'t exist');return;}
+    document.getElementById('showEmail').textContent=forgotEmail;
+    document.getElementById('resetCode').value="";
+    showStep('step-code');setMsg('Check your email for the verification code',true);
+  }catch(e){setMsg('Cannot reach server');}
+}
+
+// AUTO VERIFY - as soon as 6 digits typed
+document.getElementById('resetCode').addEventListener('input', async (e)=>{
+  e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);
+  if(e.target.value.length===6){
+    setMsg('Verifying... ⏳');
+    try{
+      const r=await fetch('/api/auth/verify-reset-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail,code:e.target.value})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){setMsg(d.error||'Wrong / expired code');e.target.value="";return;}
+      setMsg('Code verified ✅',true);
+      setTimeout(()=>{showStep('step-newpass');setMsg('');},600);
+    }catch(err){setMsg('Cannot reach server');}
+  }
+});
+
+async function doResetPassword(){
+  const np=document.getElementById('newPass').value,cp=document.getElementById('confirmNewPass').value,code=document.getElementById('resetCode').value.trim();
+  if(np.length<6){setMsg('Password must be 6+ characters');return;}
+  if(np!==cp){setMsg('Passwords do not match');return;}
+  setMsg('Saving...');
+  try{
+    const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail,code,newPassword:np})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){setMsg(d.error||'Wrong / expired code');return;}
+    setMsg('password changed successfully ✍️',true);
+    setTimeout(()=>{showStep('step-login');setMsg('');},1200);
+  }catch(e){setMsg('Cannot reach server');}
+}
+</script>
 </body>
-  </html>
+</html>

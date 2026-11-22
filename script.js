@@ -750,16 +750,17 @@ function checkout(){
 }
 
   // ===== STEP 2: PAY NOW - CREATE ORDER =====
-function payNow() {
+function payNow(country) {
   const name = document.getElementById("custName") ? document.getElementById("custName").value.trim() : "";
-  const code = document.getElementById("phoneCode") ? document.getElementById("phoneCode").value : "+44";
+  const code = document.getElementById("phoneCode") ? document.getElementById("phoneCode").value : "";
   const phone = document.getElementById("custPhone") ? document.getElementById("custPhone").value.trim() : "";
   const email = document.getElementById("custEmail") ? document.getElementById("custEmail").value.trim() : "";const address = document.getElementById("custAddress") ? document.getElementById("custAddress").value : "";
   const msg = document.getElementById("orderMessage");
+  country = country || document.getElementById("country")?.value || "";
  
 
-if (!address || !phone || !email) {
-    if (msg) { msg.style.color = "red"; msg.innerText = "Please enter your address, phone, and email."; }
+if (!country || !address || !phone || !email) {
+    if (msg) { msg.style.color = "red"; msg.innerText = "Please select a country and enter your address, phone, and email."; }
     return;
   }
   const total = cart.reduce((s,p)=> s + Number(p.price), 0);
@@ -770,7 +771,7 @@ if (!address || !phone || !email) {
 
   if (msg) {
     msg.style.color = "green";
-    msg.innerText = "Order Started! We'll notify you on " + fullPhone + ". Thank you!";
+    msg.innerText = `Order Started for ${country}! We'll notify you on ${fullPhone}. Thank you!`;
   }
 
   // Clear cart if it exists
@@ -781,18 +782,11 @@ if (!address || !phone || !email) {
     localStorage.removeItem("cart");
   } catch(e) {}
 
-  alert("Order Started! We'll notify you on " + fullPhone);
+  alert(`Order Started for ${country}! We'll notify you on ${fullPhone}`);
 }
 
-// ===== SEARCHABLE COUNTRY PICKER WITH REAL FLAGS =====
+// ===== COUNTRY SELECTOR =====
 document.addEventListener("DOMContentLoaded", () => {
-// FULL COUNTRIES WITH FLAGS - All Asia, Europe, America, Africa, Australia, South America
-let selectedCountry = localStorage.getItem("selectedCountry") || "UK";
-
-function flagFromCode(code){
-  // Turns "KE" -> 🇰🇪, "US" -> 🇺🇸, "GB" -> 🇬🇧
-  return code.toUpperCase().replace(/./g, ch => String.fromCodePoint(127397 + ch.charCodeAt(0)));
-}
 
 const countries = [
   // AFRICA
@@ -944,7 +938,7 @@ const countries = [
   {n:"Sweden", d:"+46", c:"SE", r:"Europe"},
   {n:"Switzerland", d:"+41", c:"CH", r:"Europe"},
   {n:"Ukraine", d:"+380", c:"UA", r:"Europe"},
-  {n:"UK", d:"+44", c:"GB", r:"Europe"},
+  {n:"United Kingdom", d:"+44", c:"GB", r:"Europe"},
   {n:"Vatican City", d:"+379", c:"VA", r:"Europe"},
   // NORTH AMERICA
   {n:"Antigua & Barbuda", d:"+1", c:"AG", r:"America"},
@@ -997,77 +991,78 @@ const countries = [
   {n:"Solomon Islands", d:"+677", c:"SB", r:"Australia"},
   {n:"Tonga", d:"+676", c:"TO", r:"Australia"},
   {n:"Tuvalu", d:"+688", c:"TV", r:"Australia"},
-  {n:"Vanuatu", d:"+678", c:"VU", r:"Australia"}
+  {n:"Vanuatu", d:"+678", c:"VU", r:"Australia"},
+  {n:"United States", d:"+1", c:"US", r:"America"},
+  {n:"Anguilla", d:"+1 264", c:"AI", r:"America"},
+  {n:"Aruba", d:"+297", c:"AW", r:"America"},
+  {n:"Bermuda", d:"+1 441", c:"BM", r:"America"},
+  {n:"Bonaire, Sint Eustatius and Saba", d:"+599", c:"BQ", r:"America"},
+  {n:"British Indian Ocean Territory", d:"+246", c:"IO", r:"Africa"},
+  {n:"British Virgin Islands", d:"+1 284", c:"VG", r:"America"},
+  {n:"Cayman Islands", d:"+1 345", c:"KY", r:"America"},
+  {n:"Christmas Island", d:"+61", c:"CX", r:"Australia"},
+  {n:"Cocos (Keeling) Islands", d:"+61", c:"CC", r:"Australia"},
+  {n:"Cook Islands", d:"+682", c:"CK", r:"Australia"},
+  {n:"Curacao", d:"+599", c:"CW", r:"America"},
+  {n:"Falkland Islands", d:"+500", c:"FK", r:"South America"},
+  {n:"Faroe Islands", d:"+298", c:"FO", r:"Europe"},
+  {n:"French Guiana", d:"+594", c:"GF", r:"South America"},
+  {n:"French Polynesia", d:"+689", c:"PF", r:"Australia"},
+  {n:"Gibraltar", d:"+350", c:"GI", r:"Europe"},
+  {n:"Greenland", d:"+299", c:"GL", r:"America"},
+  {n:"Guadeloupe", d:"+590", c:"GP", r:"America"},
+  {n:"Guam", d:"+1 671", c:"GU", r:"Australia"},
+  {n:"Guernsey", d:"+44 1481", c:"GG", r:"Europe"},
+  {n:"Hong Kong", d:"+852", c:"HK", r:"Asia"},
+  {n:"Isle of Man", d:"+44 1624", c:"IM", r:"Europe"},
+  {n:"Jersey", d:"+44 1534", c:"JE", r:"Europe"},
+  {n:"Macao", d:"+853", c:"MO", r:"Asia"},
+  {n:"Martinique", d:"+596", c:"MQ", r:"America"},
+  {n:"Mayotte", d:"+262", c:"YT", r:"Africa"},
+  {n:"Montserrat", d:"+1 664", c:"MS", r:"America"},
+  {n:"New Caledonia", d:"+687", c:"NC", r:"Australia"},
+  {n:"Niue", d:"+683", c:"NU", r:"Australia"},
+  {n:"Norfolk Island", d:"+672", c:"NF", r:"Australia"},
+  {n:"Northern Mariana Islands", d:"+1 670", c:"MP", r:"Australia"},
+  {n:"Puerto Rico", d:"+1 787", c:"PR", r:"America"},
+  {n:"Reunion", d:"+262", c:"RE", r:"Africa"},
+  {n:"Saint Barthelemy", d:"+590", c:"BL", r:"America"},
+  {n:"Saint Helena", d:"+290", c:"SH", r:"Africa"},
+  {n:"Saint Martin", d:"+590", c:"MF", r:"America"},
+  {n:"Sint Maarten", d:"+1 721", c:"SX", r:"America"},
+  {n:"Tokelau", d:"+690", c:"TK", r:"Australia"},
+  {n:"Turks and Caicos Islands", d:"+1 649", c:"TC", r:"America"},
+  {n:"US Virgin Islands", d:"+1 340", c:"VI", r:"America"},
+  {n:"Wallis and Futuna", d:"+681", c:"WF", r:"Australia"},
+  {n:"Western Sahara", d:"+212", c:"EH", r:"Africa"},
+  {n:"Antarctica", d:"+672", c:"AQ", r:"Antarctica"}
 ];
 countries.sort((a,b)=>a.n.localeCompare(b.n));
-function flagFromCode(code){
-  return `<img src="https://flagcdn.com/w20/${code.toLowerCase()}.png" width="20" style="vertical-align:middle;border:1px solid #ddd">`;
-}
-
-
-function renderCountries(filter=""){
-  const list = document.getElementById("countryList");
-  if(!list) return;
-  const q = filter.toLowerCase();
-  const filtered = countries.filter(c => c.n.toLowerCase().includes(q) || c.d.includes(q));
-  list.innerHTML = filtered.map(c => {
-    const flag = flagFromCode(c.c);
-    return `<button type="button" class="country-option" data-code="${c.c}" data-dial="${c.d}" data-name="${c.n}" style="display:block;width:100%;padding:8px 10px;text-align:left;background:white;border:0;border-bottom:1px solid #eee;cursor:pointer">${flag} ${c.d} ${c.n} <small>• ${c.r}</small></button>`;
-  }).join('');
-  list.querySelectorAll(".country-option").forEach(row => {
-    row.addEventListener("click", () => selectCountry(row.dataset.code, row.dataset.dial, row.dataset.name));
+const countrySelect = document.getElementById("country");
+if (countrySelect) {
+  countries.forEach(country => {
+    const option = document.createElement("option");
+    option.value = country.n;
+    option.textContent = country.n;
+    countrySelect.appendChild(option);
   });
-}
 
-function selectCountry(code, dial, name){
-  selectedCountry = name;
-  localStorage.setItem("selectedCountry", name);
-  const btn = document.getElementById("countryBtn");
-  if(btn) btn.innerHTML = flagFromCode(code) + ' ' + dial + ' ' + name + ' ▼';
-  const phoneCode = document.getElementById("phoneCode");
-  if(phoneCode) phoneCode.value = dial;
-  const selectedCountryInput = document.getElementById("selectedCountry");
-  if(selectedCountryInput) selectedCountryInput.value = selectedCountry;
-  const shippingCountry = document.getElementById("shippingCountry");
-  if(shippingCountry) shippingCountry.textContent = name;
-  const box = document.getElementById("countryList");
-  if(box) box.innerHTML = '';
-  const search = document.getElementById("countrySearch");
-  if(search) search.value = '';
-  const dropdown = document.getElementById("countryDrop");
-  if(dropdown) dropdown.style.display = "none";
-  updateCartUI();
-}
+  const savedCountry = localStorage.getItem("selectedCountry");
+  const initialCountry = savedCountry === "UK" ? "United Kingdom" : savedCountry;
+  if (countries.some(country => country.n === initialCountry)) {
+    countrySelect.value = initialCountry;
+  }
 
-const initialCountry = countries.find(country => country.n === selectedCountry)
-  || countries.find(country => country.n === "UK");
-selectCountry(initialCountry.c, initialCountry.d, initialCountry.n);
-renderCountries();
-// Delegated - works even if checkout is created later
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest("#countryBtn");
-  if (btn) {
-    const d = document.getElementById("countryDrop");
-    const show = d.style.display === "none" || d.style.display === "";
-    d.style.display = show ? "block" : "none";
-    if (show) {
-      renderCountries("");
-      const s = document.getElementById("countrySearch");
-      s.value = "";
-      setTimeout(() => s.focus(), 50);
-    }
-    return;
-  }
-  const picker = document.getElementById("countryPicker");
-  if (picker && !picker.contains(e.target)) {
-    const d = document.getElementById("countryDrop");
-    if (d) d.style.display = "none";
-  }
-});
-document.addEventListener("input", (e) => {
-  if (e.target.id === "countrySearch") renderCountries(e.target.value);
-});
-renderCountries("");
+  countrySelect.addEventListener("change", () => {
+    const country = countries.find(item => item.n === countrySelect.value);
+    if (!country) return;
+    localStorage.setItem("selectedCountry", country.n);
+    document.getElementById("phoneCode").value = country.d;
+    document.getElementById("shippingCountry").textContent = country.n;
+  });
+
+  if (countrySelect.value) countrySelect.dispatchEvent(new Event("change"));
+}
 });
 
 document.getElementById('menuBtn').addEventListener('click', toggleSidePanel);
