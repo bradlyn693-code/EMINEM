@@ -1080,7 +1080,7 @@ document.getElementById('signOutBtn').addEventListener('click', function() {
   localStorage.removeItem('userBalance');
   localStorage.removeItem('loggedIn');
   localStorage.removeItem('isLoggedIn');
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 });
 
 let installPromptEvent = null;
