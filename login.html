@@ -1,130 +1,403 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login - Pets</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
-background:linear-gradient(rgba(15,23,42,.75),rgba(15,23,42,.85)),url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80') center/cover}
-.bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:22px;animation:float 6s ease-in-out infinite;z-index:1}
-.b1{width:70px;height:70px;left:8%;top:15%}.b2{width:50px;height:50px;left:85%;top:20%;animation-delay:1s}.b3{width:90px;height:90px;left:12%;bottom:12%;animation-delay:2s}.b4{width:45px;height:45px;left:78%;bottom:18%;animation-delay:.5s}.b5{width:60px;height:60px;left:45%;top:6%;animation-delay:1.5s}.b6{width:40px;height:40px;left:90%;bottom:35%;animation-delay:2.5s}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
-.box{position:relative;z-index:2;width:100%;max-width:400px;padding:28px 26px;border-radius:24px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);box-shadow:0 20px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.5);backdrop-filter:blur(16px);color:#fff}
-.logo{font-size:42px;text-align:center}h2{text-align:center;font-size:26px;margin:6px 0 4px}.sub{text-align:center;font-size:13px;opacity:.9;margin-bottom:16px}
-input{width:100%;padding:13px 14px;margin:7px 0;border-radius:14px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.18);color:#fff;outline:none;font-size:15px}
-input::placeholder{color:rgba(255,255,255,.85)}
-button{width:100%;padding:13px;border:0;border-radius:14px;margin-top:12px;cursor:pointer;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;font-size:16px;box-shadow:0 8px 20px rgba(34,197,94,.45)}
-button.link{background:none;box-shadow:none;color:#a7f3d0;padding:6px;font-size:13px}
-#msg{margin-top:12px;min-height:20px;font-size:14px;text-align:center;border-radius:10px;padding:8px}
-#msg.ok{background:rgba(34,197,94,.35)}#msg.err{background:rgba(239,68,68,.4)}
-.hidden{display:none}.foot{text-align:center;font-size:13px;margin-top:14px}a{color:#a7f3d0;font-weight:700}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>Login - Pets</title>
+  <script>
+    if (localStorage.getItem("loggedIn") === "true") {
+      window.location.replace("home.html");
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+      font-family: Arial, sans-serif;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .landing-wrap,
+    #authContainer,
+    #loginBox {
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background:
+        linear-gradient(rgba(10, 10, 10, .62), rgba(10, 10, 10, .78)),
+        url("https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80") center / cover no-repeat,
+        #111;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .landing-wrap::before {
+      content: "";
+      position: absolute;
+      inset: -12px;
+      background: inherit;
+      filter: blur(4px);
+      z-index: 0;
+    }
+
+    .login-card,
+    .auth-card,
+    .glass-card {
+      width: min(92vw, 400px);
+      max-height: 92dvh;
+      padding: 28px 20px 22px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      color: white;
+      position: relative;
+      z-index: 2;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      animation: float 6s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .bubble-one { width: 70px; height: 70px; left: 8%; top: 15%; }
+    .bubble-two { width: 50px; height: 50px; left: 85%; top: 20%; animation-delay: 1s; }
+    .bubble-three { width: 90px; height: 90px; left: 12%; bottom: 12%; animation-delay: 2s; }
+    .bubble-four { width: 45px; height: 45px; left: 78%; bottom: 18%; animation-delay: .5s; }
+    .bubble-five { width: 60px; height: 60px; left: 45%; top: 6%; animation-delay: 1.5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+
+    .logo {
+      font-size: 38px;
+      margin-bottom: 4px;
+    }
+
+    .login-card h1,
+    .login-card h2 {
+      font-size: 28px;
+      margin: 8px 0 4px;
+    }
+
+    .login-card p {
+      font-size: 14px;
+      opacity: 0.9;
+      margin: 0 0 18px;
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 0 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .login-card input::placeholder {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .login-card button[type="submit"],
+    #loginBtn,
+    .continue-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 999px;
+      background: #00c853;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .login-card button.link {
+      width: auto;
+      padding: 8px 4px;
+      border: 0;
+      background: transparent;
+      color: #b9f6ca;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .foot {
+      font-size: 14px !important;
+      margin: 12px 0 0 !important;
+    }
+
+    .foot a {
+      color: #b9f6ca;
+      font-weight: bold;
+    }
+
+    #msg {
+      min-height: 0;
+      margin-top: 8px;
+      padding: 0;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    #msg:not(:empty) {
+      min-height: 20px;
+      padding: 8px;
+    }
+
+    #msg.ok { background: rgba(0, 200, 83, 0.35); }
+    #msg.err { background: rgba(239, 68, 68, 0.4); }
+
+    @media (max-height: 620px) {
+      .login-card,
+      .auth-card,
+      .glass-card {
+        padding-top: 20px;
+        padding-bottom: 16px;
+      }
+
+      .logo { font-size: 30px; }
+      .login-card h1,
+      .login-card h2 { font-size: 25px; margin-top: 4px; }
+      .login-card p { margin-bottom: 12px; }
+    }
+  </style>
 </head>
 <body>
-<div class="bubble b1">🐾</div><div class="bubble b2">🐶</div><div class="bubble b3">🐱</div><div class="bubble b4">🐾</div><div class="bubble b5">🦴</div><div class="bubble b6">🐾</div>
-<div class="box">
-<div class="logo">🐶🐱</div>
+  <main id="loginBox" class="landing-wrap">
+    <div class="bubble bubble-one" aria-hidden="true">🐾</div>
+    <div class="bubble bubble-two" aria-hidden="true">🐶</div>
+    <div class="bubble bubble-three" aria-hidden="true">🐱</div>
+    <div class="bubble bubble-four" aria-hidden="true">🐾</div>
+    <div class="bubble bubble-five" aria-hidden="true">🦴</div>
 
-<!-- LOGIN -->
-<div id="step-login">
-<h2>Welcome back</h2><p class="sub">Login to your Pets account</p>
-<input id="email" type="email" placeholder="✉️ Email">
-<input id="password" type="password" placeholder="🔒 Password">
-<button onclick="doLogin()">Continue ➜</button>
-<button class="link" onclick="showStep('step-forgot')">Forgot password?</button>
-</div>
+    <section class="login-card auth-card glass-card" aria-live="polite">
+      <div class="logo" aria-hidden="true">🐶🐱</div>
 
-<!-- RESET PASSWORD - EMAIL -->
-<div id="step-forgot" class="hidden">
-<h2>Reset password</h2><p class="sub">Enter your email to receive a code</p>
-<input id="forgotEmail" type="email" placeholder="✉️ Email">
-<button onclick="sendResetCode()">Send code 📩</button>
-<button class="link" onclick="showStep('step-login')">← Back to login</button>
-</div>
+      <div id="step-login">
+        <h1>Welcome back</h1>
+        <p>Login to your Pets account</p>
+        <form onsubmit="event.preventDefault(); doLogin();">
+          <input id="email" type="email" placeholder="Email" autocomplete="email" required>
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+          <button id="loginBtn" class="continue-btn" type="submit">Continue</button>
+        </form>
+        <button class="link" type="button" onclick="showStep('step-forgot')">Forgot password?</button>
+        <p class="foot">No account? <a href="signup.html">Sign Up</a></p>
+      </div>
 
-<!-- ENTER CODE - AUTO VERIFY -->
-<div id="step-code" class="hidden">
-<h2>Enter code</h2><p class="sub">We sent a code to <b id="showEmail"></b></p>
-<input id="resetCode" inputmode="numeric" maxlength="6" placeholder="🔑 6-digit code" style="text-align:center;font-size:20px;letter-spacing:6px">
-<p class="sub">Type the 6 digits — it will verify automatically</p>
-<button class="link" onclick="showStep('step-forgot')">← Wrong email?</button>
-</div>
+      <div id="step-forgot" class="hidden">
+        <h2>Reset password</h2>
+        <p>Enter your email to receive a code</p>
+        <form onsubmit="event.preventDefault(); sendResetCode();">
+          <input id="forgotEmail" type="email" placeholder="Email" autocomplete="email" required>
+          <button class="continue-btn" type="submit">Send code</button>
+        </form>
+        <button class="link" type="button" onclick="showStep('step-login')">Back to login</button>
+      </div>
 
-<!-- NEW PASSWORD -->
-<div id="step-newpass" class="hidden">
-<h2>New password</h2><p class="sub">Create a new 6+ character password</p>
-<input id="newPass" type="password" placeholder="🔒 New password">
-<input id="confirmNewPass" type="password" placeholder="🔒 Confirm new password">
-<button onclick="doResetPassword()">Change password</button>
-<button class="link" onclick="showStep('step-login')">Back to login</button>
-</div>
+      <div id="step-code" class="hidden">
+        <h2>Enter code</h2>
+        <p>We sent a code to <b id="showEmail"></b></p>
+        <input id="resetCode" inputmode="numeric" maxlength="6" placeholder="6-digit code" aria-label="6-digit reset code">
+        <p>Enter the six digits to verify.</p>
+        <button class="link" type="button" onclick="showStep('step-forgot')">Wrong email?</button>
+      </div>
 
-<div id="msg"></div>
-<p class="foot">No account? <a href="signup.html">Create account</a></p>
-</div>
+      <div id="step-newpass" class="hidden">
+        <h2>New password</h2>
+        <p>Create a new password with at least 6 characters</p>
+        <form onsubmit="event.preventDefault(); doResetPassword();">
+          <input id="newPass" type="password" placeholder="New password" autocomplete="new-password" required>
+          <input id="confirmNewPass" type="password" placeholder="Confirm new password" autocomplete="new-password" required>
+          <button class="continue-btn" type="submit">Change password</button>
+        </form>
+        <button class="link" type="button" onclick="showStep('step-login')">Back to login</button>
+      </div>
 
-<script>
-let forgotEmail="";
-function showStep(id){['step-login','step-forgot','step-code','step-newpass'].forEach(s=>document.getElementById(s).classList.add('hidden'));document.getElementById(id).classList.remove('hidden');}
-function setMsg(t,ok){const m=document.getElementById('msg');m.textContent=t;m.className=ok?'ok':(t?'err':'');}
+      <div id="msg" role="status"></div>
+    </section>
+  </main>
 
-async function doLogin(){
-  const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;
-  if(!email||!password){setMsg('Fill email and password');return;}
-  setMsg('Checking...');
-  try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){setMsg(d.error||'Account doesn\'t exist');return;}
-    if(d.token) localStorage.setItem('token',d.token);
-    setMsg('Welcome back ✅',true);
-    setTimeout(()=>location.href='pets.html',900);
-  }catch(e){setMsg('Cannot reach server');}
-}
+  <script>
+    let forgotEmail = "";
+    const authSteps = ["step-login", "step-forgot", "step-code", "step-newpass"];
 
-async function sendResetCode(){
-  forgotEmail=document.getElementById('forgotEmail').value.trim();
-  if(!forgotEmail){setMsg('Enter email');return;}
-  setMsg('Sending code...');
-  try{
-    const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){setMsg(d.error||'Account doesn\'t exist');return;}
-    document.getElementById('showEmail').textContent=forgotEmail;
-    document.getElementById('resetCode').value="";
-    showStep('step-code');setMsg('Check your email for the verification code',true);
-  }catch(e){setMsg('Cannot reach server');}
-}
+    function showStep(id) {
+      authSteps.forEach((step) => document.getElementById(step).classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+      setMsg("");
+    }
 
-// AUTO VERIFY - as soon as 6 digits typed
-document.getElementById('resetCode').addEventListener('input', async (e)=>{
-  e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);
-  if(e.target.value.length===6){
-    setMsg('Verifying... ⏳');
-    try{
-      const r=await fetch('/api/auth/verify-reset-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail,code:e.target.value})});
-      const d=await r.json().catch(()=>({}));
-      if(!r.ok){setMsg(d.error||'Wrong / expired code');e.target.value="";return;}
-      setMsg('Code verified ✅',true);
-      setTimeout(()=>{showStep('step-newpass');setMsg('');},600);
-    }catch(err){setMsg('Cannot reach server');}
-  }
-});
+    function setMsg(text, success) {
+      const message = document.getElementById("msg");
+      message.textContent = text;
+      message.className = success ? "ok" : (text ? "err" : "");
+    }
 
-async function doResetPassword(){
-  const np=document.getElementById('newPass').value,cp=document.getElementById('confirmNewPass').value,code=document.getElementById('resetCode').value.trim();
-  if(np.length<6){setMsg('Password must be 6+ characters');return;}
-  if(np!==cp){setMsg('Passwords do not match');return;}
-  setMsg('Saving...');
-  try{
-    const r=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:forgotEmail,code,newPassword:np})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){setMsg(d.error||'Wrong / expired code');return;}
-    setMsg('password changed successfully ✍️',true);
-    setTimeout(()=>{showStep('step-login');setMsg('');},1200);
-  }catch(e){setMsg('Cannot reach server');}
-}
-</script>
+    function doLogin() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      if (!email || !password) {
+        setMsg("Fill email and password");
+        return;
+      }
+
+      const normalizedEmail = email.toLowerCase();
+      const account = localStorage.getItem("user_" + normalizedEmail);
+      const hasSavedAccounts = Object.keys(localStorage).some((key) => key.startsWith("user_"));
+      if (account) {
+        let savedUser;
+        try {
+          savedUser = JSON.parse(account);
+        } catch (error) {
+          setMsg("Saved account data is invalid");
+          return;
+        }
+        if (!savedUser || typeof savedUser.email !== "string" ||
+            savedUser.email.toLowerCase() !== normalizedEmail || savedUser.password !== password) {
+          setMsg("Email or password is incorrect");
+          return;
+        }
+      } else if (hasSavedAccounts) {
+        setMsg("Account doesn't exist");
+        return;
+      }
+      localStorage.setItem("loggedIn", "true");
+      window.location.href = "home.html";
+    }
+
+    async function sendResetCode() {
+      forgotEmail = document.getElementById("forgotEmail").value.trim();
+      if (!forgotEmail) {
+        setMsg("Enter email");
+        return;
+      }
+
+      setMsg("Sending code...");
+      try {
+        const response = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setMsg(data.error || "Account doesn't exist");
+          return;
+        }
+        document.getElementById("showEmail").textContent = forgotEmail;
+        document.getElementById("resetCode").value = "";
+        showStep("step-code");
+        setMsg("Check your email for the verification code", true);
+      } catch (error) {
+        setMsg("Cannot reach server");
+      }
+    }
+
+    const signupMessage = sessionStorage.getItem("signupMessage");
+    if (signupMessage) {
+      setMsg(signupMessage, true);
+      sessionStorage.removeItem("signupMessage");
+    }
+
+    document.getElementById("resetCode").addEventListener("input", async (event) => {
+      const input = event.target;
+      input.value = input.value.replace(/\D/g, "").slice(0, 6);
+      if (input.value.length !== 6) return;
+
+      setMsg("Verifying...");
+      try {
+        const response = await fetch("/api/auth/verify-reset-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail, code: input.value })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setMsg(data.error || "Wrong or expired code");
+          input.value = "";
+          return;
+        }
+        setMsg("Code verified", true);
+        setTimeout(() => showStep("step-newpass"), 600);
+      } catch (error) {
+        setMsg("Cannot reach server");
+      }
+    });
+
+    async function doResetPassword() {
+      const newPassword = document.getElementById("newPass").value;
+      const confirmPassword = document.getElementById("confirmNewPass").value;
+      const code = document.getElementById("resetCode").value.trim();
+      if (newPassword.length < 6) {
+        setMsg("Password must be 6+ characters");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setMsg("Passwords do not match");
+        return;
+      }
+
+      setMsg("Saving...");
+      try {
+        const response = await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail, code, newPassword })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setMsg(data.error || "Wrong or expired code");
+          return;
+        }
+        setMsg("Password changed successfully", true);
+        setTimeout(() => showStep("step-login"), 1200);
+      } catch (error) {
+        setMsg("Cannot reach server");
+      }
+    }
+  </script>
 </body>
 </html>
