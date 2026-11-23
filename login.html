@@ -276,7 +276,7 @@
       message.className = success ? "ok" : (text ? "err" : "");
     }
 
-    function doLogin() {
+    async function doLogin() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       if (!email || !password) {
@@ -284,28 +284,26 @@
         return;
       }
 
-      const normalizedEmail = email.toLowerCase();
-      const account = localStorage.getItem("user_" + normalizedEmail);
-      const hasSavedAccounts = Object.keys(localStorage).some((key) => key.startsWith("user_"));
-      if (account) {
-        let savedUser;
-        try {
-          savedUser = JSON.parse(account);
-        } catch (error) {
-          setMsg("Saved account data is invalid");
+      setMsg("Checking...");
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.token || !data.user) {
+          setMsg(data.error || data.message || "Email or password is incorrect");
           return;
         }
-        if (!savedUser || typeof savedUser.email !== "string" ||
-            savedUser.email.toLowerCase() !== normalizedEmail || savedUser.password !== password) {
-          setMsg("Email or password is incorrect");
-          return;
-        }
-      } else if (hasSavedAccounts) {
-        setMsg("Account doesn't exist");
-        return;
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userEmail", data.user.email);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("loggedIn", "true");
+        window.location.href = "home.html";
+      } catch (error) {
+        setMsg("Cannot reach server");
       }
-      localStorage.setItem("loggedIn", "true");
-      window.location.href = "home.html";
     }
 
     async function sendResetCode() {
