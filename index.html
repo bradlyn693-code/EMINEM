@@ -3,119 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Welcome to Pets Shop 🛒🛍️🐶</title>
+<title>Pets Shop 🐶</title>
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; overflow: hidden; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: Arial, sans-serif; }
+body {
+  height:100vh; overflow:hidden;
+  background: linear-gradient(135deg, #ffd6e8, #ffe8c9, #c9f0ff);
+  display:flex; align-items:center; justify-content:center;
+}
+#page { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; transition: transform 0.7s ease, opacity 0.7s ease; }
+#page.collapse { transform: translateY(100%) scale(0.9); opacity:0; }
 
-  /* WRAPPER - THIS IS WHAT COLLAPSES */
-  #page {
-    height: 100vh;
-    width: 100%;
-    position: relative;
-    background: url('images/pets-bg.jpg') center/cover no-repeat;
-    transition: transform 0.7s ease, opacity 0.7s ease;
-    transform-origin: top center;
-  }
-  #page.collapse {
-    transform: scaleY(0) translateY(100px);
-    opacity: 0;
-  }
+/* Bubbles */
+#bubbles { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+.bubble {
+  position:absolute; bottom:-80px; border-radius:50%;
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(4px);
+  border:1px solid rgba(255,255,255,0.7);
+  box-shadow: inset -8px -8px 15px rgba(255,255,255,0.8), inset 5px 5px 10px rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.1);
+  display:flex; align-items:center; justify-content:center;
+  animation: rise linear infinite, wobble 2s ease-in-out infinite alternate;
+}
+@keyframes rise { to { transform: translateY(-110vh); } }
+@keyframes wobble { from { margin-left:-15px; } to { margin-left:15px; } }
 
-  /* ===== REAL 3D BUBBLES ===== */
-  .bubbles { position: absolute; inset: 0; overflow: hidden; z-index: 2; pointer-events: none; }
-  .bubble {
-    position: absolute; bottom: -100px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.35) 35%, rgba(255,255,255,0.08) 60%, rgba(255,255,255,0.25) 100%);
-    border: 1px solid rgba(255,255,255,0.6);
-    box-shadow: inset -8px -10px 18px rgba(0,0,0,0.15), inset 6px 8px 14px rgba(255,255,255,0.6), 0 15px 30px rgba(0,0,0,0.25);
-    animation: floatUp linear infinite;
-  }
-  .bubble::before {
-    content: ""; position: absolute; top: 12%; left: 16%;
-    width: 28%; height: 18%; background: rgba(255,255,255,0.9);
-    border-radius: 50%; filter: blur(1px); transform: rotate(-25deg);
-  }
-  .bubble span { position: relative; z-index: 2; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3)); }
-  @keyframes floatUp {
-    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateY(-115vh) rotate(360deg); opacity: 0; }
-  }
-  .bubble:nth-child(1){ left: 5%; width: 68px; height: 68px; animation-duration: 12s; font-size: 26px; }
-  .bubble:nth-child(2){ left: 14%; width: 48px; height: 48px; animation-duration: 9s; animation-delay: 1s; font-size: 19px; }
-  .bubble:nth-child(3){ left: 82%; width: 82px; height: 82px; animation-duration: 15s; animation-delay: 2s; font-size: 32px; }
-  .bubble:nth-child(4){ left: 91%; width: 54px; height: 54px; animation-duration: 8s; animation-delay: .5s; font-size: 21px; }
+/* Card */
+.card {
+  position:relative; z-index:10; text-align:center;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(15px);
+  border:1px solid rgba(255,255,255,0.8);
+  border-radius:30px; padding:40px 30px; width:90%; max-width:420px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15), inset 0 1px 0 white;
+  animation: floaty 3s ease-in-out infinite;
+}
+@keyframes floaty { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-12px) rotate(1deg); } }
+.card h1 { font-size:32px; line-height:1.2; margin-bottom:12px; }
+.card p { color:#444; font-size:16px; margin-bottom:25px; }
+.btn {
+  background: linear-gradient(135deg, #ff6b9d, #ff9a3d);
+  color:white; border:none; padding:16px 35px; font-size:20px; font-weight:bold;
+  border-radius:50px; cursor:pointer;
+  box-shadow: 0 10px 0 #d14a7a, 0 15px 25px rgba(0,0,0,0.2);
+  transition: transform 0.15s;
+}
+.btn:hover { transform: scale(1.05); }
+.btn:active { transform: translateY(6px) scale(0.98); box-shadow: 0 4px 0 #d14a7a; }
 
-  /* ===== REAL BUTTON - EXACTLY ON LET'S GO ===== */
-  .lets-go-btn {
-    position: absolute;
-    z-index: 10;
-    top: 44.5%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 330px;
-    height: 82px;
-    background: white;
-    color: #222;
-    border: none;
-    border-radius: 50px;
-    font-size: 30px;
-    font-weight: 800;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 -3px 0 rgba(0,0,0,0.1);
-  }
-  .lets-go-btn:hover { transform: translate(-50%, -50%) scale(1.05); background: #fff5ee; }
-  .lets-go-btn:active { transform: translate(-50%, -50%) scale(0.97); }
-
-  /* ===== FOOTER ===== */
-  .real-footer {
-    position: absolute; bottom: 10px; left: 0; right: 0;
-    z-index: 5; text-align: center;
-    color: white; font-size: 14px; line-height: 1.7;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-  }
-
-  @media (max-width: 500px) {
-    .lets-go-btn { width: 78%; height: 70px; font-size: 24px; top: 44%; }
-  }
+/* Footer */
+footer {
+  position:fixed; bottom:0; left:0; width:100%; z-index:20; text-align:center;
+  padding:12px 10px; font-size:14px; line-height:1.5; font-weight:bold;
+  background: rgba(255,255,255,0.45); backdrop-filter: blur(12px);
+  border-top:1px solid rgba(255,255,255,0.8);
+}
 </style>
 </head>
 <body>
 
+<div id="bubbles"></div>
+
 <div id="page">
-
-  <div class="bubbles">
-    <div class="bubble"><span>🦴</span></div>
-    <div class="bubble"><span>🐾</span></div>
-    <div class="bubble"><span>🐶</span></div>
-    <div class="bubble"><span>🐾</span></div>
+  <div class="card">
+    <h1>Welcome to Pets Shop 🛒🛍️🐶</h1>
+    <p>Find your new best friend - toys, food, love & care for your pets</p>
+    <button class="btn" onclick="goSignup()">Let's go 🛒</button>
   </div>
-
-  <!-- REAL VISIBLE BUTTON -->
-  <button class="lets-go-btn" onclick="goSignup()">Let's go 🛒🛍️</button>
-
-  <div class="real-footer">
-    📨 pets457@gmail.com<br>
-    ©️ 2025 petsshopworld<br>
-    Verified pets shop ✅
-  </div>
-
 </div>
 
-<script>
-  function goSignup() {
-    document.getElementById('page').classList.add('collapse');
-    setTimeout(function() {
-      window.location.href = 'signup.html';
-    }, 700);
-  }
-</script>
+<footer>
+  📨 pets457@gmail.com<br>
+  ©️ 2025 petsshopworld<br>
+  Shop with us 🛒🛍️
+</footer>
 
+<script>
+// Create bubbles
+const emojis = ['🦴','🐾','🐶','🦴','🐾','🐶'];
+const container = document.getElementById('bubbles');
+for(let i=0;i<22;i++){
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  const size = 35 + Math.random()*55;
+  b.style.width = size+'px';
+  b.style.height = size+'px';
+  b.style.left = Math.random()*100+'%';
+  b.style.fontSize = (size*0.45)+'px';
+  b.style.animationDuration = (6 + Math.random()*7)+'s';
+  b.style.animationDelay = (Math.random()*6)+'s';
+  b.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  container.appendChild(b);
+}
+
+function goSignup(){
+  document.getElementById('page').classList.add('collapse');
+  setTimeout(()=>{ window.location.href = 'signup.html'; }, 700);
+}
+</script>
 </body>
 </html>

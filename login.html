@@ -157,6 +157,7 @@ async function doLogin(){
   if(!d.success) return setMsg('li-msg', d.message||d.error||"Create account, details doesn't exist!!", false);
   setMsg('li-msg','Welcome back ♥️',true);
   if(d.token) localStorage.setItem('token', d.token);
+  localStorage.setItem('loggedIn', 'true');
   if(d.user) localStorage.setItem('loggedInUser', JSON.stringify(d.user));
   localStorage.setItem('userEmail', email);
   setTimeout(()=>{ window.location.href='/home.html'; },1200);
