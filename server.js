@@ -100,12 +100,10 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Type must be dog or cat' });
   }
   if (!query) return res.status(400).json({ error: 'Search query is required' });
-
   const apiKey = type === 'dog' ? DOG_API_KEY : CAT_API_KEY;
   if (!apiKey) {
     return res.status(503).json({ error: `${type.toUpperCase()}_API_KEY is not configured` });
   }
-
   const apiBase = type === 'dog' ? 'https://api.thedogapi.com/v1' : 'https://api.thecatapi.com/v1';
   try {
     const breedResponse = await fetch(
@@ -113,12 +111,10 @@ app.get('/api/search', async (req, res) => {
       { headers: { 'x-api-key': apiKey } }
     );
     if (!breedResponse.ok) throw new Error(`Breed search returned ${breedResponse.status}`);
-
     const breeds = await breedResponse.json();
     if (!Array.isArray(breeds) || breeds.length === 0) {
       return res.json({ error: 'No pet found' });
     }
-
     const breed = breeds[0];
     const imageResponse = await fetch(
       `${apiBase}/images/search?breed_ids=${encodeURIComponent(breed.id)}&limit=4`,
@@ -129,7 +125,6 @@ app.get('/api/search', async (req, res) => {
     const images = Array.isArray(imageResults)
       ? imageResults.map(image => image.url).filter(url => typeof url === 'string').slice(0, 4)
       : [];
-
     const pet = {
       name: breed.name,
       temperament: breed.temperament || '',
@@ -140,7 +135,6 @@ app.get('/api/search', async (req, res) => {
     };
     if (type === 'dog') pet.weight = breed.weight?.metric ? `${breed.weight.metric} kg` : '';
     else pet.description = breed.description || '';
-
     return res.json(pet);
   } catch (error) {
     console.error(`${type} search failed:`, error.message);
@@ -190,6 +184,12 @@ app.get('/api/parrots/search', async (req, res) => {
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PORT = process.env.PORT || 3000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// FIX 1 - transporter was missing, now added
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+});
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -276,15 +276,11 @@ async function sendVerificationCode(email, code) {
     throw error;
   }
   try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-    });
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Verify your Pets account',
-      text: `Your verification code is: ${code}. It expires in 10 minutes. If you did not sign up, ignore this.`
+      text: `Your verification code is: ${code}. It expires in 1 minute. If you did not sign up, ignore this.`
     });
   } catch (cause) {
     const error = new Error('Verification email delivery failed');
@@ -302,7 +298,7 @@ async function issueVerificationCode(userId, email) {
     await client.query(
       `UPDATE users
        SET verification_code_hash=$1,
-           verification_code_expires_at=NOW() + INTERVAL '10 minutes',
+           verification_code_expires_at=NOW() + INTERVAL '1 minute',
            verification_attempts=0
        WHERE id=$2`,
       [hashVerificationCode(code), userId]
@@ -350,15 +346,11 @@ async function sendPasswordResetLink(email, token) {
   const baseUrl = process.env.APP_URL || `http://localhost:${PORT}`;
   const resetUrl = new URL('/reset-password', baseUrl);
   resetUrl.searchParams.set('token', token);
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-  });
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: email,
     subject: 'Reset your Pets password',
-    text: `Use this link to reset your password. It expires in 15 minutes:\n\n${resetUrl.toString()}\n\nIf you did not request this, ignore this email.`
+    text: `Use this link to reset your password. It expires in 1 minute:\n\n${resetUrl.toString()}\n\nIf you did not request this, ignore this email.`
   });
 }
 
@@ -375,7 +367,6 @@ app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
   if (confirmPassword !== undefined && password !== confirmPassword) {
     return res.status(400).json({ success: false, error: 'Passwords do not match' });
   }
-
   let client;
   try {
     await ensureUsersTable();
@@ -387,7 +378,7 @@ app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
       `INSERT INTO users(
          name,email,password_hash,verified,verification_code_hash,
          verification_code_expires_at,verification_attempts
-       ) VALUES($1,$2,$3,FALSE,$4,NOW() + INTERVAL '10 minutes',0)
+       ) VALUES($1,$2,$3,FALSE,$4,NOW() + INTERVAL '1 minute',0)
        ON CONFLICT(email) DO UPDATE SET
          name=EXCLUDED.name,password_hash=EXCLUDED.password_hash,verified=FALSE,
          verification_code_hash=EXCLUDED.verification_code_hash,
@@ -423,7 +414,6 @@ app.post('/api/auth/verify', async (req, res) => {
   const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
   if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
   if (!/^\d{6}$/.test(code)) return res.status(400).json({ success: false, error: 'Enter the 6-digit verification code' });
-
   let client;
   try {
     await ensureUsersTable();
@@ -442,7 +432,7 @@ app.post('/api/auth/verify', async (req, res) => {
     const user = result.rows[0];
     if (user.verified) {
       await client.query('COMMIT');
-      return res.json({ success: true, message: 'Account is already verified.' });
+      return res.json({ success: true, message: 'Account created successfully ✅' });
     }
     if (!user.verification_code_expires_at || new Date(user.verification_code_expires_at) <= new Date()) {
       await client.query('ROLLBACK');
@@ -463,7 +453,7 @@ app.post('/api/auth/verify', async (req, res) => {
       [user.id]
     );
     await client.query('COMMIT');
-    return res.json({ success: true });
+    return res.json({ success: true, message: 'Account created successfully ✅' });
   } catch (error) {
     if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Verification rollback error:', rollbackError.message));
     console.error('Email verification error:', error.message);
@@ -508,29 +498,27 @@ app.post(['/api/auth/forgot-password', '/api/forgot-password'], async (req, res)
       [email]
     );
     if (!result.rows.length) {
-  return res.status(404).json({ success: false, error: "Account doesn't exist" });
-}
-   // NEW: 6-digit code, not a link
-const code = String(Math.floor(100000 + Math.random() * 900000));
-const codeHash = createHash('sha256').update(code).digest('hex');
-await pool.query(
-  `UPDATE users SET reset_token=$1, reset_expires=NOW() + INTERVAL '10 minutes' WHERE id=$2`,
-  [codeHash, result.rows[0].id]
-);
-try {
-  // Send the CODE via EMAIL_USER / EMAIL_PASS
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Pets - Your reset code',
-    text: `Your reset code is ${code}. It expires in 10 minutes.`
-  });
-} catch (error) {
- await pool.query(`UPDATE users SET reset_token=NULL, reset_expires=NULL WHERE id=$1`, [result.rows[0].id]);
-  console.error('Password reset email error:', error.message);
-  return res.status(502).json({ success: false, error: 'Could not send code' });
-}
-return res.json({ success: true, message: 'Check your email for the verification code' });
+      return res.status(404).json({ success: false, error: 'No account found' });
+    }
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = createHash('sha256').update(code).digest('hex');
+    await pool.query(
+      `UPDATE users SET reset_token=$1, reset_expires=NOW() + INTERVAL '1 minute' WHERE id=$2`,
+      [codeHash, result.rows[0].id]
+    );
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Pets - Your reset code',
+        text: `Your reset code is ${code}. It expires in 1 minute.`
+      });
+    } catch (error) {
+      await pool.query(`UPDATE users SET reset_token=NULL, reset_expires=NULL WHERE id=$1`, [result.rows[0].id]);
+      console.error('Password reset email error:', error.message);
+      return res.status(502).json({ success: false, error: 'Could not send code' });
+    }
+    return res.json({ success: true, message: 'Check your email for the verification code' });
   } catch (error) {
     console.error('Forgot password error:', error.message);
     const unavailable = isDatabaseUnavailable(error);
@@ -538,42 +526,53 @@ return res.json({ success: true, message: 'Check your email for the verification
   }
 });
 
+// VERIFY RESET CODE - 6-digit code
+app.post('/api/auth/verify-reset', async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const code = String(req.body?.code || '').trim();
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ success: false, error: 'Enter the 6-digit code' });
+  try {
+    await ensureUsersTable();
+    const r = await pool.query('SELECT id, reset_token, reset_expires FROM users WHERE email=$1', [email]);
+    if (!r.rows.length) return res.status(404).json({ success: false, error: 'No account found' });
+    const user = r.rows[0];
+    if (!user.reset_token || new Date(user.reset_expires) <= new Date()) return res.status(400).json({ success: false, error: 'Code expired, request again' });
+    const codeHash = createHash('sha256').update(code).digest('hex');
+    if (codeHash !== user.reset_token) return res.status(400).json({ success: false, error: 'Wrong code' });
+    return res.json({ success: true, message: 'Verified' });
+  } catch (e) { return res.status(500).json({ success: false, error: 'Verification failed' }); }
+});
+
+// RESET PASSWORD - 6-digit code + new password, erases old
 app.post(['/api/auth/reset-password', '/api/reset-password'], async (req, res) => {
-  const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
-  const password = req.body?.newPassword;
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const code = String(req.body?.code || req.body?.token || '').trim();
+  const password = req.body?.newPassword || req.body?.password;
   const confirmPassword = req.body?.confirmPassword;
-  if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).json({ success: false, error: 'Reset link is invalid or expired' });
+  if (!/^\d{6}$/.test(code)) return res.status(400).json({ success: false, error: 'Enter the 6-digit code' });
   if (typeof password !== 'string' || password.length < 6) {
     return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
   }
   if (confirmPassword !== undefined && (typeof confirmPassword !== 'string' || password !== confirmPassword)) {
     return res.status(400).json({ success: false, error: 'Passwords do not match' });
   }
-  let client;
   try {
     await ensureUsersTable();
     const passwordHash = await bcrypt.hash(password, 10);
-    const tokenHash = createHash('sha256').update(token).digest('hex');
-    client = await pool.connect();
-    await client.query('BEGIN');
-    const updated = await client.query(
+    const codeHash = createHash('sha256').update(code).digest('hex');
+    const updated = await pool.query(
       `UPDATE users SET password_hash=$1,reset_token=NULL,reset_expires=NULL
-       WHERE reset_token=$2 AND reset_expires>NOW() AND verified=TRUE RETURNING id`,
-      [passwordHash, tokenHash]
+       WHERE email=$2 AND reset_token=$3 AND reset_expires>NOW() AND verified=TRUE RETURNING id`,
+      [passwordHash, email, codeHash]
     );
     if (!updated.rows.length) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ success: false, error: 'Reset link is invalid or expired' });
+      return res.status(400).json({ success: false, error: 'Code is invalid or expired' });
     }
-    await client.query('COMMIT');
-    return res.json({ success: true, message: 'Password updated' });
+    return res.json({ success: true, message: 'Password changed, please login' });
   } catch (error) {
-    if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Password reset rollback error:', rollbackError.message));
     console.error('Password reset error:', error.message);
     const unavailable = isDatabaseUnavailable(error);
     return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Could not reset the password' });
-  } finally {
-    if (client) client.release();
   }
 });
 
@@ -591,10 +590,10 @@ app.post(['/api/auth/login', '/api/login'], async (req, res) => {
       'SELECT id,name,email,password_hash,verified,wallet_balance FROM users WHERE email=$1',
       [email]
     );
-    if (!result.rows.length) return res.status(401).json({ success: false, message: 'No account? Create one' });
+    if (!result.rows.length) return res.status(401).json({ success: false, message: "Create account, details doesn't exist!!" });
     const user = result.rows[0];
     if (!await bcrypt.compare(password, user.password_hash)) {
-      return res.status(401).json({ success: false, message: 'Wrong password, try again' });
+      return res.status(401).json({ success: false, message: "Create account, details doesn't exist!!" });
     }
     if (!user.verified) {
       return res.status(403).json({
@@ -604,6 +603,7 @@ app.post(['/api/auth/login', '/api/login'], async (req, res) => {
     }
     return res.json({
       success: true,
+      message: 'Welcome back ♥️',
       token: createToken(user.id),
       user: { id: user.id, name: user.name, email: user.email, balance: Number(user.wallet_balance || 0) }
     });
@@ -618,315 +618,6 @@ app.get('/reset-password', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Legacy auth handlers removed; active handlers above share the users schema.
-/*
-app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
-  const { name, email, password } = req.body || {};
-  const cleanName = typeof name === 'string' ? name.trim() : '';
-  const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-  if (!cleanName) return res.status(400).json({ success: false, message: 'Please enter your name' });
-  if (!EMAIL_PATTERN.test(cleanEmail)) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
-  }
-  if (typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-  }
-  let client;
-  try {
-    await ensureUsersTable();
-    const existing = await pool.query(
-      'SELECT id,verified FROM users WHERE email=$1',
-      [cleanEmail]
-    );
-    if (existing.rows.length && existing.rows[0].verified) {
-      return res.status(409).json({
-        success: false,
-        error: 'Account already exists, please log in',
-        message: 'Account already exists, please log in'
-      });
-    }
-
-    if (existing.rows.length) {
-      await issueVerificationCode(existing.rows[0].id, cleanEmail);
-    } else {
-      const passwordHash = await bcrypt.hash(password, 10);
-      const code = createVerificationCode();
-      client = await pool.connect();
-      await client.query('BEGIN');
-      const result = await client.query(
-        `INSERT INTO users(
-           name,email,password_hash,verified,verification_code_hash,
-           verification_code_expires_at,verification_attempts,wallet_balance
-         )
-         VALUES($1,$2,$3,FALSE,$4,NOW() + INTERVAL '10 minutes',0,0)
-         ON CONFLICT(email) DO NOTHING
-         RETURNING id`,
-        [cleanName, cleanEmail, passwordHash, hashVerificationCode(code)]
-      );
-      if (!result.rows.length) {
-        await client.query('ROLLBACK');
-        return res.status(409).json({
-          success: false,
-          error: 'Account already exists, please log in',
-          message: 'Account already exists, please log in'
-        });
-      }
-      await sendVerificationCode(cleanEmail, code);
-      await client.query('COMMIT');
-    }
-
-    return res.status(existing.rows.length ? 200 : 201).json({
-      success: true,
-      needsVerification: true,
-      message: 'Verification code sent to your email',
-      email: cleanEmail
-    });
-  } catch (error) {
-    if (client) {
-      await client.query('ROLLBACK').catch((rollbackError) => {
-        console.error('Signup rollback error:', rollbackError.message);
-      });
-    }
-    if (error.code === '23505') {
-      return res.status(409).json({
-        success: false,
-        error: 'Account already exists, please log in',
-        message: 'Account already exists, please log in'
-      });
-    }
-    if (error.isEmailDeliveryError) {
-      console.error('Signup email error:', error.cause?.message || error.message);
-      return res.status(502).json({
-        success: false,
-        error: 'Could not send verification email. Check email address and try again.',
-        message: 'Could not send verification email. Check email address and try again.'
-      });
-    }
-    if (error.code && !isDatabaseUnavailable(error) && !['23505'].includes(error.code)) {
-      console.error('Signup verification/database error:', error.message);
-    }
-    const unavailable = isDatabaseUnavailable(error);
-    return res.status(unavailable ? 503 : 500).json({
-      success: false,
-      error: unavailable ? 'Database unavailable' : 'Account creation failed',
-      message: unavailable ? 'Database unavailable' : 'Account creation failed'
-    });
-  }
-});
-
-app.post('/api/auth/verify', async (req, res) => {
-  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-  const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
-  if (!EMAIL_PATTERN.test(email)) {
-    return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
-  }
-  if (!/^\d{6}$/.test(code)) {
-    return res.status(400).json({ success: false, error: 'Enter the 6-digit verification code' });
-  }
-  try {
-    await ensureUsersTable();
-    const result = await pool.query(
-      `SELECT id,verified,verification_code_hash,
-              verification_code_expires_at,verification_attempts
-       FROM users WHERE email=$1`,
-      [email]
-    );
-    if (!result.rows.length) {
-      return res.status(404).json({ success: false, error: 'Account does not exist, please create account' });
-    }
-    const user = result.rows[0];
-    if (user.verified) {
-      return res.json({ success: true, message: 'Already verified, please log in' });
-    }
-    if (!user.verification_code_expires_at || new Date(user.verification_code_expires_at) <= new Date()) {
-      return res.status(400).json({ success: false, error: 'Code expired, please resend' });
-    }
-    if (user.verification_code_hash !== hashVerificationCode(code)) {
-      await pool.query(
-        'UPDATE users SET verification_attempts=verification_attempts+1 WHERE id=$1',
-        [user.id]
-      );
-      return res.status(400).json({ success: false, error: 'Wrong code, try again' });
-    }
-    await pool.query(
-      `UPDATE users
-       SET verified=TRUE,verification_code_hash=NULL,
-           verification_code_expires_at=NULL,verification_attempts=0
-       WHERE id=$1`,
-      [user.id]
-    );
-    return res.json({ success: true, message: 'Email verified! Please log in.' });
-  } catch (error) {
-    console.error('Email verification error:', error.message);
-    const unavailable = isDatabaseUnavailable(error);
-    return res.status(unavailable ? 503 : 500).json({
-      success: false,
-      error: unavailable ? 'Database unavailable' : 'Email verification failed'
-    });
-  }
-});
-
-app.post('/api/auth/resend-code', async (req, res) => {
-  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-  if (!EMAIL_PATTERN.test(email)) {
-    return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
-  }
-  try {
-    await ensureUsersTable();
-    const result = await pool.query(
-      'SELECT id,verified FROM users WHERE email=$1',
-      [email]
-    );
-    if (!result.rows.length) {
-      return res.status(404).json({ success: false, error: 'Account does not exist, please create account' });
-    }
-    if (result.rows[0].verified) {
-      return res.status(409).json({ success: false, error: 'Email is already verified, please log in' });
-    }
-    await issueVerificationCode(result.rows[0].id, email);
-    return res.json({ success: true, message: 'New code sent' });
-  } catch (error) {
-    console.error('Resend verification code error:', error.message);
-    const unavailable = isDatabaseUnavailable(error);
-    return res.status(unavailable ? 503 : 502).json({
-      success: false,
-      error: unavailable
-        ? 'Database unavailable'
-        : 'Could not send verification email. Check email address and try again.'
-    });
-  }
-});
-// ===== FORGOT PASSWORD - START =====
-async function ensurePasswordResetTable() {
-  await pool.query(`CREATE TABLE IF NOT EXISTS password_reset_codes (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    code VARCHAR(10) NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
-    used BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT NOW()
-  )`);
-}
-async function sendResetCodeEmail(email, code) {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-  });
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Reset your Pets password',
-    text: `Your password reset code is: ${code}. It expires in 15 minutes. If you did not request this, ignore this email.`
-  });
-}
-
-// 1. User asks for code
-app.post(['/api/auth/forgot-password', '/api/forgot-password'], async (req, res) => {
-  try {
-    const { email } = req.body || {};
-    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-    if (!cleanEmail) return res.status(400).json({ success: false, message: 'Please enter your email' });
-    await ensurePasswordResetTable();
-    const result = await pool.query('SELECT id, email FROM users WHERE email=$1', [cleanEmail]);
-    // If no account, tell user to create one
-    if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'No account found with this email. Please create one.' });
-const user = result.rows[0];
-    const code = createVerificationCode();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-    await pool.query('UPDATE password_reset_codes SET used=TRUE WHERE user_id=$1 AND used=FALSE', [user.id]);
-    await pool.query('INSERT INTO password_reset_codes (user_id, code, expires_at) VALUES ($1,$2,$3)', [user.id, code, expiresAt]);
-    await sendResetCodeEmail(user.email, code);
-    return res.json({ success: true, message: 'Reset code sent to your email' });
-  } catch (e) { console.error('Forgot password error:', e); return res.status(500).json({ success: false, message: 'Could not send reset code' }); }
-});
-
-// 2. User enters code + new password
-app.post(['/api/auth/reset-password', '/api/reset-password'], async (req, res) => {
-  try {
-    const { email, code, newPassword } = req.body || {};
-    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-    if (!cleanEmail || !code) return res.status(400).json({ success: false, message: 'Email and code are required' });
-    if (typeof newPassword !== 'string' || newPassword.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-    await ensurePasswordResetTable();
-    const userRes = await pool.query('SELECT id FROM users WHERE email=$1', [cleanEmail]);
-    if (userRes.rows.length === 0) return res.status(400).json({ success: false, message: 'Invalid code' });
-    const userId = userRes.rows[0].id;
-    const codeRes = await pool.query('SELECT * FROM password_reset_codes WHERE user_id=$1 AND code=$2 AND used=FALSE ORDER BY created_at DESC LIMIT 1', [userId, String(code).trim()]);
-    if (codeRes.rows.length === 0) return res.status(400).json({ success: false, message: 'Invalid code' });
-    if (new Date(codeRes.rows[0].expires_at) < new Date()) return res.status(400).json({ success: false, message: 'Code expired, request a new one' });
-    const hash = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, userId]);
-    await pool.query('UPDATE password_reset_codes SET used=TRUE WHERE id=$1', [codeRes.rows[0].id]);
-    return res.json({ success: true, message: 'Password reset successful, please login' });
-  } catch (e) { console.error('Reset password error:', e); return res.status(500).json({ success: false, message: 'Could not reset password' }); }
-});
-// ===== FORGOT PASSWORD - END =====
-app.post(['/api/auth/login', '/api/login'], async (req, res) => {
-  const { email, password } = req.body || {};
-  const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-  if (!EMAIL_PATTERN.test(cleanEmail)) {
-    return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
-  }
-  if (typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-  }
-  if (!process.env.JWT_SECRET) {
-    return res.status(503).json({ success: false, message: 'Account service is not configured' });
-  }
-
-  try {
-    await ensureUsersTable();
-    const result = await pool.query(
-      'SELECT id,name,email,password_hash,wallet_balance FROM users WHERE email=$1',
-      [cleanEmail]
-    );
-    if (result.rows.length === 0) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account does not exist, please create account'
-      });
-    }
-    const user = result.rows[0];
-    if (!await bcrypt.compare(password, user.password_hash)) {
-      return res.status(401).json({ success: false, message: 'Wrong password, try again' });
-    }
-    const verification = await pool.query(
-      'SELECT verified FROM users WHERE id=$1',
-      [user.id]
-    );
-    if (!verification.rows[0].verified) {
-      try {
-        await issueVerificationCode(user.id, user.email);
-      } catch (emailError) {
-        console.error('Login verification email error:', emailError.cause?.message || emailError.message);
-        return res.status(502).json({
-          success: false,
-          error: 'Could not send verification email. Check email address and try again.'
-        });
-      }
-      return res.status(403).json({
-        success: false,
-        needsVerification: true,
-        error: 'Please verify your email first. Code sent to your email.'
-      });
-    }
-    return res.json({
-      success: true,
-      message: 'Welcome back!',
-      token: createToken(user.id),
-      user: { id: user.id, name: user.name, email: user.email, balance: Number(user.wallet_balance) }
-    });
-  } catch (error) {
-    console.error('Login error:', error.message);
-    const unavailable = isDatabaseUnavailable(error);
-    return res.status(unavailable ? 503 : 500).json({
-      success: false,
-      message: unavailable ? 'Database unavailable' : 'Login failed'
-    });
-  }
-});
-
-*/
 app.post('/api/wallet/verify', requireLogin, async (req, res) => {
   const reference = typeof req.body?.reference === 'string' ? req.body.reference.trim() : '';
   if (!reference) {
@@ -935,7 +626,6 @@ app.post('/api/wallet/verify', requireLogin, async (req, res) => {
   if (!PAYSTACK_SECRET_KEY) {
     return res.status(503).json({ success: false, message: 'Payment service is not configured' });
   }
-
   let client;
   try {
     await ensureUsersTable();
@@ -948,7 +638,6 @@ app.post('/api/wallet/verify', requireLogin, async (req, res) => {
         !Number.isSafeInteger(transaction.amount) || transaction.amount < 1) {
       return res.status(400).json({ success: false, message: 'Payment could not be verified in USD' });
     }
-
     client = await pool.connect();
     await client.query('BEGIN');
     const userResult = await client.query(
@@ -963,7 +652,6 @@ app.post('/api/wallet/verify', requireLogin, async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(400).json({ success: false, message: 'Payment email does not match your account' });
     }
-
     const amountUsd = (transaction.amount / 100).toFixed(2);
     const inserted = await client.query(
       `INSERT INTO wallet_transactions(user_id,reference,amount_usd)

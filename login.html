@@ -1,401 +1,219 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#111111">
-  <title>Login - Pets</title>
-  <script>
-    if (localStorage.getItem("loggedIn") === "true") {
-      window.location.replace("home.html");
-    }
-  </script>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
-      overflow: hidden;
-      touch-action: manipulation;
-      -webkit-text-size-adjust: 100%;
-      font-family: Arial, sans-serif;
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .landing-wrap,
-    #authContainer,
-    #loginBox {
-      width: 100%;
-      height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background:
-        linear-gradient(rgba(10, 10, 10, .62), rgba(10, 10, 10, .78)),
-        url("https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1600&q=80") center / cover no-repeat,
-        #111;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .landing-wrap::before {
-      content: "";
-      position: absolute;
-      inset: -12px;
-      background: inherit;
-      filter: blur(4px);
-      z-index: 0;
-    }
-
-    .login-card,
-    .auth-card,
-    .glass-card {
-      width: min(92vw, 400px);
-      max-height: 92dvh;
-      padding: 28px 20px 22px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      text-align: center;
-      color: white;
-      position: relative;
-      z-index: 2;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
-
-    .bubble {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      animation: float 6s ease-in-out infinite;
-      z-index: 1;
-    }
-
-    .bubble-one { width: 70px; height: 70px; left: 8%; top: 15%; }
-    .bubble-two { width: 50px; height: 50px; left: 85%; top: 20%; animation-delay: 1s; }
-    .bubble-three { width: 90px; height: 90px; left: 12%; bottom: 12%; animation-delay: 2s; }
-    .bubble-four { width: 45px; height: 45px; left: 78%; bottom: 18%; animation-delay: .5s; }
-    .bubble-five { width: 60px; height: 60px; left: 45%; top: 6%; animation-delay: 1.5s; }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-18px); }
-    }
-
-    .logo {
-      font-size: 38px;
-      margin-bottom: 4px;
-    }
-
-    .login-card h1,
-    .login-card h2 {
-      font-size: 28px;
-      margin: 8px 0 4px;
-    }
-
-    .login-card p {
-      font-size: 14px;
-      opacity: 0.9;
-      margin: 0 0 18px;
-    }
-
-    .login-card input {
-      width: 100%;
-      padding: 14px 16px;
-      margin: 0 0 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      font-size: 16px;
-      outline: none;
-    }
-
-    .login-card input::placeholder {
-      color: rgba(255, 255, 255, 0.85);
-    }
-
-    .login-card button[type="submit"],
-    #loginBtn,
-    .continue-btn {
-      width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 999px;
-      background: #00c853;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-
-    .login-card button.link {
-      width: auto;
-      padding: 8px 4px;
-      border: 0;
-      background: transparent;
-      color: #b9f6ca;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .foot {
-      font-size: 14px !important;
-      margin: 12px 0 0 !important;
-    }
-
-    .foot a {
-      color: #b9f6ca;
-      font-weight: bold;
-    }
-
-    #msg {
-      min-height: 0;
-      margin-top: 8px;
-      padding: 0;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
-    #msg:not(:empty) {
-      min-height: 20px;
-      padding: 8px;
-    }
-
-    #msg.ok { background: rgba(0, 200, 83, 0.35); }
-    #msg.err { background: rgba(239, 68, 68, 0.4); }
-
-    @media (max-height: 620px) {
-      .login-card,
-      .auth-card,
-      .glass-card {
-        padding-top: 20px;
-        padding-bottom: 16px;
-      }
-
-      .logo { font-size: 30px; }
-      .login-card h1,
-      .login-card h2 { font-size: 25px; margin-top: 4px; }
-      .login-card p { margin-bottom: 12px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pets Shop - Account</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0f0c29;background-image:url('pets-bg.jpg'),url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200');background-size:cover;background-position:center;position:relative}
+body::before{content:'';position:absolute;inset:0;background:rgba(15,12,41,.55);z-index:0}
+.bubbles{position:absolute;inset:0;overflow:hidden;z-index:1;pointer-events:none}
+.bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 32px rgba(0,0,0,.25),inset 0 0 20px rgba(255,255,255,.3);animation:float linear infinite}
+@keyframes float{0%{transform:translateY(110vh) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-20vh) rotate(360deg);opacity:0}}
+.card{position:relative;z-index:2;width:92%;max-width:420px;background:rgba(255,255,255,.15);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.4);border-radius:24px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.5);transform:perspective(1000px) rotateX(2deg);display:none}
+.card.active{display:block;animation:pop .4s ease}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.logo{font-size:48px;text-align:center;margin-bottom:6px}
+h2{text-align:center;color:#fff;font-size:26px;margin-bottom:6px;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+.sub{text-align:center;color:rgba(255,255,255,.85);font-size:13px;margin-bottom:18px}
+label{display:block;color:#fff;font-size:13px;font-weight:600;margin:12px 0 5px}
+input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.2);color:#fff;font-size:15px;outline:none}
+input::placeholder{color:rgba(255,255,255,.7)}
+input:focus{background:rgba(255,255,255,.3);border-color:#fff}
+.code-input{letter-spacing:8px;text-align:center;font-size:22px;font-weight:700}
+button{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b9d,#ff8e53);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:18px;box-shadow:0 8px 20px rgba(255,107,157,.4)}
+button:disabled{opacity:.6}
+.link{text-align:center;margin-top:16px;color:#fff;font-size:14px}
+.link a{color:#ffd166;font-weight:700;cursor:pointer;text-decoration:underline}
+.msg{text-align:center;font-size:14px;font-weight:700;margin-top:14px;min-height:20px}
+.msg.green{color:#00ff88}
+.msg.red{color:#ff4d4d;background:rgba(0,0,0,.3);padding:8px;border-radius:8px}
+.count{ text-align:center;color:#ffd166;font-weight:700;margin-top:10px;font-size:15px}
+.back{ text-align:center;margin-top:12px;color:rgba(255,255,255,.9);font-size:13px;cursor:pointer;text-decoration:underline}
+</style>
 </head>
 <body>
-  <main id="loginBox" class="landing-wrap">
-    <div class="bubble bubble-one" aria-hidden="true">🐾</div>
-    <div class="bubble bubble-two" aria-hidden="true">🐶</div>
-    <div class="bubble bubble-three" aria-hidden="true">🐱</div>
-    <div class="bubble bubble-four" aria-hidden="true">🐾</div>
-    <div class="bubble bubble-five" aria-hidden="true">🦴</div>
+<div class="bubbles" id="bubbles"></div>
 
-    <section class="login-card auth-card glass-card" aria-live="polite">
-      <div class="logo" aria-hidden="true">🐶🐱</div>
+<!-- 1 CREATE ACCOUNT -->
+<div class="card active" id="card-signup">
+<div class="logo">🐾</div><h2>Create Account</h2><p class="sub">Join Pets Shop today</p>
+<label>Full Name</label><input id="su-name" placeholder="Your name">
+<label>Email</label><input id="su-email" type="email" placeholder="you@email.com">
+<label>Password (6 digits)</label><input id="su-pass" type="password" placeholder="••••••" maxlength="6" inputmode="numeric">
+<button onclick="doSignup()">Create Account</button>
+<div class="msg" id="su-msg"></div>
+<div class="link">Already have account? <a onclick="show('card-login')">Login</a></div>
+</div>
 
-      <div id="step-login">
-        <h1>Welcome back</h1>
-        <p>Login to your Pets account</p>
-        <form onsubmit="event.preventDefault(); doLogin();">
-          <input id="email" type="email" placeholder="Email" autocomplete="email" required>
-          <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
-          <button id="loginBtn" class="continue-btn" type="submit">Continue</button>
-        </form>
-        <button class="link" type="button" onclick="showStep('step-forgot')">Forgot password?</button>
-        <p class="foot">No account? <a href="signup.html">Sign Up</a></p>
-      </div>
+<!-- 2 VERIFY SIGNUP CODE -->
+<div class="card" id="card-verify">
+<div class="logo">✉️</div><h2>Enter Verification Code</h2><p class="sub">We sent a 6-digit code to your email</p>
+<label>6-Digit Code</label><input id="v-code" class="code-input" placeholder="000000" maxlength="6" inputmode="numeric">
+<button onclick="doVerify()">Verify & Create Account</button>
+<div class="msg" id="v-msg"></div><div class="count" id="v-count"></div>
+<div class="back" onclick="show('card-signup')">← Back</div>
+</div>
 
-      <div id="step-forgot" class="hidden">
-        <h2>Reset password</h2>
-        <p>Enter your email to receive a code</p>
-        <form onsubmit="event.preventDefault(); sendResetCode();">
-          <input id="forgotEmail" type="email" placeholder="Email" autocomplete="email" required>
-          <button class="continue-btn" type="submit">Send code</button>
-        </form>
-        <button class="link" type="button" onclick="showStep('step-login')">Back to login</button>
-      </div>
+<!-- 3 LOGIN -->
+<div class="card" id="card-login">
+<div class="logo">🐶🐱</div><h2>Welcome Back</h2><p class="sub">Login to your Pets Shop account</p>
+<label>Email</label><input id="li-email" type="email" placeholder="you@email.com">
+<label>Password</label><input id="li-pass" type="password" placeholder="Your password">
+<button onclick="doLogin()">Login</button>
+<div class="msg" id="li-msg"></div>
+<div class="link"><a onclick="show('card-forgot')">Forgot Password?</a></div>
+<div class="link">No account? <a onclick="show('card-signup')">Create Account</a></div>
+</div>
 
-      <div id="step-code" class="hidden">
-        <h2>Enter code</h2>
-        <p>We sent a code to <b id="showEmail"></b></p>
-        <input id="resetCode" inputmode="numeric" maxlength="6" placeholder="6-digit code" aria-label="6-digit reset code">
-        <p>Enter the six digits to verify.</p>
-        <button class="link" type="button" onclick="showStep('step-forgot')">Wrong email?</button>
-      </div>
+<!-- 4 FORGOT - ENTER EMAIL -->
+<div class="card" id="card-forgot">
+<div class="logo">🔑</div><h2>Reset Password</h2><p class="sub">Enter your email to get a code</p>
+<label>Email</label><input id="fp-email" type="email" placeholder="you@email.com">
+<button onclick="doForgot()">Send Code</button>
+<div class="msg" id="fp-msg"></div>
+<div class="back" onclick="show('card-login')">← Back to Login</div>
+</div>
 
-      <div id="step-newpass" class="hidden">
-        <h2>New password</h2>
-        <p>Create a new password with at least 6 characters</p>
-        <form onsubmit="event.preventDefault(); doResetPassword();">
-          <input id="newPass" type="password" placeholder="New password" autocomplete="new-password" required>
-          <input id="confirmNewPass" type="password" placeholder="Confirm new password" autocomplete="new-password" required>
-          <button class="continue-btn" type="submit">Change password</button>
-        </form>
-        <button class="link" type="button" onclick="showStep('step-login')">Back to login</button>
-      </div>
+<!-- 5 VERIFY RESET CODE -->
+<div class="card" id="card-verify-reset">
+<div class="logo">🔐</div><h2>Enter 6-Digit Code</h2><p class="sub">Code sent to your email • Expires in 1 minute</p>
+<label>6-Digit Code</label><input id="vr-code" class="code-input" placeholder="000000" maxlength="6" inputmode="numeric">
+<button onclick="doVerifyReset()">Verify Code</button>
+<div class="msg" id="vr-msg"></div><div class="count" id="vr-count"></div>
+<div class="back" onclick="show('card-forgot')">← Back</div>
+</div>
 
-      <div id="msg" role="status"></div>
-    </section>
-  </main>
+<!-- 6 CHANGE PASSWORD -->
+<div class="card" id="card-change">
+<div class="logo">🔒</div><h2>Change Password</h2><p class="sub">Create a new password</p>
+<label>New Password</label><input id="cp-new" type="password" placeholder="New password (min 6)">
+<label>Confirm Password</label><input id="cp-confirm" type="password" placeholder="Confirm password">
+<button onclick="doChange()">Proceed</button>
+<div class="msg" id="cp-msg"></div>
+</div>
 
-  <script>
-    let forgotEmail = "";
-    const authSteps = ["step-login", "step-forgot", "step-code", "step-newpass"];
-
-    function showStep(id) {
-      authSteps.forEach((step) => document.getElementById(step).classList.add("hidden"));
-      document.getElementById(id).classList.remove("hidden");
-      setMsg("");
-    }
-
-    function setMsg(text, success) {
-      const message = document.getElementById("msg");
-      message.textContent = text;
-      message.className = success ? "ok" : (text ? "err" : "");
-    }
-
-    async function doLogin() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      if (!email || !password) {
-        setMsg("Fill email and password");
-        return;
-      }
-
-      setMsg("Checking...");
-      try {
-        const response = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.token || !data.user) {
-          setMsg(data.error || data.message || "Email or password is incorrect");
-          return;
-        }
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userEmail", data.user.email);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("loggedIn", "true");
-        window.location.href = "home.html";
-      } catch (error) {
-        setMsg("Cannot reach server");
-      }
-    }
-
-    async function sendResetCode() {
-      forgotEmail = document.getElementById("forgotEmail").value.trim();
-      if (!forgotEmail) {
-        setMsg("Enter email");
-        return;
-      }
-
-      setMsg("Sending code...");
-      try {
-        const response = await fetch("/api/auth/forgot-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          setMsg(data.error || "Account doesn't exist");
-          return;
-        }
-        document.getElementById("showEmail").textContent = forgotEmail;
-        document.getElementById("resetCode").value = "";
-        showStep("step-code");
-        setMsg("Check your email for the verification code", true);
-      } catch (error) {
-        setMsg("Cannot reach server");
-      }
-    }
-
-    const signupMessage = sessionStorage.getItem("signupMessage");
-    if (signupMessage) {
-      setMsg(signupMessage, true);
-      sessionStorage.removeItem("signupMessage");
-    }
-
-    document.getElementById("resetCode").addEventListener("input", async (event) => {
-      const input = event.target;
-      input.value = input.value.replace(/\D/g, "").slice(0, 6);
-      if (input.value.length !== 6) return;
-
-      setMsg("Verifying...");
-      try {
-        const response = await fetch("/api/auth/verify-reset-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail, code: input.value })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          setMsg(data.error || "Wrong or expired code");
-          input.value = "";
-          return;
-        }
-        setMsg("Code verified", true);
-        setTimeout(() => showStep("step-newpass"), 600);
-      } catch (error) {
-        setMsg("Cannot reach server");
-      }
-    });
-
-    async function doResetPassword() {
-      const newPassword = document.getElementById("newPass").value;
-      const confirmPassword = document.getElementById("confirmNewPass").value;
-      const code = document.getElementById("resetCode").value.trim();
-      if (newPassword.length < 6) {
-        setMsg("Password must be 6+ characters");
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        setMsg("Passwords do not match");
-        return;
-      }
-
-      setMsg("Saving...");
-      try {
-        const response = await fetch("/api/auth/reset-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail, code, newPassword })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          setMsg(data.error || "Wrong or expired code");
-          return;
-        }
-        setMsg("Password changed successfully", true);
-        setTimeout(() => showStep("step-login"), 1200);
-      } catch (error) {
-        setMsg("Cannot reach server");
-      }
-    }
-  </script>
+<script>
+let currentEmail = '';
+let timer = null;
+function show(id){
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function setMsg(id, text, ok){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'green' : 'red');
+  if(!text) el.className='msg';
+}
+function startCountdown(elId, onEnd){
+  clearInterval(timer);
+  let s = 60;
+  const el = document.getElementById(elId);
+  el.textContent = 'Code expires in: 0:' + (s<10?'0':'') + s;
+  timer = setInterval(()=>{
+    s--;
+    if(s<=0){ clearInterval(timer); el.textContent='Code expired - request a new one'; if(onEnd) onEnd(); return; }
+    el.textContent = 'Code expires in: 0:' + (s<10?'0':'') + s;
+  },1000);
+}
+async function post(url, body){
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json().catch(()=>({}));
+  return d;
+}
+// CREATE ACCOUNT
+async function doSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim().toLowerCase();
+  const password=document.getElementById('su-pass').value.trim();
+  if(!name||!email||!password) return setMsg('su-msg','Fill all fields',false);
+  if(password.length<6) return setMsg('su-msg','Password must be 6 digits',false);
+  currentEmail=email;
+  setMsg('su-msg','Sending code...',true);
+  const d=await post('/api/auth/signup',{name,email,password});
+  if(!d.success) return setMsg('su-msg', d.error||d.message||'Failed', false);
+  setMsg('su-msg','',true);
+  show('card-verify');
+  startCountdown('v-count');
+}
+// VERIFY SIGNUP
+async function doVerify(){
+  const code=document.getElementById('v-code').value.trim();
+  if(!/^\d{6}$/.test(code)) return setMsg('v-msg','Enter 6-digit code',false);
+  setMsg('v-msg','Verifying...',true);
+  const d=await post('/api/auth/verify',{email:currentEmail,code});
+  if(!d.success) return setMsg('v-msg', d.error||d.message||'Wrong code', false);
+  setMsg('v-msg','Account created successfully ✅',true);
+  setTimeout(()=>{ show('card-login'); document.getElementById('li-email').value=currentEmail; },1500);
+}
+// LOGIN
+async function doLogin(){
+  const email=document.getElementById('li-email').value.trim().toLowerCase();
+  const password=document.getElementById('li-pass').value.trim();
+  if(!email||!password) return setMsg('li-msg',"Create account, details doesn't exist!!",false);
+  const d=await post('/api/auth/login',{email,password});
+  if(!d.success) return setMsg('li-msg', d.message||d.error||"Create account, details doesn't exist!!", false);
+  setMsg('li-msg','Welcome back ♥️',true);
+  if(d.token) localStorage.setItem('token', d.token);
+  if(d.user) localStorage.setItem('loggedInUser', JSON.stringify(d.user));
+  localStorage.setItem('userEmail', email);
+  setTimeout(()=>{ window.location.href='/'; },1200);
+}
+// FORGOT
+async function doForgot(){
+  const email=document.getElementById('fp-email').value.trim().toLowerCase();
+  if(!email) return setMsg('fp-msg','Enter your email',false);
+  currentEmail=email;
+  setMsg('fp-msg','Checking account...',true);
+  const d=await post('/api/auth/forgot-password',{email});
+  if(!d.success) return setMsg('fp-msg', d.error||d.message||'No account found', false);
+  show('card-verify-reset');
+  startCountdown('vr-count');
+}
+// VERIFY RESET
+async function doVerifyReset(){
+  const code=document.getElementById('vr-code').value.trim();
+  if(!/^\d{6}$/.test(code)) return setMsg('vr-msg','Enter 6-digit code',false);
+  setMsg('vr-msg','Verifying...',true);
+  const d=await post('/api/auth/verify-reset',{email:currentEmail,code});
+  if(!d.success) return setMsg('vr-msg', d.error||d.message||'Wrong code', false);
+  // store code for change step
+  window._resetCode = code;
+  setMsg('vr-msg','Verified ✅',true);
+  setTimeout(()=>show('card-change'),800);
+}
+// CHANGE
+async function doChange(){
+  const newPassword=document.getElementById('cp-new').value.trim();
+  const confirmPassword=document.getElementById('cp-confirm').value.trim();
+  if(newPassword!==confirmPassword) return setMsg('cp-msg','Passwords do not match',false);
+  if(newPassword.length<6) return setMsg('cp-msg','Password must be at least 6 characters',false);
+  const d=await post('/api/auth/reset-password',{email:currentEmail, code:window._resetCode, newPassword, confirmPassword});
+  if(!d.success) return setMsg('cp-msg', d.error||d.message||'Failed', false);
+  setMsg('cp-msg','Password changed ✅ Going to login...',true);
+  setTimeout(()=>{ show('card-login'); document.getElementById('li-email').value=currentEmail; },1200);
+}
+// BUBBLES with paws + bones
+const icons=['🐾','🦴','🐾','🦴','🐾','🦴','🐾','🦴'];
+const box=document.getElementById('bubbles');
+for(let i=0;i<16;i++){
+  const b=document.createElement('div');
+  b.className='bubble';
+  const size=40+Math.random()*60;
+  b.style.width=size+'px'; b.style.height=size+'px';
+  b.style.left=Math.random()*95+'%';
+  b.style.fontSize=(size*0.5)+'px';
+  b.style.animationDuration=(10+Math.random()*12)+'s';
+  b.style.animationDelay=(Math.random()*10)+'s';
+  b.textContent=icons[i%icons.length];
+  box.appendChild(b);
+}
+// If opened with ?mode=login etc
+const p=new URLSearchParams(location.search);
+if(p.get('mode')==='login') show('card-login');
+if(p.get('mode')==='signup') show('card-signup');
+</script>
 </body>
 </html>

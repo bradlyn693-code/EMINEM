@@ -133,6 +133,7 @@ body { margin: 0; font-family: Arial, sans-serif; background: #fff7f0; color: #2
     <button type="button" id="countryBtn" style="padding:8px;width:150px;text-align:left;background:white;border:1px solid #ccc;cursor:pointer;display:flex;align-items:center;gap:6px;">
       <img id="countryBtnFlag" src="https://flagcdn.com/w20/gb.png" style="width:20px;"> <span id="countryBtnText">+44 UK</span> ▼
     </button>
+    <select id="country" hidden></select>
     <div id="countryDrop" style="display:none;position:absolute;top:100%;left:0;width:260px;background:white;border:1px solid #ccc;z-index:999;box-shadow:0 4px 10px rgba(0,0,0,0.2);">
       <input id="countrySearch" placeholder="🔍 Search country... USA, UK, Kenya" style="width:100%;padding:10px;box-sizing:border-box;border:none;border-bottom:1px solid #eee;outline:none;">
       <div id="countryList" style="max-height:250px;overflow-y:auto;"></div>
@@ -154,5 +155,67 @@ body { margin: 0; font-family: Arial, sans-serif; background: #fff7f0; color: #2
 <button onclick="openCart()" style="position:fixed;top:15px;right:15px;z-index:300;background:#111;color:#fff;padding:10px 14px;border-radius:8px">🛒 Cart (<span id="cartCount">0</span>)</button>
 </div>
 <script src="script.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const countrySelect = document.getElementById("country");
+  const countryButton = document.getElementById("countryBtn");
+  const countryDrop = document.getElementById("countryDrop");
+  const countrySearch = document.getElementById("countrySearch");
+  const countryList = document.getElementById("countryList");
+  const countryButtonText = document.getElementById("countryBtnText");
+  const countryButtonFlag = document.getElementById("countryBtnFlag");
+  const phoneCode = document.getElementById("phoneCode");
+  const selectedCountry = document.getElementById("selectedCountry");
+  const regionCodes = "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW".split(" ");
+  const displayNames = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
+  const flagCodes = new Map(displayNames ? regionCodes.map(code => [displayNames.of(code), code.toLowerCase()]) : []);
+  Object.entries({ USA: "us", "Czech Republic": "cz", "Russia": "ru", "South Korea": "kr", "North Korea": "kp", "Moldova": "md", "Bolivia": "bo", "Tanzania": "tz", "Vatican City": "va", "Macao": "mo", "Curacao": "cw", "Reunion": "re", "Micronesia": "fm", "Kosovo": "xk" }).forEach(([name, code]) => flagCodes.set(name, code));
+
+  function renderCountries(query) {
+    const filter = query.trim().toLowerCase();
+    countryList.replaceChildren();
+    Array.from(countrySelect.options)
+      .filter(option => option.textContent.toLowerCase().includes(filter))
+      .forEach(option => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.textContent = option.textContent;
+        item.style.cssText = "display:block;width:100%;padding:8px;text-align:left;border:0;background:white;cursor:pointer;";
+        item.addEventListener("click", () => selectCountry(option));
+        countryList.appendChild(item);
+      });
+  }
+
+  function selectCountry(option) {
+    countrySelect.value = option.value;
+    countrySelect.dispatchEvent(new Event("change"));
+    selectedCountry.value = option.value;
+    countryButtonText.textContent = `${phoneCode.value} ${option.value === "United Kingdom" ? "UK" : option.value}`;
+    const flagCode = flagCodes.get(option.value);
+    countryButtonFlag.style.visibility = flagCode ? "visible" : "hidden";
+    if (flagCode) countryButtonFlag.src = `https://flagcdn.com/w20/${flagCode}.png`;
+    countryDrop.style.display = "none";
+    countrySearch.value = "";
+  }
+
+  if (!countrySelect.options.length) throw new Error("Country options were not loaded.");
+  if (!countrySelect.value) countrySelect.value = "United Kingdom";
+  renderCountries("");
+  selectCountry(countrySelect.options[countrySelect.selectedIndex]);
+
+  countryButton.addEventListener("click", () => {
+    const isOpen = countryDrop.style.display === "block";
+    countryDrop.style.display = isOpen ? "none" : "block";
+    if (!isOpen) {
+      renderCountries(countrySearch.value);
+      countrySearch.focus();
+    }
+  });
+  countrySearch.addEventListener("input", () => renderCountries(countrySearch.value));
+  document.addEventListener("click", event => {
+    if (!document.getElementById("countryPicker").contains(event.target)) countryDrop.style.display = "none";
+  });
+});
+</script>
 </body>
 </html>
