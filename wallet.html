@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet</title><script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+  body{margin:0;font-family:Arial;background:#f4f6fb;display:flex;justify-content:center;padding:20px}
+  .wallet-card{
+    width:100%;max-width:430px;background:linear-gradient(145deg,#ffffff,#eef2ff);
+    border-radius:22px;padding:26px;text-align:center;
+    box-shadow:0 25px 45px rgba(0,0,0,0.18), inset 0 1px 0 #fff;
+    border:1px solid #dbe2ff;
+  }
+  .wallet-card h2{margin:0;font-size:28px}
+  .balance{font-size:44px;font-weight:bold;margin:15px 0 2px}
+  .input-3d{
+    width:100%;padding:15px;margin:10px 0;border-radius:13px;border:1px solid #ccc;
+    font-size:16px;box-sizing:border-box;background:#fff;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.08), 0 5px 12px rgba(0,0,0,0.08);
+    outline:none;
+  }
+  .input-3d:focus{border-color:#6c5ce7;box-shadow:0 0 0 3px rgba(108,92,231,0.2)}
+  .topup-btn{
+    width:100%;padding:16px;margin-top:12px;border:none;border-radius:14px;
+    background:#6c5ce7;color:#fff;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 8px 20px rgba(108,92,231,0.4);
+  }
+  .cards{margin-top:14px;color:#000;font-weight:bold;font-size:14px}
+  .back{margin-top:18px;display:block;color:#6c5ce7;text-decoration:none}
+  #msg{margin-top:10px;color:red}
+</style>
+</head>
+<body>
+<div class="wallet-card">
+  <h2>Wallet 🏦</h2>
+  <div class="balance" id="balance">$0.00</div>
+  <small>Virtual Balance - Use to Buy Pets</small>
+  <input class="input-3d" id="walletName" type="text" placeholder="Enter your Full Name">
+  <input class="input-3d" id="walletEmail" type="email" placeholder="Enter your Email">
+  <input class="input-3d" id="walletAmount" type="number" placeholder="Enter Amount ($) e.g. 10">
+  <button class="topup-btn" onclick="payWithPaystack()">Top up 💳</button>
+  <div class="cards">* Visa &nbsp; * Mastercard &nbsp; * American Express &nbsp; * Apple Pay</div>
+  <div id="msg"></div>
+  <a class="back" href="home.html">← Back to Home</a>
+</div>
+<script>
+  let balance = parseFloat(localStorage.getItem('walletBalance') || 0);
+  function showBalance(){ document.getElementById('balance').innerText = '$' + balance.toFixed(2); }
+  showBalance();
+  document.getElementById('walletEmail').value = localStorage.getItem('userEmail') || '';
+  document.getElementById('walletName').value = localStorage.getItem('userName') || '';
+  function payWithPaystack(){
+    const name = document.getElementById('walletName').value.trim();
+    const email = document.getElementById('walletEmail').value.trim();
+    const amount = parseFloat(document.getElementById('walletAmount').value);
+    if(!name) return document.getElementById('msg').innerText = 'Please enter your name';
+    if(!email) return document.getElementById('msg').innerText = 'Please enter your email';
+    if(!amount || amount <= 0) return document.getElementById('msg').innerText = 'Please enter valid amount';
+    if(typeof PaystackPop === 'undefined') return document.getElementById('msg').innerText = 'Paystack failed to load. Refresh page.';
+    localStorage.setItem('userName', name);
+    localStorage.setItem('userEmail', email);
+    let handler = PaystackPop.setup({
+      key: 'pk_live_746fa 4cd031z58a5869zb35c6f73e79ca330c873',
+      email: email,
+      amount: amount * 100,
+      currency: 'USD',
+      ref: 'WALLET-' + Date.now(),
+      callback: function(response){
+        balance += amount;
+        localStorage.setItem('walletBalance', balance);
+        showBalance();
+        alert('Success! Virtual Balance: $' + balance.toFixed(2));
+        document.getElementById('walletAmount').value = '';
+      },
+      onClose: function(){ document.getElementById('msg').innerText = 'Payment window closed'; }
+    });
+    handler.openIframe();
+  }
+</script>
+</body>
+</html>
