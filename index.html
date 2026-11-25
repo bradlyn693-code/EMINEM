@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pets Shop 🐶</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6b00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pets World">
+<link rel="apple-touch-icon" href="icon.png">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, sans-serif; }
 body {
@@ -100,6 +106,33 @@ function goSignup(){
   document.getElementById('page').classList.add('collapse');
   setTimeout(()=>{ window.location.href = 'signup.html'; }, 700);
 }
+</script>
+<!-- INSTALL APP POPUP -->
+<div id="installPopup" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:white;border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);align-items:center;gap:12px;">
+  <img src="icon.png" style="width:56px;height:56px;border-radius:14px;object-fit:cover;">
+  <div style="flex:1;text-align:left;">
+    <b style="font-size:16px;color:#222;">Install Pets World App 🐾</b>
+    <div style="font-size:13px;color:#666;">Install for faster access, works like a real app!</div>
+  </div>
+  <button id="installBtn" style="background:#ff6b00;color:white;border:none;padding:10px 16px;border-radius:25px;font-weight:bold;cursor:pointer;white-space:nowrap;">Install</button>
+  <button onclick="document.getElementById('installPopup').style.display='none';localStorage.setItem('installDismissed','1')" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+</div>
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); deferredPrompt = e;
+  if (!window.matchMedia('(display-mode: standalone)').matches && localStorage.getItem('installDismissed') !== '1') {
+    setTimeout(() => { document.getElementById('installPopup').style.display = 'flex'; }, 3000);
+  }
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return; deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice;
+  if (choice.outcome === 'accepted') { document.getElementById('installPopup').style.display = 'none'; }
+  deferredPrompt = null;
+});
+window.addEventListener('appinstalled', () => { document.getElementById('installPopup').style.display = 'none'; });
 </script>
 </body>
 </html>
