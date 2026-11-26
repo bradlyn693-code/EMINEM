@@ -38,13 +38,13 @@ body { margin: 0; font-family: Arial, sans-serif; background: #fff7f0; color: #2
 <h1 class="welcome-3d">Welcome to pets world 🐶🦜😸</h1>
 
   <!-- Toggle Button -->
-  <button id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false">☰</button>
+  <button id="menuBtn" type="button" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidePanel()">☰</button>
   <button id="installAppBtn" type="button" hidden>Install App</button>
 
   <!-- Side Panel -->
-  <div id="panelOverlay" aria-hidden="true"></div>
+  <div id="panelOverlay" aria-hidden="true" onclick="closeSidePanel()"></div>
    <div id="sidebar">
-  <button id="closeSidebarBtn" type="button" aria-label="Close side panel">×</button>
+  <button id="closeSidebarBtn" type="button" aria-label="Close side panel" onclick="closeSidePanel()">×</button>
   <h2>🐾 Pet Shop</h2>
   <a href="#" onclick="goHome()">🏠 Home</a>
   <a href="#" onclick="showPets('dog')">🐶 Dogs</a>

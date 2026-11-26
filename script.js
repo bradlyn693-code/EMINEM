@@ -1,11 +1,11 @@
-const CAT_API_KEY = "live_PaA0XuGjhvPCepwdAIHk8LXkDJHjUT6tEjfNzOZTufFWUOeaLMQd9CXkVhTx2gVO";
+const CAT_API_KEY = "YOUR_NEW_KEY_HERE"; // <-- PASTE NEW ROTATED KEY HERE
 function toggleSidePanel(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('panelOverlay');
   const menuButton = document.getElementById('menuBtn');
-  if(!window.matchMedia('(max-width: 1024px)').matches) return;
+  if(!sidebar) return;
   const isOpen = sidebar.classList.toggle('open');
-  if(overlay) overlay.classList.toggle('active', isOpen);
+  if(overlay) overlay.classList.toggle('show', isOpen);
   if(menuButton) menuButton.setAttribute('aria-expanded', String(isOpen));
 }
 function toggleMenu(){ toggleSidePanel(); }
@@ -14,8 +14,9 @@ function closeSidePanel(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('panelOverlay');
   const menuButton = document.getElementById('menuBtn');
+  if(!sidebar) return;
   sidebar.classList.remove('open');
-  if(overlay) overlay.classList.remove('active');
+  if(overlay) overlay.classList.remove('show');
   if(menuButton) menuButton.setAttribute('aria-expanded', 'false');
 }
 
@@ -79,7 +80,6 @@ let dogList = [
   {breed:"Afghan Hound", api:"hound/afghan", desc:"Long silky hair, elegant.", price: 1100},
   {breed:"Greyhound", api:"greyhound/italian", desc:"Fastest dog, slim.", price: 1950},
   {breed:"Whippet", api:"whippet", desc:"Small greyhound.", price: 1300},
-  
   {breed:"Bull Terrier", api:"terrier/bull", desc:"Egg head, playful.", price: 1700},
   {breed:"Fox Terrier", api:"terrier/fox", desc:"Wiry, energetic.", price: 1050},
   {breed:"Jack Russell", api:"terrier/russell", desc:"Tiny, hyper, smart.", price: 780},
@@ -93,7 +93,7 @@ let dogList = [
   {breed:"Basenji", api:"basenji", desc:"Doesn't bark, yodels.", price: 1920},
   {breed:"Weimaraner", api:"weimaraner", desc:"Silver grey hunter.", price: 1850},
   {breed:"Vizsla", api:"vizsla", desc:"Golden hunter.", price: 900},
- {breed:"Brittany", api:"spaniel/brittany", desc:"Orange hunting dog.", price:1800}, 
+  {breed:"Brittany", api:"spaniel/brittany", desc:"Orange hunting dog.", price:1800},
 ];
 
 let puppyNames = ["Max","Bella","Luna","Rocky","Daisy","Cooper","Milo","Lola","Buddy","Ruby","Teddy","Rosie","Bear","Molly","Leo","Poppy","Zeus","Willow","Duke","Ivy","Archie","Nala","Oscar","Coco"];
@@ -217,7 +217,7 @@ async function buildAllPets(){
 }
 
 function renderPets(list, category){
-  const grid = document.getElementById('petGrid');
+  const grid = document.getElementById('petGrid') || document.getElementById('petList');
   if(!grid) return;
   grid.innerHTML = '';
   list.forEach(pet=>{
@@ -230,7 +230,7 @@ function renderPets(list, category){
 }
 
 function renderCats(list, category){
-  const grid = document.getElementById('petGrid');
+  const grid = document.getElementById('petGrid') || document.getElementById('petList');
   if(!grid) return;
   grid.innerHTML = '';
   list.forEach(cat=>{
@@ -315,7 +315,7 @@ function payNow(country) {
     if (msg) { msg.style.color = "red"; msg.innerText = "Please select a country and enter your address, phone, and email."; }
     return;
   }
-  const total = cart.reduce((s,p)=> s + Number(p.price), 0);
+  const total = cart.reduce((s,p)=> s + Number(p.price) * (p.qty || 1), 0);
   if (getBalance() < total) {
     if (msg) { msg.style.color = "red"; msg.innerText = "*Top up wallet first"; }
     return;
@@ -395,7 +395,7 @@ function depositHalfToBook(){
   if(!cart || !cart.length){ alert('Your cart is empty'); return; }
   let wallet = getBalance();
   let totalDeposit = 0;
-  cart.forEach(item=>{ totalDeposit += Number(item.price||0) / 2; });
+  cart.forEach(item=>{ totalDeposit += Number(item.price||0) / 2 * (item.qty || 1); });
   const msg = document.getElementById('depositMessage') || document.getElementById('orderMessage');
   if(wallet < totalDeposit){
     if(msg){ msg.style.color='red'; msg.textContent = 'Top up 50% of the pets price to book!!'; }
@@ -419,4 +419,56 @@ function depositHalfToBook(){
   updateCartUI();
   if(msg){ msg.style.color='green'; msg.textContent = 'Pet Booked successfully🐶'; }
   showBookedPets();
+}
+
+// ===== ALIASES ONLY - FOR home.html onclicks, NO OTHER LOGIC CHANGED =====
+function showPets(category){
+  const map = {dog:'Dog', cat:'Cat', kitten:'Cat', parrot:'Parrot', puppy:'Dog', all:'All'};
+  filterPets(map[category] || 'All');
+}
+function goHome(){
+  closeSidePanel();
+  const hp = document.getElementById('homePage');
+  if(hp) hp.style.display = '';
+  const pt = document.getElementById('pageTitle');
+  if(pt) pt.textContent = 'All Pets';
+  buildAllPets();
+}
+function openCart(){
+  const d = document.getElementById('cartDrawer');
+  if(d) d.style.display = 'block';
+  else toggleCart();
+}
+function closeCart(){
+  const d = document.getElementById('cartDrawer');
+  if(d) d.style.display = 'none';
+  const p = document.getElementById('cartPanel');
+  if(p) p.classList.remove('open');
+}
+function googleSearch(){
+  const q = (document.getElementById('searchInput')?.value || document.getElementById('homeSearch')?.value || '').trim().toLowerCase();
+  if(!q) return buildAllPets();
+  buildAllPets().then(()=>{
+    const filtered = allPets.filter(p => (p.breed||'').toLowerCase().includes(q) || (p.name||'').toLowerCase().includes(q) || (p.desc||'').toLowerCase().includes(q));
+    renderPets(filtered, 'Search');
+    const hp = document.getElementById('homePage');
+    if(hp) hp.style.display = 'none';
+  });
+}
+function clearSearch(){
+  const s = document.getElementById('searchInput');
+  if(s) s.value = '';
+  const sb = document.getElementById('suggestionsBox');
+  if(sb) sb.innerHTML = '';
+  buildAllPets();
+}
+function feelingLucky(){
+  buildAllPets().then(()=>{
+    if(!allPets.length) return;
+    renderPets([allPets[Math.floor(Math.random()*allPets.length)]], 'Lucky');
+  });
+}
+function closeBookedPets(){
+  const p = document.getElementById('bookedPetsPage');
+  if(p) p.style.display = 'none';
 }
