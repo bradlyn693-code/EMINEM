@@ -765,8 +765,13 @@ if (!country || !address || !phone || !email) {
     if (msg) { msg.style.color = "red"; msg.innerText = "Please select a country and enter your address, phone, and email."; }
     return;
   }
-  const total = cart.reduce((s,p)=> s + Number(p.price), 0);
-  if (getBalance() < total) { alert("Not enough wallet balance. Top up first."); return; }
+    const total = cart.reduce((s, p) => s + Number(p.price || 0), 0);
+
+  if (getBalance() < total) {
+    msg.style.color = "red";
+    msg.textContent = "* Top up wallet first";
+    return;
+  }
   setBalance(getBalance() - total);
   if (typeof updateWalletUI === "function") updateWalletUI();
   const fullPhone = code + phone;
@@ -1154,19 +1159,20 @@ function getBookedPets(){ try{ return JSON.parse(localStorage.getItem('bookedPet
 function saveBookedPets(list){ localStorage.setItem('bookedPets', JSON.stringify(list)); }
 
 function depositHalfToBook(){
-  if(!cart || !cart.length){ alert('Your cart is empty'); return; }
-  let wallet = getBalance();
-  let totalDeposit = 0;
-  cart.forEach(item=>{ totalDeposit += Number(item.price||0) / 2; });
-  const msg = document.getElementById('orderMessage');
-  if(wallet < totalDeposit){
-    if(msg){ msg.style.color='red'; msg.textContent = 'Not enough in wallet. You need ' + formatUsd(totalDeposit) + ' to book (50%). Your wallet: ' + formatUsd(wallet); }
-    else alert('Not enough in wallet. You need ' + formatUsd(totalDeposit));
+  const msg = document.getElementById('checkoutMsg') || document.getElementById('cartMsg') || document.getElementById('balanceInfo');
+  if(!cart || cart.length === 0){
+    if(msg){ msg.style.color='red'; msg.textContent='Your cart is empty'; }
     return;
   }
-  // deduct 50% using YOUR existing setBalance / userBalance
+  let total = 0;
+  cart.forEach(item=>{ total += Number(item.price||0); });
+  let totalDeposit = total * 0.5;
+  let wallet = getBalance();
+  if(wallet < totalDeposit){
+    if(msg){ msg.style.color='red'; msg.textContent='Not enough balance for 50% deposit. Need $' + totalDeposit.toFixed(2) + ', you have $' + wallet.toFixed(2); }
+    return;
+  }
   setBalance(wallet - totalDeposit);
-  // save delivery details with booking so Complete Payment can use them
   let booked = getBookedPets();
   let custName = document.getElementById('custName') ? document.getElementById('custName').value : '';
   let custAddress = document.getElementById('custAddress') ? document.getElementById('custAddress').value : '';
@@ -1174,15 +1180,28 @@ function depositHalfToBook(){
   let custEmail = document.getElementById('custEmail') ? document.getElementById('custEmail').value : '';
   cart.forEach(item=>{
     let price = Number(item.price||0);
+    let deposit = price * 0.5;
     let img = '';
     if(item.images && item.images[0]) img = item.images[0];
     else if(item.image) img = item.image;
-    booked.push({ name: item.name || item.breed || 'Pet', breed: item.breed || '', price: price, image: img, paid: price/2, remaining: price/2, status: 'Booked', date: new Date().toLocaleString(), custName: custName, custAddress: custAddress, custPhone: custPhone, custEmail: custEmail });
+    booked.push({
+      name: item.name || item.breed || 'Pet',
+      breed: item.breed || item.name || 'Pet',
+      price: price,
+      image: img, img: img,
+      amountPaid: deposit,
+      depositPaid: deposit,
+      remaining: price - deposit,
+      totalPaid: deposit,
+      status: 'deposit',
+      paymentType: 'deposit',
+      custName: custName, custAddress: custAddress, custPhone: custPhone, custEmail: custEmail
+    });
   });
   saveBookedPets(booked);
   cart = [];
   updateCartUI();
-  if(msg){ msg.style.color='green'; msg.textContent = 'Pet Booked successfully🐶'; }
+  if(msg){ msg.style.color='green'; msg.textContent='Pet Booked with 50% deposit! Pay remaining 50% in Booked Pets to complete.'; }
   showBookedPets();
 }
 function showBookedPets(){
