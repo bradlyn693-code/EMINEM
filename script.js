@@ -123,17 +123,24 @@ let catList = [
 ];
 // === LOAD REAL CAT IMAGES WITH API KEY ===
 async function loadCatImagesFromAPI() {
+  const placeholderImage = 'https://placehold.co/600x400?text=Cat';
+  catList.forEach(cat => { cat.images = [placeholderImage]; });
   for (const cat of catList) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     try {
       const res = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${cat.code}&limit=5`, {
-        headers: { "x-api-key": CAT_API_KEY }
+        headers: { "x-api-key": CAT_API_KEY },
+        signal: controller.signal
       });
+      if (!res.ok) throw new Error(`Cat image request failed: ${res.status}`);
       const data = await res.json();
       if (data && data.length > 0) {
         cat.images = data.map(d => d.url);
         cat.image = cat.images[0];
       }
     } catch(e) { console.log("fail", cat.breed); }
+    finally { clearTimeout(timeout); }
   }
 }
 loadCatImagesFromAPI();
@@ -180,17 +187,24 @@ async function fetchDogImages(){
     if(!breedGroups[base]) breedGroups[base] = [];
     breedGroups[base].push(d);
   }
-  for(const base in breedGroups){
+  await Promise.all(Object.keys(breedGroups).map(async base => {
+    const placeholderImage = 'https://placehold.co/600x400?text=Pet';
+    breedGroups[base].forEach(dog => { dog.images = [placeholderImage]; });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     try{
-      const r = await fetch(`https://dog.ceo/api/breed/${base}/images/random/6`);
+      const r = await fetch(`https://dog.ceo/api/breed/${base}/images/random/6`, { signal: controller.signal });
+      if(!r.ok) throw new Error(`Dog image request failed: ${r.status}`);
       const data = await r.json();
       if(data.status === 'success'){
         breedGroups[base].forEach((dog,i)=>{
-          dog.images = data.message.slice(i*2, i*2+2);
+          const images = data.message.slice(i*2, i*2+2);
+          if(images.length) dog.images = images;
         });
       }
     }catch(e){ console.log('fail', base); }
-  }
+    finally { clearTimeout(timeout); }
+  }));
   const puppies = [];
   for(const dog of dogList){
     puppies.push({
@@ -208,11 +222,11 @@ async function fetchDogImages(){
 
 async function buildAllPets(){
   if(allPetsLoaded) return;
-  allPetsLoaded = true;
   const dogPuppies = await fetchDogImages();
   const catKittens = catList.map((cat,i)=>({ breed: cat.breed, name: kittenNames[i % kittenNames.length], price: cat.price, images: cat.images || [], desc: cat.desc, type:'Cat', code: cat.code }));
   const parrots = parrotList.map((p,i)=>({ breed: p.breed, name: 'Polly '+(i+1), price: p.price, images: [p.fallback], desc: p.desc, type:'Parrot' }));
   allPets = [...dogPuppies, ...catKittens, ...parrots];
+  allPetsLoaded = true;
   renderPets(allPets, 'All');
 }
 
