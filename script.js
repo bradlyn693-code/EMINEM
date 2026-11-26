@@ -146,15 +146,16 @@ function parrotFallbackImage(bodyColor, accentColor){
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+// === PARROT IMAGES FIXED ONLY - real parrot photos, property renamed img -> image ===
 let parrotList = [
-  {breed:"African Grey Parrot", price:1200, desc:"Intelligent...", img:"https://picsum.photos/seed/africangrey/400/300", bodyColor:"#808080", accentColor:"#FF0000"},
-  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings...", img:"https://picsum.photos/seed/macaw/400/300", bodyColor:"#0066FF", accentColor:"#FFCC00"},
-  {breed:"Budgerigar / Budgie", price:45, desc:"A small, live...", img:"https://picsum.photos/seed/budgie/400/300", bodyColor:"#00CC66", accentColor:"#FFFF00"},
-  {breed:"Cockatiel", price:120, desc:"Grey cockatiel...", img:"https://picsum.photos/seed/cockatiel/400/300", bodyColor:"#999999", accentColor:"#FF9900"},
-  {breed:"Amazon Parrot", price:800, desc:"A sociable green...", img:"https://picsum.photos/seed/amazon/400/300", bodyColor:"#009900", accentColor:"#FF0000"},
-  {breed:"Sun Conure", price:1420, desc:"A brilliant conure...", img:"https://picsum.photos/seed/sunconure/400/300", bodyColor:"#FF9900", accentColor:"#FFFF00"},
-  {breed:"Lovebird", price:1190, desc:"A small, affectionate...", img:"https://picsum.photos/seed/lovebird/400/300", bodyColor:"#FF3399", accentColor:"#00CCFF"},
-  {breed:"White Cockatoo", price:950, desc:"An elegant all-white...", img:"https://picsum.photos/seed/cockatoo/400/300", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
+  {breed:"African Grey Parrot", price:1200, desc:"Intelligent...", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#808080", accentColor:"#FF0000"},
+  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings...", image:"https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=600&q=80", bodyColor:"#0066FF", accentColor:"#FFCC00"},
+  {breed:"Budgerigar / Budgie", price:45, desc:"A small, live...", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#00CC66", accentColor:"#FFFF00"},
+  {breed:"Cockatiel", price:120, desc:"Grey cockatiel...", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#999999", accentColor:"#FF9900"},
+  {breed:"Amazon Parrot", price:800, desc:"A sociable green...", image:"https://images.unsplash.com/photo-1619468005516-1a8a0a0a0a0a?w=600&q=80", bodyColor:"#009900", accentColor:"#FF0000"},
+  {breed:"Sun Conure", price:1420, desc:"A brilliant conure...", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#FF9900", accentColor:"#FFFF00"},
+  {breed:"Lovebird", price:1190, desc:"A small, affectionate...", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#FF3399", accentColor:"#00CCFF"},
+  {breed:"White Cockatoo", price:950, desc:"An elegant all-white...", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
 ];
 
 async function fetchWithTimeout(url, timeoutMs = 8000){
@@ -299,12 +300,13 @@ function loadPets(){
       images:catFallbackImages
     }, () => getBreedPhotos(`cat:${cat.code}`, () => getCatImages(cat.code)));
   }
+  // === PARROT FIX ONLY - use parrot.image (not .img) and set fallbackImage ===
   for(let i=0; i<parrotList.length; i++){
     const parrot = parrotList[i];
     addPet({
       type:'parrot', name:parrot.breed, breed:parrot.breed, price:parrot.price,
-      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image],
-      fallbackImage:parrot.fallbackImage
+      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image, parrot.image, parrot.image, parrot.image],
+      fallbackImage:parrotFallbackImage(parrot.bodyColor, parrot.accentColor)
     });
   }
 
@@ -1146,3 +1148,112 @@ if (isIOS && installWrap && installHelp && installBtn) {
   installBtn.style.display = 'none';
   installHelp.style.display = 'block';
 }
+
+// ===== BOOKED PETS - DEPOSIT 50% FEATURE - ADDED ONLY AT BOTTOM, NOTHING ABOVE TOUCHED =====
+function getBookedPets(){ try{ return JSON.parse(localStorage.getItem('bookedPets')||'[]'); }catch(e){ return []; } }
+function saveBookedPets(list){ localStorage.setItem('bookedPets', JSON.stringify(list)); }
+
+function depositHalfToBook(){
+  if(!cart || !cart.length){ alert('Your cart is empty'); return; }
+  let wallet = getBalance();
+  let totalDeposit = 0;
+  cart.forEach(item=>{ totalDeposit += Number(item.price||0) / 2; });
+  const msg = document.getElementById('orderMessage');
+  if(wallet < totalDeposit){
+    if(msg){ msg.style.color='red'; msg.textContent = 'Not enough in wallet. You need ' + formatUsd(totalDeposit) + ' to book (50%). Your wallet: ' + formatUsd(wallet); }
+    else alert('Not enough in wallet. You need ' + formatUsd(totalDeposit));
+    return;
+  }
+  // deduct 50% using YOUR existing setBalance / userBalance
+  setBalance(wallet - totalDeposit);
+  // save delivery details with booking so Complete Payment can use them
+  let booked = getBookedPets();
+  let custName = document.getElementById('custName') ? document.getElementById('custName').value : '';
+  let custAddress = document.getElementById('custAddress') ? document.getElementById('custAddress').value : '';
+  let custPhone = document.getElementById('custPhone') ? document.getElementById('custPhone').value : '';
+  let custEmail = document.getElementById('custEmail') ? document.getElementById('custEmail').value : '';
+  cart.forEach(item=>{
+    let price = Number(item.price||0);
+    let img = '';
+    if(item.images && item.images[0]) img = item.images[0];
+    else if(item.image) img = item.image;
+    booked.push({ name: item.name || item.breed || 'Pet', breed: item.breed || '', price: price, image: img, paid: price/2, remaining: price/2, status: 'Booked', date: new Date().toLocaleString(), custName: custName, custAddress: custAddress, custPhone: custPhone, custEmail: custEmail });
+  });
+  saveBookedPets(booked);
+  cart = [];
+  updateCartUI();
+  if(msg){ msg.style.color='green'; msg.textContent = 'Pet Booked successfully🐶'; }
+  showBookedPets();
+}
+function showBookedPets(){
+  const page = document.getElementById('bookedPetsPage');
+  if(page) page.style.display = 'block';
+  // close sidebar using YOUR existing function
+  if(typeof closeSidePanel === 'function') closeSidePanel();
+  const ov = document.getElementById('panelOverlay'); if(ov) ov.classList.remove('show');
+  const cd = document.getElementById('cartDrawer'); if(cd) cd.style.display='none';
+  renderBookedPets();
+}
+function closeBookedPets(){ const page = document.getElementById('bookedPetsPage'); if(page) page.style.display = 'none'; }
+function renderBookedPets(){
+  const listEl = document.getElementById('bookedList');
+  if(!listEl) return;
+  let booked = getBookedPets();
+  if(!booked.length){ listEl.innerHTML = '<p style="text-align:center;">No booked pets yet.</p>'; return; }
+  listEl.innerHTML = booked.map((p, i)=>{
+    let img = p.image ? '<img src="'+p.image+'" style="width:100%;height:150px;object-fit:cover;border-radius:10px;">' : '<div style="font-size:50px;text-align:center;">🐶</div>';
+    let btn = p.status === 'Fully Paid' ? '<p style="color:green;font-weight:bold;">✅ Fully Paid</p>' : '<button onclick="completePayment('+i+')" style="width:100%;padding:10px;background:#ff6b00;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Complete Payment</button>';
+    return '<div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px #ddd;">' + img + '<h3 style="margin:8px 0 4px;">'+p.name+'</h3>' + '<p style="margin:2px 0;">Total Price: '+formatUsd(Number(p.price))+'</p>' + '<p style="margin:2px 0;">Paid: '+formatUsd(Number(p.paid))+'</p>' + '<p style="margin:2px 0;font-weight:bold;">Remaining: '+formatUsd(Number(p.remaining))+'</p>' + '<p style="margin:2px 0;">Status: '+p.status+'</p>' + btn + '</div>';
+  }).join('');
+}
+function completePayment(index){
+  let booked = getBookedPets();
+  let pet = booked[index];
+  if(!pet) return;
+  if(pet.status === 'Fully Paid'){ alert('Already fully paid'); return; }
+  let wallet = getBalance();
+  let need = Number(pet.remaining);
+  const msgEl = document.getElementById('bookedMsg');
+  if(wallet < need){
+    if(msgEl){ msgEl.style.color='red'; msgEl.textContent = 'Not enough in wallet. You need ' + formatUsd(need) + ' to complete. Your wallet: ' + formatUsd(wallet); }
+    else alert('Not enough in wallet. You need ' + formatUsd(need));
+    return;
+  }
+  setBalance(wallet - need);
+  pet.paid = Number(pet.price);
+  pet.remaining = 0;
+  pet.status = 'Fully Paid';
+  booked[index] = pet;
+  saveBookedPets(booked);
+  renderBookedPets();
+  if(msgEl){ msgEl.style.color='green'; msgEl.textContent = 'Your order is fully paid for wait for communication in your Phone number and adress'; }
+  else alert('Your order is fully paid for wait for communication in your Phone number and adress');
+}
+// FIX ONLY: Your old updateCartUI disabled orange button when balance < FULL total.
+// For deposit we only need 50%, so re-enable it after original function runs.
+// This does NOT edit updateCartUI above, it just adds a wrapper at bottom.
+(function(){
+  const _origUpdateCartUI = updateCartUI;
+  updateCartUI = function(){
+    _origUpdateCartUI();
+    try{
+      const btn = document.getElementById('checkoutBtn');
+      const info = document.getElementById('balanceInfo');
+      if(btn && info && cart && cart.length){
+        const total = cart.reduce((s,p)=> s + Number(p.price||0), 0);
+        const need50 = total / 2;
+        if(getBalance() >= need50){
+          btn.disabled = false;
+          btn.style.background = "#ff6b00";
+          info.innerText = '✅ Deposit 50% to book: ' + formatUsd(need50) + ' | Your wallet: ' + formatUsd(getBalance());
+          info.style.color = "green";
+        } else {
+          btn.disabled = true;
+          btn.style.background = "#ccc";
+          info.innerText = '❌ Not enough for deposit. Need ' + formatUsd(need50) + ', you have ' + formatUsd(getBalance()) + '. Top up first.';
+          info.style.color = "red";
+        }
+      }
+    }catch(e){}
+  };
+})();

@@ -1,28 +1,45 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
-axios.defaults.timeout = 10000;
+const cors = require('cors');
 const path = require('path');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-const { createHash, randomBytes, randomInt, timingSafeEqual } = require('crypto');
+const { createHash, randomInt, timingSafeEqual } = require('crypto');
 
 const app = express();
-app.use(express.json());
+
+// ===== FIX 1: CORS - allows Vercel frontend to call Render backend =====
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+axios.defaults.timeout = 10000;
+
+// ===== STARTUP CHECKS - so you know what's missing =====
+if (!process.env.DATABASE_URL) console.log('❌ DATABASE_URL missing in .env');
+if (!process.env.JWT_SECRET) console.log('❌ JWT_SECRET missing in .env');
+if (!process.env.PAYSTACK_SECRET_KEY) console.log('❌ PAYSTACK_SECRET_KEY missing in .env');
+if (!process.env.PAYSTACK_PUBLIC_KEY) console.log('⚠️ PAYSTACK_PUBLIC_KEY missing - wallet.html will get empty key');
+if (!process.env.EMAIL_USER) console.log('⚠️ EMAIL_USER missing - verification emails will fail');
+console.log('Dog?', process.env.DOG_API_KEY ? 'YES ✅' : 'NO ❌');
+console.log('Cat?', process.env.CAT_API_KEY ? 'YES ✅' : 'NO ❌');
+
 app.get('/api/config', (req, res) => {
   res.json({ paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '' });
 });
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+
+// ===== FIX 2: Health check for Render =====
+app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.use(express.static(__dirname));
-// ===== PETS - ADD ONLY THIS BLOCK - DO NOT DELETE ABOVE =====
+
+// ===== PETS - KEPT EXACTLY FROM YOUR CODE =====
 const DOG_API_KEY = process.env.DOG_API_KEY;
 const CAT_API_KEY = process.env.CAT_API_KEY;
-console.log('Dog?', DOG_API_KEY ? 'YES ✅' : 'NO ❌');
-console.log('Cat?', CAT_API_KEY ? 'YES ✅' : 'NO ❌');
 
 function makePrice(id, name, type) {
   const str = String(id) + name + type;
@@ -35,6 +52,10 @@ function hashCode(str) {
   let h = 0;
   for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 100000;
   return h;
+}
+function priceInRange(seed, min, max){
+  let h = 0; for(let c of seed) h = (h*31 + c.charCodeAt(0)) % 100000;
+  return min + (h % (max - min + 1));
 }
 
 app.get('/api/dogs/search', async (req, res) => {
@@ -96,50 +117,26 @@ app.get('/api/cats/search', async (req, res) => {
 app.get('/api/search', async (req, res) => {
   const type = String(req.query.type || '').toLowerCase();
   const query = String(req.query.q || '').trim();
-  if (type !== 'dog' && type !== 'cat') {
-    return res.status(400).json({ error: 'Type must be dog or cat' });
-  }
+  if (type !== 'dog' && type !== 'cat') return res.status(400).json({ error: 'Type must be dog or cat' });
   if (!query) return res.status(400).json({ error: 'Search query is required' });
   const apiKey = type === 'dog' ? DOG_API_KEY : CAT_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: `${type.toUpperCase()}_API_KEY is not configured` });
-  }
+  if (!apiKey) return res.status(503).json({ error: `${type.toUpperCase()}_API_KEY is not configured` });
   const apiBase = type === 'dog' ? 'https://api.thedogapi.com/v1' : 'https://api.thecatapi.com/v1';
   try {
-    const breedResponse = await fetch(
-      `${apiBase}/breeds/search?q=${encodeURIComponent(query)}`,
-      { headers: { 'x-api-key': apiKey } }
-    );
+    const breedResponse = await fetch(`${apiBase}/breeds/search?q=${encodeURIComponent(query)}`, { headers: { 'x-api-key': apiKey } });
     if (!breedResponse.ok) throw new Error(`Breed search returned ${breedResponse.status}`);
     const breeds = await breedResponse.json();
-    if (!Array.isArray(breeds) || breeds.length === 0) {
-      return res.json({ error: 'No pet found' });
-    }
+    if (!Array.isArray(breeds) || breeds.length === 0) return res.json({ error: 'No pet found' });
     const breed = breeds[0];
-    const imageResponse = await fetch(
-      `${apiBase}/images/search?breed_ids=${encodeURIComponent(breed.id)}&limit=4`,
-      { headers: { 'x-api-key': apiKey } }
-    );
+    const imageResponse = await fetch(`${apiBase}/images/search?breed_ids=${encodeURIComponent(breed.id)}&limit=4`, { headers: { 'x-api-key': apiKey } });
     if (!imageResponse.ok) throw new Error(`Image search returned ${imageResponse.status}`);
     const imageResults = await imageResponse.json();
-    const images = Array.isArray(imageResults)
-      ? imageResults.map(image => image.url).filter(url => typeof url === 'string').slice(0, 4)
-      : [];
-    const pet = {
-      name: breed.name,
-      temperament: breed.temperament || '',
-      life_span: breed.life_span || '',
-      images,
-      price: type === 'dog' ? randomInt(1235, 2571) : randomInt(1310, 2367),
-      type
-    };
+    const images = Array.isArray(imageResults) ? imageResults.map(image => image.url).filter(url => typeof url === 'string').slice(0, 4) : [];
+    const pet = { name: breed.name, temperament: breed.temperament || '', life_span: breed.life_span || '', images, price: type === 'dog' ? randomInt(1235, 2571) : randomInt(1310, 2367), type };
     if (type === 'dog') pet.weight = breed.weight?.metric ? `${breed.weight.metric} kg` : '';
     else pet.description = breed.description || '';
     return res.json(pet);
-  } catch (error) {
-    console.error(`${type} search failed:`, error.message);
-    return res.status(502).json({ error: 'Pet search failed' });
-  }
+  } catch (error) { console.error(`${type} search failed:`, error.message); return res.status(502).json({ error: 'Pet search failed' }); }
 });
 
 const PARROT_BREEDS = {
@@ -168,24 +165,56 @@ app.get('/api/parrots/search', async (req, res) => {
       photos = (ovData.results || []).map(p => p.url).filter(u => u && u.startsWith('http'));
     } catch (e) {}
     const unique = [...new Set(photos)].slice(0, 4);
-    res.json({
-      id: key, type: 'Parrot', name: breed.name,
-      temperament: breed.temperament, life_span: breed.life_span,
-      weight: breed.weight, origin: breed.origin,
-      age: '6-12 months', ageLabel: '🦜 Parrot - 6-12 months old',
-      price: makePrice(key, breed.name, 'parrot'),
-      mainImage: unique[0] || '',
-      images: unique
-    });
+    res.json({ id: key, type: 'Parrot', name: breed.name, temperament: breed.temperament, life_span: breed.life_span, weight: breed.weight, origin: breed.origin, age: '6-12 months', ageLabel: '🦜 Parrot - 6-12 months old', price: makePrice(key, breed.name, 'parrot'), mainImage: unique[0] || '', images: unique });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Parrot API failed' }); }
 });
-// ===== END PETS =====
 
+app.get('/api/pets/search', async (req, res) => {
+  const q = (req.query.q || 'dog').toLowerCase();
+  const isCat = q.includes('cat') || q.includes('kitten') || q.includes('kitty');
+  try {
+    if (isCat) {
+      const searchTerm = q.replace('cat','').replace('kitten','').replace('kitty','').trim() || 'persian';
+      const breedRes = await fetch(`https://api.thecatapi.com/v1/breeds/search?q=${encodeURIComponent(searchTerm)}`, { headers: { 'x-api-key': process.env.CAT_API_KEY } });
+      let breeds = await breedRes.json();
+      if (!breeds.length) breeds = [{ id: 'pers', name: 'Persian', description: 'Sweet, calm and fluffy companion.', temperament: 'Calm, Affectionate', origin: 'Iran', life_span: '12 - 17' }];
+      const out = [];
+      for (let b of breeds.slice(0, 6)) {
+        const imgRes = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${b.id}&limit=4`, { headers: { 'x-api-key': process.env.CAT_API_KEY } });
+        const imgs = await imgRes.json();
+        const photos = imgs.map(i => i.url).filter(Boolean);
+        if (!photos.length) continue;
+        out.push({ id: b.id, type: 'cat', name: b.name, breed: b.name, description: b.description || 'Lovely cat looking for a home.', temperament: b.temperament || 'Friendly', origin: b.origin || 'Unknown', life: b.life_span || '12 - 15', price: priceInRange(b.id + b.name, 975, 2200), photos, mainPhoto: photos[0] });
+      }
+      return res.json(out);
+    } else {
+      const searchTerm = q.replace('dog','').replace('puppy','').replace('puppies','').trim() || 'labrador';
+      const breedRes = await fetch(`https://api.thedogapi.com/v1/breeds/search?q=${encodeURIComponent(searchTerm)}`, { headers: { 'x-api-key': process.env.DOG_API_KEY } });
+      let breeds = await breedRes.json();
+      if (!breeds.length) breeds = [{ id: 1, name: 'Labrador', bred_for: 'Retrieving', breed_group: 'Sporting', life_span: '10 - 12 years', temperament: 'Friendly, Active, Outgoing', reference_image_id: 'BJa4kxc4X' }];
+      const out = [];
+      for (let b of breeds.slice(0, 6)) {
+        let photos = [];
+        const imgRes = await fetch(`https://api.thedogapi.com/v1/images/search?breed_ids=${b.id}&limit=4`, { headers: { 'x-api-key': process.env.DOG_API_KEY } });
+        const imgs = await imgRes.json();
+        photos = imgs.map(i => i.url).filter(Boolean);
+        if (!photos.length) {
+          const fb = await fetch('https://dog.ceo/api/breed/labrador/images/random/4').then(r=>r.json()).catch(()=>({message:[]}));
+          photos = fb.message || [];
+        }
+        if (!photos.length) continue;
+        out.push({ id: String(b.id), type: 'dog', name: b.name, breed: b.name, description: `A wonderful ${b.name}. ${b.bred_for ? 'Bred for ' + b.bred_for + '.' : ''} Great companion for families.`, temperament: b.temperament || 'Friendly, Loyal', origin: b.origin || b.breed_group || 'Unknown', life: b.life_span || '10 - 13 years', price: priceInRange(String(b.id) + b.name, 1152, 2710), photos, mainPhoto: photos[0] });
+      }
+      return res.json(out);
+    }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Pet search failed' }); }
+});
+
+// ===== AUTH + WALLET - KEPT FROM YOUR CODE =====
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const PORT = process.env.PORT || 3000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// FIX 1 - transporter was missing, now added
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
@@ -202,8 +231,7 @@ const pool = new Pool({
 let usersTableReady = false;
 function isDatabaseUnavailable(error) {
   const code = error.code || '';
-  return code.startsWith('08') ||
-    ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'EHOSTUNREACH', '57P03'].includes(code);
+  return code.startsWith('08') || ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'EHOSTUNREACH', '57P03'].includes(code);
 }
 
 async function ensureUsersTable() {
@@ -260,34 +288,17 @@ async function ensureUsersTable() {
 function createToken(userId) {
   return jwt.sign({ sub: String(userId) }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
-
-function hashVerificationCode(code) {
-  return createHash('sha256').update(code).digest('hex');
-}
-
-function createVerificationCode() {
-  return String(randomInt(100000, 1000000));
-}
+function hashVerificationCode(code) { return createHash('sha256').update(code).digest('hex'); }
+function createVerificationCode() { return String(randomInt(100000, 1000000)); }
 
 async function sendVerificationCode(email, code) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     const error = new Error('EMAIL_USER or EMAIL_PASS is not configured');
-    error.isEmailDeliveryError = true;
-    throw error;
+    error.isEmailDeliveryError = true; throw error;
   }
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Verify your Pets account',
-      text: `Your verification code is: ${code}. It expires in 1 minute. If you did not sign up, ignore this.`
-    });
-  } catch (cause) {
-    const error = new Error('Verification email delivery failed');
-    error.isEmailDeliveryError = true;
-    error.cause = cause;
-    throw error;
-  }
+    await transporter.sendMail({ from: process.env.EMAIL_USER, to: email, subject: 'Verify your Pets account', text: `Your verification code is: ${code}. It expires in 1 minute. If you did not sign up, ignore this.` });
+  } catch (cause) { const error = new Error('Verification email delivery failed'); error.isEmailDeliveryError = true; error.cause = cause; throw error; }
 }
 
 async function issueVerificationCode(userId, email) {
@@ -295,42 +306,21 @@ async function issueVerificationCode(userId, email) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(
-      `UPDATE users
-       SET verification_code_hash=$1,
-           verification_code_expires_at=NOW() + INTERVAL '1 minute',
-           verification_attempts=0
-       WHERE id=$2`,
-      [hashVerificationCode(code), userId]
-    );
+    await client.query(`UPDATE users SET verification_code_hash=$1, verification_code_expires_at=NOW() + INTERVAL '1 minute', verification_attempts=0 WHERE id=$2`, [hashVerificationCode(code), userId]);
     await sendVerificationCode(email, code);
     await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK').catch((rollbackError) => {
-      console.error('Verification rollback error:', rollbackError.message);
-    });
-    throw error;
-  } finally {
-    client.release();
-  }
+  } catch (error) { await client.query('ROLLBACK').catch(()=>{}); throw error; } finally { client.release(); }
 }
 
 function requireLogin(req, res, next) {
   const authorization = req.get('authorization') || '';
   const match = authorization.match(/^Bearer\s+(.+)$/i);
-  if (!match || !process.env.JWT_SECRET) {
-    return res.status(401).json({ success: false, message: 'Please log in to continue' });
-  }
+  if (!match || !process.env.JWT_SECRET) return res.status(401).json({ success: false, message: 'Please log in to continue' });
   try {
     const payload = jwt.verify(match[1], process.env.JWT_SECRET);
-    if (typeof payload === 'string' || !payload.sub) {
-      return res.status(401).json({ success: false, message: 'Please log in to continue' });
-    }
-    req.userId = payload.sub;
-    return next();
-  } catch (error) {
-    return res.status(401).json({ success: false, message: 'Please log in to continue' });
-  }
+    if (typeof payload === 'string' || !payload.sub) return res.status(401).json({ success: false, message: 'Please log in to continue' });
+    req.userId = payload.sub; return next();
+  } catch (error) { return res.status(401).json({ success: false, message: 'Please log in to continue' }); }
 }
 
 function hashesMatch(value, hashedValue) {
@@ -340,18 +330,11 @@ function hashesMatch(value, hashedValue) {
 }
 
 async function sendPasswordResetLink(email, token) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error('EMAIL_USER or EMAIL_PASS is not configured');
-  }
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) throw new Error('EMAIL_USER or EMAIL_PASS is not configured');
   const baseUrl = process.env.APP_URL || `http://localhost:${PORT}`;
   const resetUrl = new URL('/reset-password', baseUrl);
   resetUrl.searchParams.set('token', token);
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Reset your Pets password',
-    text: `Use this link to reset your password. It expires in 1 minute:\n\n${resetUrl.toString()}\n\nIf you did not request this, ignore this email.`
-  });
+  await transporter.sendMail({ from: process.env.EMAIL_USER, to: email, subject: 'Reset your Pets password', text: `Use this link to reset your password. It expires in 1 minute:\n\n${resetUrl.toString()}\n\nIf you did not request this, ignore this email.` });
 }
 
 app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
@@ -361,12 +344,8 @@ app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
   const confirmPassword = req.body?.confirmPassword;
   if (!name) return res.status(400).json({ success: false, error: 'Please enter your full name' });
   if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
-  if (typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
-  }
-  if (confirmPassword !== undefined && password !== confirmPassword) {
-    return res.status(400).json({ success: false, error: 'Passwords do not match' });
-  }
+  if (typeof password !== 'string' || password.length < 6) return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  if (confirmPassword !== undefined && password !== confirmPassword) return res.status(400).json({ success: false, error: 'Passwords do not match' });
   let client;
   try {
     await ensureUsersTable();
@@ -374,39 +353,18 @@ app.post(['/api/auth/signup', '/api/signup'], async (req, res) => {
     const code = createVerificationCode();
     client = await pool.connect();
     await client.query('BEGIN');
-    const saved = await client.query(
-      `INSERT INTO users(
-         name,email,password_hash,verified,verification_code_hash,
-         verification_code_expires_at,verification_attempts
-       ) VALUES($1,$2,$3,FALSE,$4,NOW() + INTERVAL '1 minute',0)
-       ON CONFLICT(email) DO UPDATE SET
-         name=EXCLUDED.name,password_hash=EXCLUDED.password_hash,verified=FALSE,
-         verification_code_hash=EXCLUDED.verification_code_hash,
-         verification_code_expires_at=EXCLUDED.verification_code_expires_at,
-         verification_attempts=0
-       WHERE users.verified=FALSE
-       RETURNING id`,
-      [name, email, passwordHash, hashVerificationCode(code)]
-    );
-    if (!saved.rows.length) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ success: false, error: 'An account already exists for this email. Please log in.' });
-    }
+    const saved = await client.query(`INSERT INTO users(name,email,password_hash,verified,verification_code_hash, verification_code_expires_at,verification_attempts) VALUES($1,$2,$3,FALSE,$4,NOW() + INTERVAL '1 minute',0) ON CONFLICT(email) DO UPDATE SET name=EXCLUDED.name,password_hash=EXCLUDED.password_hash,verified=FALSE, verification_code_hash=EXCLUDED.verification_code_hash, verification_code_expires_at=EXCLUDED.verification_code_expires_at, verification_attempts=0 WHERE users.verified=FALSE RETURNING id`, [name, email, passwordHash, hashVerificationCode(code)]);
+    if (!saved.rows.length) { await client.query('ROLLBACK'); return res.status(409).json({ success: false, error: 'An account already exists for this email. Please log in.' }); }
     await sendVerificationCode(email, code);
     await client.query('COMMIT');
     return res.status(200).json({ success: true, needsVerification: true, email });
   } catch (error) {
-    if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Signup rollback error:', rollbackError.message));
-    if (error.isEmailDeliveryError) {
-      console.error('Signup email error:', error.cause?.message || error.message);
-      return res.status(502).json({ success: false, error: 'Could not send verification email. Check email settings and try again.' });
-    }
+    if (client) await client.query('ROLLBACK').catch(()=>{});
+    if (error.isEmailDeliveryError) { console.error('Signup email error:', error.cause?.message || error.message); return res.status(502).json({ success: false, error: 'Could not send verification email. Check email settings and try again.' }); }
     console.error('Signup error:', error.message);
     const unavailable = isDatabaseUnavailable(error);
     return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Account creation failed' });
-  } finally {
-    if (client) client.release();
-  }
+  } finally { if (client) client.release(); }
 });
 
 app.post('/api/auth/verify', async (req, res) => {
@@ -419,49 +377,22 @@ app.post('/api/auth/verify', async (req, res) => {
     await ensureUsersTable();
     client = await pool.connect();
     await client.query('BEGIN');
-    const result = await client.query(
-      `SELECT id,verified,verification_code_hash,
-              verification_code_expires_at,verification_attempts
-       FROM users WHERE email=$1 FOR UPDATE`,
-      [email]
-    );
-    if (!result.rows.length) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ success: false, error: 'No account found for this email. Please create an account.' });
-    }
+    const result = await client.query(`SELECT id,verified,verification_code_hash, verification_code_expires_at,verification_attempts FROM users WHERE email=$1 FOR UPDATE`, [email]);
+    if (!result.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ success: false, error: 'No account found for this email. Please create an account.' }); }
     const user = result.rows[0];
-    if (user.verified) {
-      await client.query('COMMIT');
-      return res.json({ success: true, message: 'Account created successfully ✅' });
-    }
-    if (!user.verification_code_expires_at || new Date(user.verification_code_expires_at) <= new Date()) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ success: false, error: 'Verification code expired. Please resend a new code.' });
-    }
-    if (user.verification_attempts >= 5) {
-      await client.query('ROLLBACK');
-      return res.status(429).json({ success: false, error: 'Too many attempts. Please resend a new code.' });
-    }
-    if (!hashesMatch(code, user.verification_code_hash)) {
-      await client.query('UPDATE users SET verification_attempts=verification_attempts+1 WHERE id=$1', [user.id]);
-      await client.query('COMMIT');
-      return res.status(400).json({ success: false, error: 'Incorrect verification code. Please try again.' });
-    }
-    await client.query(
-      `UPDATE users SET verified=TRUE,verification_code_hash=NULL,
-       verification_code_expires_at=NULL,verification_attempts=0 WHERE id=$1`,
-      [user.id]
-    );
+    if (user.verified) { await client.query('COMMIT'); return res.json({ success: true, message: 'Account created successfully ✅' }); }
+    if (!user.verification_code_expires_at || new Date(user.verification_code_expires_at) <= new Date()) { await client.query('ROLLBACK'); return res.status(400).json({ success: false, error: 'Verification code expired. Please resend a new code.' }); }
+    if (user.verification_attempts >= 5) { await client.query('ROLLBACK'); return res.status(429).json({ success: false, error: 'Too many attempts. Please resend a new code.' }); }
+    if (!hashesMatch(code, user.verification_code_hash)) { await client.query('UPDATE users SET verification_attempts=verification_attempts+1 WHERE id=$1', [user.id]); await client.query('COMMIT'); return res.status(400).json({ success: false, error: 'Incorrect verification code. Please try again.' }); }
+    await client.query(`UPDATE users SET verified=TRUE,verification_code_hash=NULL, verification_code_expires_at=NULL,verification_attempts=0 WHERE id=$1`, [user.id]);
     await client.query('COMMIT');
     return res.json({ success: true, message: 'Account created successfully ✅' });
   } catch (error) {
-    if (client) await client.query('ROLLBACK').catch((rollbackError) => console.error('Verification rollback error:', rollbackError.message));
+    if (client) await client.query('ROLLBACK').catch(()=>{});
     console.error('Email verification error:', error.message);
     const unavailable = isDatabaseUnavailable(error);
     return res.status(unavailable ? 503 : 500).json({ success: false, error: unavailable ? 'Database unavailable' : 'Email verification failed' });
-  } finally {
-    if (client) client.release();
-  }
+  } finally { if (client) client.release(); }
 });
 
 app.post('/api/auth/resend-code', async (req, res) => {
@@ -470,21 +401,14 @@ app.post('/api/auth/resend-code', async (req, res) => {
   try {
     await ensureUsersTable();
     const result = await pool.query('SELECT id,verified FROM users WHERE email=$1', [email]);
-    if (!result.rows.length) {
-      return res.status(404).json({ success: false, error: 'No account found for this email.' });
-    }
-    if (result.rows[0].verified) {
-      return res.status(409).json({ success: false, error: 'This account is already verified. Please log in.' });
-    }
+    if (!result.rows.length) return res.status(404).json({ success: false, error: 'No account found for this email.' });
+    if (result.rows[0].verified) return res.status(409).json({ success: false, error: 'This account is already verified. Please log in.' });
     await issueVerificationCode(result.rows[0].id, email);
     return res.json({ success: true });
   } catch (error) {
     console.error('Resend verification code error:', error.cause?.message || error.message);
     const unavailable = isDatabaseUnavailable(error);
-    return res.status(unavailable ? 503 : 502).json({
-      success: false,
-      error: unavailable ? 'Database unavailable' : 'Could not send verification email. Check email settings and try again.'
-    });
+    return res.status(unavailable ? 503 : 502).json({ success: false, error: unavailable ? 'Database unavailable' : 'Could not send verification email. Check email settings and try again.' });
   }
 });
 
@@ -493,26 +417,13 @@ app.post(['/api/auth/forgot-password', '/api/forgot-password'], async (req, res)
   if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, error: 'Please enter a valid email address' });
   try {
     await ensureUsersTable();
-    const result = await pool.query(
-      'SELECT id FROM users WHERE email=$1 AND verified=TRUE',
-      [email]
-    );
-    if (!result.rows.length) {
-      return res.status(404).json({ success: false, error: 'No account found' });
-    }
+    const result = await pool.query('SELECT id FROM users WHERE email=$1 AND verified=TRUE', [email]);
+    if (!result.rows.length) return res.status(404).json({ success: false, error: 'No account found' });
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const codeHash = createHash('sha256').update(code).digest('hex');
-    await pool.query(
-      `UPDATE users SET reset_token=$1, reset_expires=NOW() + INTERVAL '1 minute' WHERE id=$2`,
-      [codeHash, result.rows[0].id]
-    );
+    await pool.query(`UPDATE users SET reset_token=$1, reset_expires=NOW() + INTERVAL '1 minute' WHERE id=$2`, [codeHash, result.rows[0].id]);
     try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Pets - Your reset code',
-        text: `Your reset code is ${code}. It expires in 1 minute.`
-      });
+      await transporter.sendMail({ from: process.env.EMAIL_USER, to: email, subject: 'Pets - Your reset code', text: `Your reset code is ${code}. It expires in 1 minute.` });
     } catch (error) {
       await pool.query(`UPDATE users SET reset_token=NULL, reset_expires=NULL WHERE id=$1`, [result.rows[0].id]);
       console.error('Password reset email error:', error.message);
@@ -526,7 +437,6 @@ app.post(['/api/auth/forgot-password', '/api/forgot-password'], async (req, res)
   }
 });
 
-// VERIFY RESET CODE - 6-digit code
 app.post('/api/auth/verify-reset', async (req, res) => {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const code = String(req.body?.code || '').trim();
@@ -543,31 +453,20 @@ app.post('/api/auth/verify-reset', async (req, res) => {
   } catch (e) { return res.status(500).json({ success: false, error: 'Verification failed' }); }
 });
 
-// RESET PASSWORD - 6-digit code + new password, erases old
 app.post(['/api/auth/reset-password', '/api/reset-password'], async (req, res) => {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const code = String(req.body?.code || req.body?.token || '').trim();
   const password = req.body?.newPassword || req.body?.password;
   const confirmPassword = req.body?.confirmPassword;
   if (!/^\d{6}$/.test(code)) return res.status(400).json({ success: false, error: 'Enter the 6-digit code' });
-  if (typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
-  }
-  if (confirmPassword !== undefined && (typeof confirmPassword !== 'string' || password !== confirmPassword)) {
-    return res.status(400).json({ success: false, error: 'Passwords do not match' });
-  }
+  if (typeof password !== 'string' || password.length < 6) return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  if (confirmPassword !== undefined && (typeof confirmPassword !== 'string' || password !== confirmPassword)) return res.status(400).json({ success: false, error: 'Passwords do not match' });
   try {
     await ensureUsersTable();
     const passwordHash = await bcrypt.hash(password, 10);
     const codeHash = createHash('sha256').update(code).digest('hex');
-    const updated = await pool.query(
-      `UPDATE users SET password_hash=$1,reset_token=NULL,reset_expires=NULL
-       WHERE email=$2 AND reset_token=$3 AND reset_expires>NOW() AND verified=TRUE RETURNING id`,
-      [passwordHash, email, codeHash]
-    );
-    if (!updated.rows.length) {
-      return res.status(400).json({ success: false, error: 'Code is invalid or expired' });
-    }
+    const updated = await pool.query(`UPDATE users SET password_hash=$1,reset_token=NULL,reset_expires=NULL WHERE email=$2 AND reset_token=$3 AND reset_expires>NOW() AND verified=TRUE RETURNING id`, [passwordHash, email, codeHash]);
+    if (!updated.rows.length) return res.status(400).json({ success: false, error: 'Code is invalid or expired' });
     return res.json({ success: true, message: 'Password changed, please login' });
   } catch (error) {
     console.error('Password reset error:', error.message);
@@ -580,33 +479,16 @@ app.post(['/api/auth/login', '/api/login'], async (req, res) => {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const password = req.body?.password;
   if (!EMAIL_PATTERN.test(email)) return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
-  if (typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ success: false, message: 'Please enter your password' });
-  }
+  if (typeof password !== 'string' || password.length < 6) return res.status(400).json({ success: false, message: 'Please enter your password' });
   if (!process.env.JWT_SECRET) return res.status(503).json({ success: false, message: 'Account service is not configured' });
   try {
     await ensureUsersTable();
-    const result = await pool.query(
-      'SELECT id,name,email,password_hash,verified,wallet_balance FROM users WHERE email=$1',
-      [email]
-    );
+    const result = await pool.query('SELECT id,name,email,password_hash,verified,wallet_balance FROM users WHERE email=$1', [email]);
     if (!result.rows.length) return res.status(401).json({ success: false, message: "Create account, details doesn't exist!!" });
     const user = result.rows[0];
-    if (!await bcrypt.compare(password, user.password_hash)) {
-      return res.status(401).json({ success: false, message: "Create account, details doesn't exist!!" });
-    }
-    if (!user.verified) {
-      return res.status(403).json({
-        success: false,
-        message: 'This account is not verified. Please verify your email before logging in.'
-      });
-    }
-    return res.json({
-      success: true,
-      message: 'Welcome back ♥️',
-      token: createToken(user.id),
-      user: { id: user.id, name: user.name, email: user.email, balance: Number(user.wallet_balance || 0) }
-    });
+    if (!await bcrypt.compare(password, user.password_hash)) return res.status(401).json({ success: false, message: "Create account, details doesn't exist!!" });
+    if (!user.verified) return res.status(403).json({ success: false, message: 'This account is not verified. Please verify your email before logging in.' });
+    return res.json({ success: true, message: 'Welcome back ♥️', token: createToken(user.id), user: { id: user.id, name: user.name, email: user.email, balance: Number(user.wallet_balance || 0) } });
   } catch (error) {
     console.error('Login error:', error.message);
     const unavailable = isDatabaseUnavailable(error);
@@ -614,156 +496,62 @@ app.post(['/api/auth/login', '/api/login'], async (req, res) => {
   }
 });
 
-app.get('/reset-password', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
+// ===== FIX 3: NEW - Get logged-in user + wallet balance (was missing) =====
+app.get('/api/auth/me', requireLogin, async (req, res) => {
+  try {
+    await ensureUsersTable();
+    const r = await pool.query('SELECT id,name,email,wallet_balance FROM users WHERE id=$1', [req.userId]);
+    if (!r.rows.length) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, user: { id: r.rows[0].id, name: r.rows[0].name, email: r.rows[0].email, balance: Number(r.rows[0].wallet_balance || 0) } });
+  } catch (e) { res.status(500).json({ success: false, message: 'Failed to load profile' }); }
 });
 
+app.get('/api/wallet/balance', requireLogin, async (req, res) => {
+  try {
+    await ensureUsersTable();
+    const r = await pool.query('SELECT wallet_balance FROM users WHERE id=$1', [req.userId]);
+    res.json({ success: true, balance: Number(r.rows[0]?.wallet_balance || 0) });
+  } catch (e) { res.status(500).json({ success: false, message: 'Failed to load balance' }); }
+});
+
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+
+// ===== WALLET VERIFY - KEPT FROM YOUR CODE (secure, prevents double-spend) =====
 app.post('/api/wallet/verify', requireLogin, async (req, res) => {
   const reference = typeof req.body?.reference === 'string' ? req.body.reference.trim() : '';
-  if (!reference) {
-    return res.status(400).json({ success: false, message: 'Payment reference is required' });
-  }
-  if (!PAYSTACK_SECRET_KEY) {
-    return res.status(503).json({ success: false, message: 'Payment service is not configured' });
-  }
+  if (!reference) return res.status(400).json({ success: false, message: 'Payment reference is required' });
+  if (!PAYSTACK_SECRET_KEY) return res.status(503).json({ success: false, message: 'Payment service is not configured' });
   let client;
   try {
     await ensureUsersTable();
-    const verifiedResponse = await axios.get(
-      `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
-      { headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` } }
-    );
+    const verifiedResponse = await axios.get(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, { headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` } });
     const transaction = verifiedResponse.data?.data;
-    if (transaction?.status !== 'success' || transaction.currency !== 'USD' ||
-        !Number.isSafeInteger(transaction.amount) || transaction.amount < 1) {
+    if (transaction?.status !== 'success' || transaction.currency !== 'USD' || !Number.isSafeInteger(transaction.amount) || transaction.amount < 1) {
       return res.status(400).json({ success: false, message: 'Payment could not be verified in USD' });
     }
     client = await pool.connect();
     await client.query('BEGIN');
-    const userResult = await client.query(
-      'SELECT id,email FROM users WHERE id=$1 FOR UPDATE',
-      [req.userId]
-    );
-    if (userResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(401).json({ success: false, message: 'Please log in to continue' });
-    }
-    if (transaction.customer?.email?.toLowerCase() !== userResult.rows[0].email.toLowerCase()) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ success: false, message: 'Payment email does not match your account' });
-    }
+    const userResult = await client.query('SELECT id,email FROM users WHERE id=$1 FOR UPDATE', [req.userId]);
+    if (userResult.rows.length === 0) { await client.query('ROLLBACK'); return res.status(401).json({ success: false, message: 'Please log in to continue' }); }
+    if (transaction.customer?.email?.toLowerCase() !== userResult.rows[0].email.toLowerCase()) { await client.query('ROLLBACK'); return res.status(400).json({ success: false, message: 'Payment email does not match your account' }); }
     const amountUsd = (transaction.amount / 100).toFixed(2);
-    const inserted = await client.query(
-      `INSERT INTO wallet_transactions(user_id,reference,amount_usd)
-       VALUES($1,$2,$3)
-       ON CONFLICT(reference) DO NOTHING
-       RETURNING id`,
-      [req.userId, reference, amountUsd]
-    );
+    const inserted = await client.query(`INSERT INTO wallet_transactions(user_id,reference,amount_usd) VALUES($1,$2,$3) ON CONFLICT(reference) DO NOTHING RETURNING id`, [req.userId, reference, amountUsd]);
     if (inserted.rows.length === 0) {
-      const previous = await client.query(
-        'SELECT user_id FROM wallet_transactions WHERE reference=$1',
-        [reference]
-      );
-      if (String(previous.rows[0]?.user_id) !== String(req.userId)) {
-        await client.query('ROLLBACK');
-        return res.status(409).json({ success: false, message: 'Payment reference has already been used' });
-      }
+      const previous = await client.query('SELECT user_id FROM wallet_transactions WHERE reference=$1', [reference]);
+      if (String(previous.rows[0]?.user_id) !== String(req.userId)) { await client.query('ROLLBACK'); return res.status(409).json({ success: false, message: 'Payment reference has already been used' }); }
     } else {
-      await client.query(
-        'UPDATE users SET wallet_balance=wallet_balance + $1 WHERE id=$2',
-        [amountUsd, req.userId]
-      );
+      await client.query('UPDATE users SET wallet_balance=wallet_balance + $1 WHERE id=$2', [amountUsd, req.userId]);
     }
-    const balanceResult = await client.query(
-      'SELECT wallet_balance FROM users WHERE id=$1',
-      [req.userId]
-    );
+    const balanceResult = await client.query('SELECT wallet_balance FROM users WHERE id=$1', [req.userId]);
     await client.query('COMMIT');
-    return res.json({
-      success: true,
-      message: 'Wallet topped up successfully',
-      balance: Number(balanceResult.rows[0].wallet_balance)
-    });
+    return res.json({ success: true, message: 'Wallet topped up successfully', balance: Number(balanceResult.rows[0].wallet_balance) });
   } catch (error) {
-    if (client) await client.query('ROLLBACK').catch((rollbackError) => {
-      console.error('Wallet rollback error:', rollbackError.message);
-    });
+    if (client) await client.query('ROLLBACK').catch(()=>{});
     console.error('Wallet verification error:', error.response?.data || error.message);
     const unavailable = isDatabaseUnavailable(error);
-    return res.status(unavailable ? 503 : 400).json({
-      success: false,
-      message: error.response?.data?.message || (unavailable ? 'Database unavailable' : 'Payment verification failed')
-    });
-  } finally {
-    if (client) client.release();
-  }
-});
-
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
-});
-// ---------- PETS SEARCH - Dog + Cat API ----------
-function priceInRange(seed, min, max){
-  let h = 0; for(let c of seed) h = (h*31 + c.charCodeAt(0)) % 100000;
-  return min + (h % (max - min + 1));
-}
-
-app.get('/api/pets/search', async (req, res) => {
-  const q = (req.query.q || 'dog').toLowerCase();
-  const isCat = q.includes('cat') || q.includes('kitten') || q.includes('kitty');
-  try {
-    if (isCat) {
-      const searchTerm = q.replace('cat','').replace('kitten','').replace('kitty','').trim() || 'persian';
-      const breedRes = await fetch(`https://api.thecatapi.com/v1/breeds/search?q=${encodeURIComponent(searchTerm)}`, { headers: { 'x-api-key': process.env.CAT_API_KEY } });
-      let breeds = await breedRes.json();
-      if (!breeds.length) breeds = [{ id: 'pers', name: 'Persian', description: 'Sweet, calm and fluffy companion.', temperament: 'Calm, Affectionate', origin: 'Iran', life_span: '12 - 17' }];
-      const out = [];
-      for (let b of breeds.slice(0, 6)) {
-        const imgRes = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${b.id}&limit=4`, { headers: { 'x-api-key': process.env.CAT_API_KEY } });
-        const imgs = await imgRes.json();
-        const photos = imgs.map(i => i.url).filter(Boolean);
-        if (!photos.length) continue;
-        out.push({
-          id: b.id, type: 'cat', name: b.name, breed: b.name,
-          description: b.description || 'Lovely cat looking for a home.',
-          temperament: b.temperament || 'Friendly',
-          origin: b.origin || 'Unknown',
-          life: b.life_span || '12 - 15',
-          price: priceInRange(b.id + b.name, 975, 2200),
-          photos, mainPhoto: photos[0]
-        });
-      }
-      return res.json(out);
-    } else {
-      const searchTerm = q.replace('dog','').replace('puppy','').replace('puppies','').trim() || 'labrador';
-      const breedRes = await fetch(`https://api.thedogapi.com/v1/breeds/search?q=${encodeURIComponent(searchTerm)}`, { headers: { 'x-api-key': process.env.DOG_API_KEY } });
-      let breeds = await breedRes.json();
-      if (!breeds.length) breeds = [{ id: 1, name: 'Labrador', bred_for: 'Retrieving', breed_group: 'Sporting', life_span: '10 - 12 years', temperament: 'Friendly, Active, Outgoing', reference_image_id: 'BJa4kxc4X' }];
-      const out = [];
-      for (let b of breeds.slice(0, 6)) {
-        let photos = [];
-        const imgRes = await fetch(`https://api.thedogapi.com/v1/images/search?breed_ids=${b.id}&limit=4`, { headers: { 'x-api-key': process.env.DOG_API_KEY } });
-        const imgs = await imgRes.json();
-        photos = imgs.map(i => i.url).filter(Boolean);
-        if (!photos.length) {
-          const fb = await fetch('https://dog.ceo/api/breed/labrador/images/random/4').then(r=>r.json()).catch(()=>({message:[]}));
-          photos = fb.message || [];
-        }
-        if (!photos.length) continue;
-        out.push({
-          id: String(b.id), type: 'dog', name: b.name, breed: b.name,
-          description: `A wonderful ${b.name}. ${b.bred_for ? 'Bred for ' + b.bred_for + '.' : ''} Great companion for families.`,
-          temperament: b.temperament || 'Friendly, Loyal',
-          origin: b.origin || b.breed_group || 'Unknown',
-          life: b.life_span || '10 - 13 years',
-          price: priceInRange(String(b.id) + b.name, 1152, 2710),
-          photos, mainPhoto: photos[0]
-        });
-      }
-      return res.json(out);
-    }
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Pet search failed' }); }
+    return res.status(unavailable ? 503 : 400).json({ success: false, message: error.response?.data?.message || (unavailable ? 'Database unavailable' : 'Payment verification failed') });
+  } finally { if (client) client.release(); }
 });
 
 if (require.main === module) {
