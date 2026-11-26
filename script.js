@@ -472,3 +472,19 @@ function closeBookedPets(){
   const p = document.getElementById('bookedPetsPage');
   if(p) p.style.display = 'none';
 }
+// AUTO-LOAD PETS ON HOME PAGE OPEN
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (typeof buildAllPets === "function") {
+      await buildAllPets();
+    }
+    if (typeof showPets === "function") {
+      showPets('all');
+    } else if (typeof renderPets === "function" && typeof allPets !== "undefined") {
+      renderPets(allPets);
+    }
+    console.log("Pets loaded:", typeof allPets !== "undefined" ? allPets.length : "unknown");
+  } catch (e) {
+    console.error("Auto-load failed:", e);
+  }
+});
