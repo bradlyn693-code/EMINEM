@@ -1,11 +1,11 @@
-const CAT_API_KEY = "YOUR_NEW_KEY_HERE"; // <-- PASTE NEW ROTATED KEY HERE
+const CAT_API_KEY = "live_PaA0XuGjhvPCepwdAIHk8LXkDJHjUT6tEjfNzOZTufFWUOeaLMQd9CXkVhTx2gVO";
 function toggleSidePanel(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('panelOverlay');
   const menuButton = document.getElementById('menuBtn');
-  if(!sidebar) return;
+  if(!window.matchMedia('(max-width: 1024px)').matches) return;
   const isOpen = sidebar.classList.toggle('open');
-  if(overlay) overlay.classList.toggle('show', isOpen);
+  if(overlay) overlay.classList.toggle('active', isOpen);
   if(menuButton) menuButton.setAttribute('aria-expanded', String(isOpen));
 }
 function toggleMenu(){ toggleSidePanel(); }
@@ -14,9 +14,8 @@ function closeSidePanel(){
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('panelOverlay');
   const menuButton = document.getElementById('menuBtn');
-  if(!sidebar) return;
   sidebar.classList.remove('open');
-  if(overlay) overlay.classList.remove('show');
+  if(overlay) overlay.classList.remove('active');
   if(menuButton) menuButton.setAttribute('aria-expanded', 'false');
 }
 
@@ -80,6 +79,7 @@ let dogList = [
   {breed:"Afghan Hound", api:"hound/afghan", desc:"Long silky hair, elegant.", price: 1100},
   {breed:"Greyhound", api:"greyhound/italian", desc:"Fastest dog, slim.", price: 1950},
   {breed:"Whippet", api:"whippet", desc:"Small greyhound.", price: 1300},
+  
   {breed:"Bull Terrier", api:"terrier/bull", desc:"Egg head, playful.", price: 1700},
   {breed:"Fox Terrier", api:"terrier/fox", desc:"Wiry, energetic.", price: 1050},
   {breed:"Jack Russell", api:"terrier/russell", desc:"Tiny, hyper, smart.", price: 780},
@@ -93,7 +93,7 @@ let dogList = [
   {breed:"Basenji", api:"basenji", desc:"Doesn't bark, yodels.", price: 1920},
   {breed:"Weimaraner", api:"weimaraner", desc:"Silver grey hunter.", price: 1850},
   {breed:"Vizsla", api:"vizsla", desc:"Golden hunter.", price: 900},
-  {breed:"Brittany", api:"spaniel/brittany", desc:"Orange hunting dog.", price:1800},
+ {breed:"Brittany", api:"spaniel/brittany", desc:"Orange hunting dog.", price:1800}, 
 ];
 
 let puppyNames = ["Max","Bella","Luna","Rocky","Daisy","Cooper","Milo","Lola","Buddy","Ruby","Teddy","Rosie","Bear","Molly","Leo","Poppy","Zeus","Willow","Duke","Ivy","Archie","Nala","Oscar","Coco"];
@@ -123,24 +123,17 @@ let catList = [
 ];
 // === LOAD REAL CAT IMAGES WITH API KEY ===
 async function loadCatImagesFromAPI() {
-  const placeholderImage = 'https://placehold.co/600x400?text=Cat';
-  catList.forEach(cat => { cat.images = [placeholderImage]; });
   for (const cat of catList) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
     try {
       const res = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${cat.code}&limit=5`, {
-        headers: { "x-api-key": CAT_API_KEY },
-        signal: controller.signal
+        headers: { "x-api-key": CAT_API_KEY }
       });
-      if (!res.ok) throw new Error(`Cat image request failed: ${res.status}`);
       const data = await res.json();
       if (data && data.length > 0) {
         cat.images = data.map(d => d.url);
         cat.image = cat.images[0];
       }
     } catch(e) { console.log("fail", cat.breed); }
-    finally { clearTimeout(timeout); }
   }
 }
 loadCatImagesFromAPI();
@@ -153,269 +146,1027 @@ function parrotFallbackImage(bodyColor, accentColor){
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+// === PARROT IMAGES FIXED ONLY - real parrot photos, property renamed img -> image ===
 let parrotList = [
-  {breed:"Macaw", desc:"Large colorful talking parrot.", price:1800, bodyColor:"#d53f2b", accentColor:"#f2c230", fallback: parrotFallbackImage("#d53f2b","#f2c230")},
-  {breed:"African Grey", desc:"Smartest talking parrot.", price:1500, bodyColor:"#8d9297", accentColor:"#d33b2d", fallback: parrotFallbackImage("#8d9297","#d33b2d")},
-  {breed:"Cockatoo", desc:"White fluffy crest parrot.", price:1200, bodyColor:"#f5f5f5", accentColor:"#ffcf3d", fallback: parrotFallbackImage("#f5f5f5","#ffcf3d")},
-  {breed:"Budgerigar", desc:"Small green friendly parakeet.", price:120, bodyColor:"#7bc950", accentColor:"#f7d154", fallback: parrotFallbackImage("#7bc950","#f7d154")},
-  {breed:"Conure", desc:"Playful, loud, colorful.", price:900, bodyColor:"#2f9e6e", accentColor:"#e84e2d", fallback: parrotFallbackImage("#2f9e6e","#e84e2d")},
-  {breed:"Amazon Parrot", desc:"Green talkative parrot.", price:1100, bodyColor:"#2d8a4e", accentColor:"#f6c945", fallback: parrotFallbackImage("#2d8a4e","#f6c945")},
-  {breed:"Lovebird", desc:"Tiny pair bonding parrot.", price:180, bodyColor:"#51a847", accentColor:"#f2725b", fallback: parrotFallbackImage("#51a847","#f2725b")},
-  {breed:"Cockatiel", desc:"Grey with orange cheeks.", price:250, bodyColor:"#a8a8a8", accentColor:"#ff9440", fallback: parrotFallbackImage("#a8a8a8","#ff9440")},
-  {breed:"Eclectus", desc:"Red and green, calm.", price:1300, bodyColor:"#c9272f", accentColor:"#1f9d55", fallback: parrotFallbackImage("#c9272f","#1f9d55")},
-  {breed:"Quaker Parrot", desc:"Small green talker.", price:350, bodyColor:"#5ea84b", accentColor:"#8fd14f", fallback: parrotFallbackImage("#5ea84b","#8fd14f")},
-  {breed:"Caique", desc:"Clown parrot, playful.", price:1000, bodyColor:"#f5f5f5", accentColor:"#ff8c1a", fallback: parrotFallbackImage("#f5f5f5","#ff8c1a")},
-  {breed:"Senegal Parrot", desc:"Calm, green and yellow.", price:600, bodyColor:"#3f9e4d", accentColor:"#f2c230", fallback: parrotFallbackImage("#3f9e4d","#f2c230")},
-  {breed:"Pionus", desc:"Quiet, gentle parrot.", price:800, bodyColor:"#3b6fb6", accentColor:"#e84e2d", fallback: parrotFallbackImage("#3b6fb6","#e84e2d")},
-  {breed:"Rosella", desc:"Colorful Australian parrot.", price:400, bodyColor:"#d53f2b", accentColor:"#f2c230", fallback: parrotFallbackImage("#d53f2b","#f2c230")},
-  {breed:"Ringneck Parakeet", desc:"Green with ring.", price:300, bodyColor:"#4fae4e", accentColor:"#f2725b", fallback: parrotFallbackImage("#4fae4e","#f2725b")},
-  {breed:"Meyers Parrot", desc:"Brown and yellow, calm.", price:450, bodyColor:"#6b4a2f", accentColor:"#f2c230", fallback: parrotFallbackImage("#6b4a2f","#f2c230")},
-  {breed:"Jardine Parrot", desc:"Orange head, smart.", price:500, bodyColor:"#2f9e6e", accentColor:"#f2725b", fallback: parrotFallbackImage("#2f9e6e","#f2725b")},
-  {breed:"Hawk Head Parrot", desc:"Fan crest, red/green.", price:900, bodyColor:"#7b2d26", accentColor:"#2f9e6e", fallback: parrotFallbackImage("#7b2d26","#2f9e6e")},
-  {breed:"Blue and Gold Macaw", desc:"Blue and gold giant.", price:2000, bodyColor:"#2b6cb0", accentColor:"#f2c230", fallback: parrotFallbackImage("#2b6cb0","#f2c230")},
-  {breed:"Scarlet Macaw", desc:"Bright red giant.", price:2100, bodyColor:"#d53f2b", accentColor:"#f2c230", fallback: parrotFallbackImage("#d53f2b","#f2c230")},
+  {breed:"African Grey Parrot", price:1200, desc:"Intelligent...", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#808080", accentColor:"#FF0000"},
+  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings...", image:"https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=600&q=80", bodyColor:"#0066FF", accentColor:"#FFCC00"},
+  {breed:"Budgerigar / Budgie", price:45, desc:"A small, live...", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#00CC66", accentColor:"#FFFF00"},
+  {breed:"Cockatiel", price:120, desc:"Grey cockatiel...", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#999999", accentColor:"#FF9900"},
+  {breed:"Amazon Parrot", price:800, desc:"A sociable green...", image:"https://images.unsplash.com/photo-1619468005516-1a8a0a0a0a0a?w=600&q=80", bodyColor:"#009900", accentColor:"#FF0000"},
+  {breed:"Sun Conure", price:1420, desc:"A brilliant conure...", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#FF9900", accentColor:"#FFFF00"},
+  {breed:"Lovebird", price:1190, desc:"A small, affectionate...", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#FF3399", accentColor:"#00CCFF"},
+  {breed:"White Cockatoo", price:950, desc:"An elegant all-white...", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
 ];
 
-let allPetsLoaded = false;
-let userBalance = 0;
-
-async function fetchDogImages(){
-  const breedGroups = {};
-  for(const d of dogList){
-    const parts = d.api.split('/');
-    const base = parts[0];
-    if(!breedGroups[base]) breedGroups[base] = [];
-    breedGroups[base].push(d);
+async function fetchWithTimeout(url, timeoutMs = 8000){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    return await fetch(url, { signal: controller.signal });
+  }finally{
+    clearTimeout(timeout);
   }
-  await Promise.all(Object.keys(breedGroups).map(async base => {
-    const placeholderImage = 'https://placehold.co/600x400?text=Pet';
-    breedGroups[base].forEach(dog => { dog.images = [placeholderImage]; });
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    try{
-      const r = await fetch(`https://dog.ceo/api/breed/${base}/images/random/6`, { signal: controller.signal });
-      if(!r.ok) throw new Error(`Dog image request failed: ${r.status}`);
-      const data = await r.json();
-      if(data.status === 'success'){
-        breedGroups[base].forEach((dog,i)=>{
-          const images = data.message.slice(i*2, i*2+2);
-          if(images.length) dog.images = images;
-        });
-      }
-    }catch(e){ console.log('fail', base); }
-    finally { clearTimeout(timeout); }
-  }));
-  const puppies = [];
-  for(const dog of dogList){
-    puppies.push({
-      breed: dog.breed,
-      name: puppyNames[Math.floor(Math.random()*puppyNames.length)],
-      price: dog.price,
-      images: dog.images || [],
-      desc: dog.desc,
-      api: dog.api,
-      type: 'Dog'
+}
+
+const dogFallbackImages = [
+  "https://images.dog.ceo/breeds/german-shepherd/n02106662_20711.jpg",
+  "https://images.dog.ceo/breeds/german-shepherd/img_20200801_005827_704.jpg",
+  "https://images.dog.ceo/breeds/german-shepherd/n02106662_1451.jpg",
+  "https://images.dog.ceo/breeds/german-shepherd/n02106662_10858.jpg"
+];
+function getDogFallbackImages(index){
+  return Array.from({length:4}, (_, photoIndex) =>
+    `https://placedog.net/500/500?id=${index * 4 + photoIndex + 1}`);
+}
+const catFallbackImages = [
+  "https://cdn2.thecatapi.com/images/avc.jpg",
+  "https://cdn2.thecatapi.com/images/eda.jpg",
+  "https://cdn2.thecatapi.com/images/77e.jpg",
+  "https://cdn2.thecatapi.com/images/MTg5OTI0Ng.jpg"
+];
+const breedPhotos = new Map();
+
+function getBreedPhotos(key, load){
+  if(!breedPhotos.has(key)) breedPhotos.set(key, load());
+  return breedPhotos.get(key);
+}
+
+async function getDogImages(api, fallbackImages){
+  try{
+    const response = await fetchWithTimeout(`https://dog.ceo/api/breed/${api}/images/random/4`);
+    if(!response.ok) throw new Error(`Dog image API returned ${response.status} for ${api}`);
+    const data = await response.json();
+    const images = Array.isArray(data.message) ? [...new Set(data.message)] : [];
+    if(data.status === "success" && images.length >= 4) return images.slice(0, 4);
+    throw new Error(`Dog image API returned fewer than four photos for ${api}`);
+  }catch(error){
+    console.warn(`Using real-photo fallback for dog breed ${api}:`, error);
+    return fallbackImages;
+  }
+}
+
+async function getCatImages(code){
+  try{
+    const response = await fetchWithTimeout(`https://api.thecatapi.com/v1/images/search?breed_ids=${encodeURIComponent(code)}&limit=4&mime_types=jpg`);
+    if(!response.ok) throw new Error(`Cat image API returned ${response.status} for ${code}`);
+    const data = await response.json();
+    const images = Array.isArray(data)
+      ? [...new Set(data.map(item => item.url).filter(url => /^https:\/\/[^/]+\/.+\.jpg(?:\?.*)?$/i.test(url)))]
+      : [];
+    if(images.length >= 4) return images.slice(0, 4);
+    throw new Error(`Cat image API returned fewer than four JPG photos for ${code}`);
+  }catch(error){
+    console.warn(`Using real-photo fallback for cat breed ${code}:`, error);
+    return catFallbackImages;
+  }
+}
+
+function handlePetImageError(image){
+  if(image.dataset.fallbackApplied) return;
+  image.dataset.fallbackApplied = "true";
+  const index = Number(image.dataset.petIndex);
+  const pet = allPets[index];
+  if(pet && (pet.type === "cat" || pet.type === "kitten")){
+    image.src = catFallbackImages[0];
+  }else if(pet && pet.type === "parrot"){
+    image.src = pet.fallbackImage;
+  }else if(pet && pet.type === "dog"){
+    image.src = pet.fallbackImage;
+  }else{
+    image.src = dogFallbackImages[0];
+  }
+}
+
+function loadPets(){
+  if(allPets.length) return;
+  const imageTasks = [];
+  const seenPets = new Set();
+  function addPet(pet, getImages){
+    const normalizedBreed = pet.breed.toLowerCase().trim() === "budgie"
+      ? "budgerigar"
+      : pet.breed.toLowerCase().trim();
+    const duplicateKey = pet.type === "puppy" || pet.type === "kitten"
+      ? `${pet.type}|${normalizedBreed}|${pet.name.toLowerCase().trim()}`
+      : `${pet.type}|${normalizedBreed}`;
+    if(seenPets.has(duplicateKey)) return;
+    seenPets.add(duplicateKey);
+
+    const index = allPets.length;
+    allPets.push({...pet, id:`pet-${index + 1}`, images:pet.images.slice(0, 4)});
+    if(getImages){
+      imageTasks.push(async () => {
+        const images = await getImages();
+        if(images.length === 4){
+          allPets[index].images = images;
+          document.querySelectorAll(`[data-pet-index="${index}"]`).forEach((image) => {
+            const photoIndex = Number(image.dataset.photoIndex || 0);
+            image.dataset.fallbackApplied = "";
+            image.src = images[photoIndex] || images[0];
+          });
+        }
+      });
+    }
+  }
+
+  for(let i=0; i<dogList.length; i++){
+    const dog = dogList[i];
+    const fallbackImages = getDogFallbackImages(i);
+    addPet({
+      type:'dog', name:dog.breed, breed:dog.breed, price:dog.price,
+      age:(2 + (i%10))+" months", desc:dog.desc, images:fallbackImages,
+      fallbackImage:fallbackImages[0]
+    }, () => getBreedPhotos(`dog:${dog.api}`, () => getDogImages(dog.api, fallbackImages)));
+  }
+  for(let i=0; i<24; i++){
+    const dog = dogList[i];
+    addPet({
+      type:'puppy', name:puppyNames[i], breed:dog.breed+" Puppy", price:puppyPrices[i],
+      age:(2 + (i%4))+" months", desc:"Baby "+dog.breed+" puppy named "+puppyNames[i]+". "+dog.desc,
+      images:dogFallbackImages
+    }, () => getBreedPhotos(`dog:${dog.api}`, () => getDogImages(dog.api)));
+  }
+  for(let i=0; i<catList.length; i++){
+    const cat = catList[i];
+    addPet({
+      type:'cat', name:cat.breed, breed:cat.breed, price:cat.price,
+      age:(3 + (i%8))+" months", desc:cat.desc, images:catFallbackImages
+    }, () => getBreedPhotos(`cat:${cat.code}`, () => getCatImages(cat.code)));
+  }
+  for(let i=0; i<26; i++){
+    const cat = catList[i % catList.length];
+    addPet({
+      type:'kitten', name:kittenNames[i], breed:cat.breed+" Kitten", price:kittenPrices[i],
+      age:(2 + (i%4))+" months", desc:"Kitten "+kittenNames[i]+" - "+cat.desc,
+      images:catFallbackImages
+    }, () => getBreedPhotos(`cat:${cat.code}`, () => getCatImages(cat.code)));
+  }
+  // === PARROT FIX ONLY - use parrot.image (not .img) and set fallbackImage ===
+  for(let i=0; i<parrotList.length; i++){
+    const parrot = parrotList[i];
+    addPet({
+      type:'parrot', name:parrot.breed, breed:parrot.breed, price:parrot.price,
+      age:(4 + (i%10))+" months", desc:parrot.desc, images:[parrot.image, parrot.image, parrot.image, parrot.image],
+      fallbackImage:parrotFallbackImage(parrot.bodyColor, parrot.accentColor)
     });
   }
-  return puppies;
+
+  for(const type of ["dog", "cat", "kitten", "parrot", "puppy"]){
+    const count = document.getElementById(`${type}Count`);
+    if(count) count.textContent = allPets.filter(pet => pet.type === type).length;
+  }
+  showPets('all');
+
+  let nextImageTask = 0;
+  const workers = Array.from({length: 6}, async () => {
+    while(nextImageTask < imageTasks.length){
+      const task = imageTasks[nextImageTask++];
+      await task();
+    }
+  });
+  Promise.all(workers).catch((error) => console.error('Pet image loading failed:', error));
 }
 
-async function buildAllPets(){
-  if(allPetsLoaded) return;
-  const dogPuppies = await fetchDogImages();
-  const catKittens = catList.map((cat,i)=>({ breed: cat.breed, name: kittenNames[i % kittenNames.length], price: cat.price, images: cat.images || [], desc: cat.desc, type:'Cat', code: cat.code }));
-  const parrots = parrotList.map((p,i)=>({ breed: p.breed, name: 'Polly '+(i+1), price: p.price, images: [p.fallback], desc: p.desc, type:'Parrot' }));
-  allPets = [...dogPuppies, ...catKittens, ...parrots];
-  allPetsLoaded = true;
-  renderPets(allPets, 'All');
+function showPets(type){
+  const list = document.getElementById('petList');
+  const title = document.getElementById('pageTitle');
+  const filtered = type === 'all' ? allPets : allPets.filter(pet => pet.type === type);
+  title.innerText = type === 'all' ? 'All Pets (' + allPets.length + ')' : type.charAt(0).toUpperCase() + type.slice(1) + ' (' + filtered.length + ')';
+  list.innerHTML = filtered.map(pet => {
+    const index = allPets.indexOf(pet);
+    return `
+      <div class="card">
+        <img src="${pet.images[0]}" loading="lazy" alt="${pet.name}" data-pet-index="${index}" onerror="handlePetImageError(this)">
+        <div class="card-body">
+          <span class="health">✓ HEALTH CHECKED</span>
+          <h3>${pet.name}</h3>
+          <p class="age">${pet.age} • ${pet.breed}</p>
+          <p class="desc">${pet.desc}</p>
+          <div class="price">${formatUsd(pet.price)}</div>
+          <button type="button" class="pet-photo-button" onclick="openPetDetails('${pet.id}')">View 4 Photos</button>
+          <button type="button" onclick="addToCart('${pet.id}')">🛒 Add to Cart</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-function renderPets(list, category){
-  const grid = document.getElementById('petGrid') || document.getElementById('petList');
-  if(!grid) return;
-  grid.innerHTML = '';
-  list.forEach(pet=>{
-    const card = document.createElement('div');
-    card.className = 'pet-card';
-    const img = (pet.images && pet.images[0]) ? pet.images[0] : 'https://placehold.co/600x400?text=Pet';
-    card.innerHTML = `<img src="${img}" alt="${pet.name}" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Pet';"><div class="pet-info"><h3>${pet.name}</h3><p>${pet.breed} - ${pet.desc}</p><p><strong>$${pet.price}</strong> • Origin: ${getOrigin(pet.breed)}</p><button class="add-btn" onclick="addToCart('${pet.name.replace(/'/g,"\\'")}','${pet.breed.replace(/'/g,"\\'")}','${pet.price}','${img}')">Add to Cart</button><button class="buy-now-btn" onclick="addToCart('${pet.name.replace(/'/g,"\\'")}','${pet.breed.replace(/'/g,"\\'")}','${pet.price}','${img}');document.querySelector('.cart-btn').click()">Buy Now</button></div>`;
-    grid.appendChild(card);
+function openPetDetails(petId){
+  const pet = allPets.find(item => item.id === petId);
+  if(!pet) return;
+  let modal = document.getElementById("petDetailModal");
+  if(!modal){
+    modal = document.createElement("div");
+    modal.id = "petDetailModal";
+    modal.className = "pet-detail-overlay";
+    modal.addEventListener("click", event => {
+      if(event.target === modal) modal.remove();
+    });
+    document.body.appendChild(modal);
+  }
+  const index = allPets.indexOf(pet);
+  modal.innerHTML = `
+    <div class="pet-detail-panel" role="dialog" aria-modal="true" aria-label="${pet.name} photos">
+      <button type="button" onclick="document.getElementById('petDetailModal').remove()" aria-label="Close photos" style="float:right">Close</button>
+      <h2>${pet.name}</h2>
+      <img id="petDetailMain" class="pet-detail-main" src="${pet.images[0]}" alt="${pet.name}" data-pet-index="${index}" data-photo-index="0" onerror="handlePetImageError(this)">
+      <div class="pet-thumbnails">
+        ${pet.images.slice(0, 4).map((image, photoIndex) => `
+          <button type="button" class="${photoIndex === 0 ? 'active' : ''}" onclick="selectPetPhoto('${pet.id}', ${photoIndex})" aria-label="Show photo ${photoIndex + 1}">
+            <img src="${image}" alt="${pet.name}, photo ${photoIndex + 1}" data-pet-index="${index}" data-photo-index="${photoIndex}" onerror="handlePetImageError(this)">
+          </button>
+        `).join('')}
+      </div>
+      <p>${pet.age} • ${pet.breed}</p>
+      <div class="price">${formatUsd(pet.price)}</div>
+      <button type="button" onclick="addToCart('${pet.id}')">🛒 Add to Cart</button>
+    </div>
+  `;
+}
+
+function selectPetPhoto(petId, photoIndex){
+  const pet = allPets.find(item => item.id === petId);
+  const modal = document.getElementById("petDetailModal");
+  const mainImage = document.getElementById("petDetailMain");
+  if(!pet || !modal || !mainImage || !pet.images[photoIndex]) return;
+  mainImage.src = pet.images[photoIndex];
+  mainImage.dataset.photoIndex = String(photoIndex);
+  modal.querySelectorAll(".pet-thumbnails button").forEach((button, index) => {
+    button.classList.toggle("active", index === photoIndex);
   });
 }
 
-function renderCats(list, category){
-  const grid = document.getElementById('petGrid') || document.getElementById('petList');
-  if(!grid) return;
-  grid.innerHTML = '';
-  list.forEach(cat=>{
-    const card = document.createElement('div');
-    card.className = 'pet-card';
-    const img = (cat.images && cat.images[0]) ? cat.images[0] : 'https://placehold.co/600x400?text=Cat';
-    card.innerHTML = `<img src="${img}" alt="${cat.name}" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Cat';"><div class="pet-info"><h3>${cat.name}</h3><p>${cat.breed} - ${cat.desc}</p><p><strong>$${cat.price}</strong> • Origin: ${getOrigin(cat.breed)}</p><button class="add-btn" onclick="addToCart('${cat.name.replace(/'/g,"\\'")}','${cat.breed.replace(/'/g,"\\'")}','${cat.price}','${img}')">Add to Cart</button><button class="buy-now-btn" onclick="addToCart('${cat.name.replace(/'/g,"\\'")}','${cat.breed.replace(/'/g,"\\'")}','${cat.price}','${img}');document.querySelector('.cart-btn').click()">Buy Now</button></div>`;
-    grid.appendChild(card);
+loadPets();
+
+// ===== GOOGLE STYLE SEARCH - MADE FOR YOUR FILE =====
+
+function displaySearchResults(list) {
+  let el = document.getElementById("petList");
+  let title = document.getElementById("pageTitle");
+  title.innerText = "Search Results (" + list.length + ")";
+  el.innerHTML = list.map(p => {
+    const index = allPets.indexOf(p);
+    return `
+    <div class="card">
+      <img src="${p.images[0]}" loading="lazy" alt="${p.name}" data-pet-index="${index}" onerror="handlePetImageError(this)">
+      <div class="card-body">
+        <span class="health">✓ HEALTH CHECKED</span>
+        <h3>${p.name}</h3>
+        <p class="age">${p.age} • ${p.breed}</p>
+        <p class="desc">${p.desc}</p>
+        <div class="price">${formatUsd(p.price)}</div>
+        <button type="button" class="pet-photo-button" onclick="openPetDetails('${p.id}')">View 4 Photos</button>
+        <button type="button" onclick="addToCart('${p.id}')">🛒 Add to Cart</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+function selectSuggestion(name){
+  document.getElementById("searchInput").value = name;
+  document.getElementById("suggestionsBox").innerHTML = "";
+  googleSearch();
+}
+function clearSearch(){
+  document.getElementById("searchInput").value = "";
+  googleSearch();
+}
+function feelingLucky(){
+  let random = allPets[Math.floor(Math.random()*allPets.length)];
+  document.getElementById("searchInput").value = random.name;
+  googleSearch();
+}
+// ===== STEP 2: FAST + ORIGIN + AGE + SMART SEARCH =====
+
+// ===== STEP 4: FIX 0 PETS - WAIT FOR API =====
+let _originalLoad = typeof loadPets === 'function' ? loadPets : null;
+
+// Don't let showPets run when empty - wait a bit and retry
+let _oldShow = showPets;
+showPets = function(type){
+  if(!allPets || allPets.length===0){
+    setTimeout(()=>showPets(type), 500);
+    let t=document.getElementById("pageTitle");
+    if(t) t.innerText="Loading pets... please wait...";
+    return;
+  }
+  _oldShow(type);
+};
+
+// After page loads, try again until pets appear
+setTimeout(()=>{
+  if(allPets && allPets.length>0){
+    showPets('all');
+  } else {
+    // If API failed, reload pets
+    if(_originalLoad) _originalLoad();
+    setTimeout(()=>showPets('all'), 1500);
+  }
+}, 1200);
+
+// Fix Home button - show banner again
+function goHome(){
+  let h=document.getElementById("homePage");
+  if(h) h.style.display="block";
+  showPets('all');
+  window.scrollTo(0,0);
+}
+
+// ===== STEP 5: NO DUPLICATES + SMART SEARCH =====
+
+// 1. Remove duplicates - keep only 1 of each pet name
+function removeDuplicates(list){
+  const seen = new Set();
+  return list.filter(p=>{
+    const key = `${p.type}|${(p.breed||"").toLowerCase().trim()}|${(p.name||"").toLowerCase().trim()}`;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
 }
 
-function filterPets(category){
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  const btn = document.querySelector(`.filter-btn[data-category="${category}"]`);
-  if(btn) btn.classList.add('active');
-  if(category === 'All'){ buildAllPets().then(()=>renderPets(allPets,'All')); return; }
-  if(category === 'Dog'){ buildAllPets().then(()=>renderPets(allPets.filter(p=>p.type==='Dog'),'Dog')); return; }
-  if(category === 'Cat'){ buildAllPets().then(()=>renderPets(allPets.filter(p=>p.type==='Cat'),'Cat')); return; }
-  if(category === 'Parrot'){ buildAllPets().then(()=>renderPets(allPets.filter(p=>p.type==='Parrot'),'Parrot')); return; }
+// Clean allPets every time we show
+let _show5 = showPets;
+showPets = function(type){
+  if(allPets && allPets.length>0){
+
+  }
+  _show5(type);
+};
+
+// 2. Fix    allPets = removeDuplicates(allPets); loadPets - don't load twice
+let _load5 = typeof loadPets === 'function' ? loadPets : null;
+let _isLoading = false;
+if(_load5){
+  loadPets = function(){
+    if(_isLoading) return;
+    _isLoading = true;
+    _load5();
+    setTimeout(()=>{ _isLoading=false; }, 3000);
+  };
 }
 
-function toggleCart(){
-  const el = document.getElementById('cartPanel');
-  el.classList.toggle('open');
-}
+// 3. NEW SMART SEARCH - searches name, breed, origin, type, description
+function googleSearch(){
+  let q = document.getElementById("searchInput").value.toLowerCase().trim();
+  // also check home banner search if used
+  let homeQ = document.getElementById("homeSearch");
+  if(!q && homeQ) q = homeQ.value.toLowerCase().trim();
+  if(!q){ showPets('all'); return; }
 
-let cart = [];
-let userCart = [];
-function addToCart(name, breed, price, image){
-  const existing = cart.find(item=>item.name === name && item.breed === breed);
-  if(existing){ existing.qty++; } else { cart.push({name, breed, price: Number(price), image, qty: 1}); }
-  updateCartUI();
-}
-function removeFromCart(index){ cart.splice(index,1); updateCartUI(); }
-function updateCartUI(){
-  const cartItems = document.getElementById('cartItems');
-  const cartTotal = document.getElementById('cartTotal');
-  const cartCount = document.getElementById('cartCount');
-  if(!cartItems) return;
-  cartItems.innerHTML = '';
-  let total = 0;
-  cart.forEach((item,idx)=>{
-    total += item.price * item.qty;
-    const div = document.createElement('div');
-    div.className = 'cart-item';
-    div.innerHTML = `<img src="${item.image}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;"><div><strong>${item.name}</strong><br>${item.breed}<br>$${item.price} x ${item.qty}</div><button onclick="removeFromCart(${idx})" style="background:#e74c3c;color:#fff;border:none;padding:4px 8px;border-radius:6px;cursor:pointer;">✕</button>`;
-    cartItems.appendChild(div);
+  let words = q.split(" ");
+  let results = allPets.filter(p=>{
+    let text = ((p.name||"")+" "+(p.breed||"")+" "+(p.origin||"")+" "+(p.type||"")+" "+(p.category||"")+" "+(p.description||"")).toLowerCase();
+    return words.every(w=> text.includes(w));
   });
-  if(cartTotal) cartTotal.innerText = 'Total: $' + total;
-  if(cartCount) cartCount.innerText = cart.reduce((s,i)=>s+i.qty,0);
+
+  results = removeDuplicates(results);
+
+  // Show results using your existing display
+  if(typeof displayPets === 'function'){
+    displayPets(results);
+  } else if(typeof renderPets === 'function'){
+    renderPets(results);
+  } else {
+    // fallback - set currentList and call show
+    currentList = results;
+    let listDiv = document.getElementById("petList");
+    if(listDiv) listDiv.innerHTML = "";
+    // force showPets to use results
+    let oldAll = allPets;
+    allPets = results;
+    _show5('all');
+    allPets = oldAll;
+  }
+
+  let t = document.getElementById("pageTitle");
+  if(t) t.innerText = `Results for "${q}" (${results.length})`;
+  let h = document.getElementById("homePage");
+  if(h) h.style.display="none";
+  window.scrollTo(0,0);
 }
 
-function getBalance(){ return Number(localStorage.getItem('userBalance') || 0); }
-function setBalance(v){ localStorage.setItem('userBalance', String(v)); updateWalletUI(); }
+function feelingLucky(){
+  if(!allPets || allPets.length===0) return;
+  let r = allPets[Math.floor(Math.random()*allPets.length)];
+  // show just that one
+  let oldAll = allPets;
+  allPets = [r];
+  _show5('all');
+  allPets = oldAll;
+}
 
-function addMoney(amount){
-  if(amount <= 0) return;
-  const current = getBalance();
-  setBalance(current + amount);
+function formatUsd(amount){
+  return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function getBalance(){
+  const balance = Number(localStorage.getItem('userBalance'));
+  return Number.isFinite(balance) && balance >= 0 ? balance : 0;
+}
+
+function setBalance(value){
+  localStorage.setItem('userBalance', Number(value).toFixed(2));
   updateWalletUI();
-  const status = document.getElementById('topupStatus');
-  if(status) status.textContent = `Virtual money added! Your balance is $${getBalance()}.`;
+}
+
+let walletPaymentPending = false;
+let cachedPaystackKeyPromise = null;
+
+function getPaystackPublicKey(){
+  if(!cachedPaystackKeyPromise){
+    cachedPaystackKeyPromise = fetch('/api/config')
+      .then(async response => {
+        const config = await response.json();
+        const key = typeof config.paystackPublicKey === 'string'
+          ? config.paystackPublicKey.trim()
+          : '';
+        if(!response.ok || !/^pk_(test|live)_/.test(key)){
+          throw new Error(config.message || 'Payment service is not configured.');
+        }
+        return key;
+      })
+      .catch(error => {
+        cachedPaystackKeyPromise = null;
+        throw error;
+      });
+  }
+  return cachedPaystackKeyPromise;
 }
 
 function updateWalletUI(){
-  const el = document.getElementById('walletBalance');
-  if(el) el.textContent = '$' + getBalance();
-  const el2 = document.getElementById('walletBalanceDisplay');
-  if(el2) el2.textContent = '$' + getBalance();
+  const formattedBalance = formatUsd(getBalance());
+  const balanceDisplay = document.getElementById('walletBalanceDisplay');
+  if(balanceDisplay) balanceDisplay.textContent = formattedBalance;
+  const navBalance = document.getElementById('walletNavBalance');
+  if(navBalance) navBalance.textContent = formattedBalance;
 }
 
-// ===== FIXED ONLY: payNow =====
+function showWalletMessage(message, type){
+  const element = document.getElementById('wallet-message');
+  if(!element) return;
+  element.textContent = message;
+  element.style.color = type === 'success' ? '#198754' : '#c62828';
+}
+
+function openWallet(){
+  let modal = document.getElementById('walletModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'walletModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;display:flex;justify-content:center;align-items:center;';
+    modal.innerHTML = '<div style="background:white;width:90%;max-width:380px;padding:20px;border-radius:15px;text-align:center;"><h2>💰 My Wallet</h2><p style="font-size:14px;color:#666;">Your USD balance to buy pets</p><div id="walletBalanceDisplay" style="background:#f0f8ff;padding:20px;border-radius:12px;font-size:32px;font-weight:bold;">$0.00</div><br><label for="topupAmount">Top Up Amount (USD)</label><br><input id="topupAmount" type="number" value="10.00" min="0.01" step="0.01" style="padding:12px;width:80%;border-radius:10px;border:1px solid #ccc;text-align:center;font-size:18px;"><br><br><button id="topupButton" type="button" onclick="topUpWallet()" style="width:100%;padding:14px;background:#0ba4db;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;">💳 Top Up with Paystack</button><div id="wallet-message" role="status" aria-live="polite" style="min-height:20px;margin:12px 0;font-weight:bold;"></div><p style="font-size:12px;color:#888;">Visa • Mastercard • American Express • Apple Pay</p><button type="button" onclick="closeWallet()" style="background:none;border:none;color:red;cursor:pointer;">Close</button></div>';
+    document.body.appendChild(modal);
+  }
+  updateWalletUI();
+  modal.style.display = 'flex';
+}
+
+function closeWallet(){
+  if(walletPaymentPending){
+    showWalletMessage('Complete or cancel the Paystack payment before closing the wallet.', 'error');
+    return;
+  }
+  const modal = document.getElementById('walletModal');
+  if(modal) modal.style.display = 'none';
+}
+
+async function topUpWallet(){
+  const button = document.getElementById('topupButton');
+  const token = localStorage.getItem('token');
+  const email = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+  const amount = Number(document.getElementById('topupAmount').value);
+  const amountInCents = Math.round(amount * 100);
+  if(!token){
+    showWalletMessage('Please log in before topping up your wallet.', 'error');
+    return;
+  }
+  if(!Number.isFinite(amount) || amount <= 0 || !Number.isSafeInteger(amountInCents) || amountInCents < 1){
+    showWalletMessage('Enter a USD amount greater than $0.00.', 'error');
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showWalletMessage('Please log in with a valid email address.', 'error');
+    return;
+  }
+  if(!window.PaystackPop || typeof window.PaystackPop.setup !== 'function'){
+    showWalletMessage('Paystack failed to load. Check internet and refresh.', 'error');
+    return;
+  }
+
+  button.disabled = true;
+  walletPaymentPending = true;
+  showWalletMessage('Preparing secure payment...', 'error');
+  try{
+    const paystackPublicKey = await getPaystackPublicKey();
+
+    let paymentCompleted = false;
+    const reference = window.crypto?.randomUUID
+      ? `pets-${window.crypto.randomUUID()}`
+      : `pets-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const handler = window.PaystackPop.setup({
+      key: paystackPublicKey,
+      email,
+      amount: amountInCents,
+      currency: 'USD',
+      ref: reference,
+      callback: function(response) {
+        paymentCompleted = true;
+        showWalletMessage('Verifying payment...', 'error');
+        (async () => {
+          try{
+            const verifyResponse = await fetch('/api/wallet/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ reference: response.reference })
+            });
+            const data = await verifyResponse.json();
+            if(!verifyResponse.ok || !data.success) {
+              throw new Error(data.message || data.error || 'Payment verification failed.');
+            }
+            setBalance(data.balance);
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            user.balance = Number(data.balance);
+            localStorage.setItem('user', JSON.stringify(user));
+            showWalletMessage(`Top-up successful! New balance: ${formatUsd(data.balance)}`, 'success');
+          }catch(error){
+            showWalletMessage(error.message || 'Payment verification failed.', 'error');
+          }finally{
+            walletPaymentPending = false;
+            button.disabled = false;
+          }
+        })();
+      },
+      onClose: () => {
+        if(!paymentCompleted){
+          walletPaymentPending = false;
+          showWalletMessage('Payment cancelled.', 'error');
+          button.disabled = false;
+        }
+      }
+    });
+    showWalletMessage('', 'error');
+    handler.openIframe();
+  }catch(error){
+    walletPaymentPending = false;
+    showWalletMessage(error.message || 'Could not start payment.', 'error');
+    button.disabled = false;
+  }
+}
+
+let cart = [];
+function addToCart(petId){
+  const pet = allPets.find(p => p.id === petId);
+  if(!pet) return alert("Pet not found");
+  cart.push(pet);
+  updateCartUI();
+  openCart();
+}
+function updateCartUI(){
+  document.getElementById('cartCount').innerText = cart.length;
+  const total = cart.reduce((s,p)=> s + Number(p.price), 0);
+  document.getElementById('cartTotal').innerText = formatUsd(total);
+  document.getElementById('cartItems').innerHTML = cart.length===0 ? "<p>Cart is empty</p>" : cart.map((p,i)=>`<div style="display:flex;justify-content:space-between;padding:10px 0"><span>${p.name} - ${formatUsd(p.price)}</span><button onclick="removeFromCart(${i})">❌</button></div>`).join('');
+  const btn = document.getElementById('checkoutBtn');
+  const info = document.getElementById('balanceInfo');
+  if(btn && info){
+    if(cart.length===0){ btn.disabled=true; info.innerText=""; }
+    else if(getBalance() < total){ btn.disabled=true; btn.style.background="#ccc"; info.innerText=`❌ Not enough balance. Need ${formatUsd(total)}, you have ${formatUsd(getBalance())}. Top up first.`; info.style.color="red"; }
+    else { btn.disabled=false; btn.style.background="#ff6b00"; info.innerText=`✅ Enough balance. After paying you will remain with ${formatUsd(getBalance()-total)}`; info.style.color="green"; }
+  }
+}
+function removeFromCart(i){ cart.splice(i,1); updateCartUI(); }
+function openCart(){ document.getElementById('cartDrawer').style.display='block'; updateCartUI(); }
+function closeCart(){ document.getElementById('cartDrawer').style.display='none'; }
+function checkout(){
+  const total = cart.reduce((s,p)=> s + Number(p.price), 0);
+  if(cart.length===0) return alert("Cart empty");
+  if(getBalance() < total){ alert(`❌ Cannot buy. Need ${formatUsd(total)}, you have ${formatUsd(getBalance())}. Top up first.`); closeCart(); openWallet(); return; }
+  setBalance(getBalance() - total);
+  updateWalletUI(); updateCartUI();
+  alert(`🎉 Order successful! Paid ${formatUsd(total)} from wallet.`);
+  cart=[]; updateCartUI(); closeCart();
+}
+
+  // ===== STEP 2: PAY NOW - CREATE ORDER =====
 function payNow(country) {
   const name = document.getElementById("custName") ? document.getElementById("custName").value.trim() : "";
   const code = document.getElementById("phoneCode") ? document.getElementById("phoneCode").value : "";
   const phone = document.getElementById("custPhone") ? document.getElementById("custPhone").value.trim() : "";
-  const email = document.getElementById("custEmail") ? document.getElementById("custEmail").value.trim() : "";
-  const address = document.getElementById("custAddress") ? document.getElementById("custAddress").value : "";
+  const email = document.getElementById("custEmail") ? document.getElementById("custEmail").value.trim() : "";const address = document.getElementById("custAddress") ? document.getElementById("custAddress").value : "";
   const msg = document.getElementById("orderMessage");
   country = country || document.getElementById("country")?.value || "";
-  if (!country || !address || !phone || !email) {
+ 
+
+if (!country || !address || !phone || !email) {
     if (msg) { msg.style.color = "red"; msg.innerText = "Please select a country and enter your address, phone, and email."; }
     return;
   }
-  const total = cart.reduce((s,p)=> s + Number(p.price) * (p.qty || 1), 0);
-  if (getBalance() < total) {
-    if (msg) { msg.style.color = "red"; msg.innerText = "*Top up wallet first"; }
-    return;
-  }
+  const total = cart.reduce((s,p)=> s + Number(p.price), 0);
+  if (getBalance() < total) { alert("Not enough wallet balance. Top up first."); return; }
   setBalance(getBalance() - total);
   if (typeof updateWalletUI === "function") updateWalletUI();
   const fullPhone = code + phone;
-  if (msg) { msg.style.color = "green"; msg.innerText = `*Order started for ${country} we'll notify you on ${fullPhone}`; }
+
+  if (msg) {
+    msg.style.color = "green";
+    msg.innerText = `Order Started for ${country}! We'll notify you on ${fullPhone}. Thank you!`;
+  }
+
+  // Clear cart if it exists
   try {
     if (typeof cart !== "undefined") { cart = []; }
     if (typeof updateCartUI === "function") updateCartUI();
     if (typeof renderCart === "function") renderCart();
     localStorage.removeItem("cart");
   } catch(e) {}
+
+  alert(`Order Started for ${country}! We'll notify you on ${fullPhone}`);
 }
 
-function getBookedPets(){
-  try{ return JSON.parse(localStorage.getItem('bookedPets') || '[]'); }catch(e){ return []; }
-}
-function saveBookedPets(list){ localStorage.setItem('bookedPets', JSON.stringify(list)); }
+// ===== COUNTRY SELECTOR =====
+document.addEventListener("DOMContentLoaded", () => {
 
-function showBookedPets(){
-  let booked = getBookedPets();
-  let box = document.getElementById('bookedPetsList');
-  let box2 = document.getElementById('bookedPetsContainer');
-  let target = box || box2;
-  if(!target) return;
-  target.innerHTML = '';
-  if(!booked.length){ target.innerHTML = '<p>No booked pets yet.</p>'; return; }
-  booked.forEach((item, idx)=>{
-    let div = document.createElement('div');
-    div.className = 'booked-pet-card';
-    div.style.cssText = 'border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:12px;background:#fff;';
-    div.innerHTML = `
-      <img src="${item.image||'https://placehold.co/600x400?text=Pet'}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;">
-      <h3>${item.name} - ${item.breed}</h3>
-      <p><b>Full Price:</b> $${item.price} | <b>Paid:</b> $${item.paid} | <b>Remaining:</b> $${item.remaining}</p>
-      <p>Status: ${item.status}</p>
-      <button onclick="completePayment(${idx})" style="background:#2ecc71;color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:bold;">Complete Payment - Pay $${item.remaining}</button>
-      <button onclick="cancelBooking(${idx})" style="background:#e74c3c;color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;margin-left:8px;">Cancel Booking</button>
-      <p id="bookedMsg-${idx}" style="font-weight:bold;margin-top:8px;"></p>
-    `;
-    target.appendChild(div);
+const countries = [
+  // AFRICA
+  {n:"Algeria", d:"+213", c:"DZ", r:"Africa"},
+  {n:"Angola", d:"+244", c:"AO", r:"Africa"},
+  {n:"Benin", d:"+229", c:"BJ", r:"Africa"},
+  {n:"Botswana", d:"+267", c:"BW", r:"Africa"},
+  {n:"Burkina Faso", d:"+226", c:"BF", r:"Africa"},
+  {n:"Burundi", d:"+257", c:"BI", r:"Africa"},
+  {n:"Cabo Verde", d:"+238", c:"CV", r:"Africa"},
+  {n:"Cameroon", d:"+237", c:"CM", r:"Africa"},
+  {n:"Central African Republic", d:"+236", c:"CF", r:"Africa"},
+  {n:"Chad", d:"+235", c:"TD", r:"Africa"},
+  {n:"Comoros", d:"+269", c:"KM", r:"Africa"},
+  {n:"Congo", d:"+242", c:"CG", r:"Africa"},
+  {n:"Congo, DR", d:"+243", c:"CD", r:"Africa"},
+  {n:"Djibouti", d:"+253", c:"DJ", r:"Africa"},
+  {n:"Egypt", d:"+20", c:"EG", r:"Africa"},
+  {n:"Equatorial Guinea", d:"+240", c:"GQ", r:"Africa"},
+  {n:"Eritrea", d:"+291", c:"ER", r:"Africa"},
+  {n:"Eswatini", d:"+268", c:"SZ", r:"Africa"},
+  {n:"Ethiopia", d:"+251", c:"ET", r:"Africa"},
+  {n:"Gabon", d:"+241", c:"GA", r:"Africa"},
+  {n:"Gambia", d:"+220", c:"GM", r:"Africa"},
+  {n:"Ghana", d:"+233", c:"GH", r:"Africa"},
+  {n:"Guinea", d:"+224", c:"GN", r:"Africa"},
+  {n:"Guinea-Bissau", d:"+245", c:"GW", r:"Africa"},
+  {n:"Ivory Coast", d:"+225", c:"CI", r:"Africa"},
+  {n:"Kenya", d:"+254", c:"KE", r:"Africa"},
+  {n:"Lesotho", d:"+266", c:"LS", r:"Africa"},
+  {n:"Liberia", d:"+231", c:"LR", r:"Africa"},
+  {n:"Libya", d:"+218", c:"LY", r:"Africa"},
+  {n:"Madagascar", d:"+261", c:"MG", r:"Africa"},
+  {n:"Malawi", d:"+265", c:"MW", r:"Africa"},
+  {n:"Mali", d:"+223", c:"ML", r:"Africa"},
+  {n:"Mauritania", d:"+222", c:"MR", r:"Africa"},
+  {n:"Mauritius", d:"+230", c:"MU", r:"Africa"},
+  {n:"Morocco", d:"+212", c:"MA", r:"Africa"},
+  {n:"Mozambique", d:"+258", c:"MZ", r:"Africa"},
+  {n:"Namibia", d:"+264", c:"NA", r:"Africa"},
+  {n:"Niger", d:"+227", c:"NE", r:"Africa"},
+  {n:"Nigeria", d:"+234", c:"NG", r:"Africa"},
+  {n:"Rwanda", d:"+250", c:"RW", r:"Africa"},
+  {n:"Sao Tome & Principe", d:"+239", c:"ST", r:"Africa"},
+  {n:"Senegal", d:"+221", c:"SN", r:"Africa"},
+  {n:"Seychelles", d:"+248", c:"SC", r:"Africa"},
+  {n:"Sierra Leone", d:"+232", c:"SL", r:"Africa"},
+  {n:"Somalia", d:"+252", c:"SO", r:"Africa"},
+  {n:"South Africa", d:"+27", c:"ZA", r:"Africa"},
+  {n:"South Sudan", d:"+211", c:"SS", r:"Africa"},
+  {n:"Sudan", d:"+249", c:"SD", r:"Africa"},
+  {n:"Tanzania", d:"+255", c:"TZ", r:"Africa"},
+  {n:"Togo", d:"+228", c:"TG", r:"Africa"},
+  {n:"Tunisia", d:"+216", c:"TN", r:"Africa"},
+  {n:"Uganda", d:"+256", c:"UG", r:"Africa"},
+  {n:"Zambia", d:"+260", c:"ZM", r:"Africa"},
+  {n:"Zimbabwe", d:"+263", c:"ZW", r:"Africa"},
+  // ASIA
+  {n:"Afghanistan", d:"+93", c:"AF", r:"Asia"},
+  {n:"Armenia", d:"+374", c:"AM", r:"Asia"},
+  {n:"Azerbaijan", d:"+994", c:"AZ", r:"Asia"},
+  {n:"Bahrain", d:"+973", c:"BH", r:"Asia"},
+  {n:"Bangladesh", d:"+880", c:"BD", r:"Asia"},
+  {n:"Bhutan", d:"+975", c:"BT", r:"Asia"},
+  {n:"Brunei", d:"+673", c:"BN", r:"Asia"},
+  {n:"Cambodia", d:"+855", c:"KH", r:"Asia"},
+  {n:"China", d:"+86", c:"CN", r:"Asia"},
+  {n:"Cyprus", d:"+357", c:"CY", r:"Asia"},
+  {n:"Georgia", d:"+995", c:"GE", r:"Asia"},
+  {n:"India", d:"+91", c:"IN", r:"Asia"},
+  {n:"Indonesia", d:"+62", c:"ID", r:"Asia"},
+  {n:"Iran", d:"+98", c:"IR", r:"Asia"},
+  {n:"Iraq", d:"+964", c:"IQ", r:"Asia"},
+  {n:"Israel", d:"+972", c:"IL", r:"Asia"},
+  {n:"Japan", d:"+81", c:"JP", r:"Asia"},
+  {n:"Jordan", d:"+962", c:"JO", r:"Asia"},
+  {n:"Kazakhstan", d:"+7", c:"KZ", r:"Asia"},
+  {n:"Kuwait", d:"+965", c:"KW", r:"Asia"},
+  {n:"Kyrgyzstan", d:"+996", c:"KG", r:"Asia"},
+  {n:"Laos", d:"+856", c:"LA", r:"Asia"},
+  {n:"Lebanon", d:"+961", c:"LB", r:"Asia"},
+  {n:"Malaysia", d:"+60", c:"MY", r:"Asia"},
+  {n:"Maldives", d:"+960", c:"MV", r:"Asia"},
+  {n:"Mongolia", d:"+976", c:"MN", r:"Asia"},
+  {n:"Myanmar", d:"+95", c:"MM", r:"Asia"},
+  {n:"Nepal", d:"+977", c:"NP", r:"Asia"},
+  {n:"North Korea", d:"+850", c:"KP", r:"Asia"},
+  {n:"Oman", d:"+968", c:"OM", r:"Asia"},
+  {n:"Pakistan", d:"+92", c:"PK", r:"Asia"},
+  {n:"Palestine", d:"+970", c:"PS", r:"Asia"},
+  {n:"Philippines", d:"+63", c:"PH", r:"Asia"},
+  {n:"Qatar", d:"+974", c:"QA", r:"Asia"},
+  {n:"Saudi Arabia", d:"+966", c:"SA", r:"Asia"},
+  {n:"Singapore", d:"+65", c:"SG", r:"Asia"},
+  {n:"South Korea", d:"+82", c:"KR", r:"Asia"},
+  {n:"Sri Lanka", d:"+94", c:"LK", r:"Asia"},
+  {n:"Syria", d:"+963", c:"SY", r:"Asia"},
+  {n:"Taiwan", d:"+886", c:"TW", r:"Asia"},
+  {n:"Tajikistan", d:"+992", c:"TJ", r:"Asia"},
+  {n:"Thailand", d:"+66", c:"TH", r:"Asia"},
+  {n:"Timor-Leste", d:"+670", c:"TL", r:"Asia"},
+  {n:"Turkey", d:"+90", c:"TR", r:"Asia"},
+  {n:"Turkmenistan", d:"+993", c:"TM", r:"Asia"},
+  {n:"UAE", d:"+971", c:"AE", r:"Asia"},
+  {n:"Uzbekistan", d:"+998", c:"UZ", r:"Asia"},
+  {n:"Vietnam", d:"+84", c:"VN", r:"Asia"},
+  {n:"Yemen", d:"+967", c:"YE", r:"Asia"},
+  // EUROPE
+  {n:"Albania", d:"+355", c:"AL", r:"Europe"},
+  {n:"Andorra", d:"+376", c:"AD", r:"Europe"},
+  {n:"Austria", d:"+43", c:"AT", r:"Europe"},
+  {n:"Belarus", d:"+375", c:"BY", r:"Europe"},
+  {n:"Belgium", d:"+32", c:"BE", r:"Europe"},
+  {n:"Bosnia & Herzegovina", d:"+387", c:"BA", r:"Europe"},
+  {n:"Bulgaria", d:"+359", c:"BG", r:"Europe"},
+  {n:"Croatia", d:"+385", c:"HR", r:"Europe"},
+  {n:"Czech Republic", d:"+420", c:"CZ", r:"Europe"},
+  {n:"Denmark", d:"+45", c:"DK", r:"Europe"},
+  {n:"Estonia", d:"+372", c:"EE", r:"Europe"},
+  {n:"Finland", d:"+358", c:"FI", r:"Europe"},
+  {n:"France", d:"+33", c:"FR", r:"Europe"},
+  {n:"Germany", d:"+49", c:"DE", r:"Europe"},
+  {n:"Greece", d:"+30", c:"GR", r:"Europe"},
+  {n:"Hungary", d:"+36", c:"HU", r:"Europe"},
+  {n:"Iceland", d:"+354", c:"IS", r:"Europe"},
+  {n:"Ireland", d:"+353", c:"IE", r:"Europe"},
+  {n:"Italy", d:"+39", c:"IT", r:"Europe"},
+  {n:"Kosovo", d:"+383", c:"XK", r:"Europe"},
+  {n:"Latvia", d:"+371", c:"LV", r:"Europe"},
+  {n:"Liechtenstein", d:"+423", c:"LI", r:"Europe"},
+  {n:"Lithuania", d:"+370", c:"LT", r:"Europe"},
+  {n:"Luxembourg", d:"+352", c:"LU", r:"Europe"},
+  {n:"Malta", d:"+356", c:"MT", r:"Europe"},
+  {n:"Moldova", d:"+373", c:"MD", r:"Europe"},
+  {n:"Monaco", d:"+377", c:"MC", r:"Europe"},
+  {n:"Montenegro", d:"+382", c:"ME", r:"Europe"},
+  {n:"Netherlands", d:"+31", c:"NL", r:"Europe"},
+  {n:"North Macedonia", d:"+389", c:"MK", r:"Europe"},
+  {n:"Norway", d:"+47", c:"NO", r:"Europe"},
+  {n:"Poland", d:"+48", c:"PL", r:"Europe"},
+  {n:"Portugal", d:"+351", c:"PT", r:"Europe"},
+  {n:"Romania", d:"+40", c:"RO", r:"Europe"},
+  {n:"Russia", d:"+7", c:"RU", r:"Europe"},
+  {n:"San Marino", d:"+378", c:"SM", r:"Europe"},
+  {n:"Serbia", d:"+381", c:"RS", r:"Europe"},
+  {n:"Slovakia", d:"+421", c:"SK", r:"Europe"},
+  {n:"Slovenia", d:"+386", c:"SI", r:"Europe"},
+  {n:"Spain", d:"+34", c:"ES", r:"Europe"},
+  {n:"Sweden", d:"+46", c:"SE", r:"Europe"},
+  {n:"Switzerland", d:"+41", c:"CH", r:"Europe"},
+  {n:"Ukraine", d:"+380", c:"UA", r:"Europe"},
+  {n:"United Kingdom", d:"+44", c:"GB", r:"Europe"},
+  {n:"Vatican City", d:"+379", c:"VA", r:"Europe"},
+  // NORTH AMERICA
+  {n:"Antigua & Barbuda", d:"+1", c:"AG", r:"America"},
+  {n:"Bahamas", d:"+1", c:"BS", r:"America"},
+  {n:"Barbados", d:"+1", c:"BB", r:"America"},
+  {n:"Belize", d:"+501", c:"BZ", r:"America"},
+  {n:"Canada", d:"+1", c:"CA", r:"America"},
+  {n:"Costa Rica", d:"+506", c:"CR", r:"America"},
+  {n:"Cuba", d:"+53", c:"CU", r:"America"},
+  {n:"Dominica", d:"+1", c:"DM", r:"America"},
+  {n:"Dominican Republic", d:"+1", c:"DO", r:"America"},
+  {n:"El Salvador", d:"+503", c:"SV", r:"America"},
+  {n:"Grenada", d:"+1", c:"GD", r:"America"},
+  {n:"Guatemala", d:"+502", c:"GT", r:"America"},
+  {n:"Haiti", d:"+509", c:"HT", r:"America"},
+  {n:"Honduras", d:"+504", c:"HN", r:"America"},
+  {n:"Jamaica", d:"+1", c:"JM", r:"America"},
+  {n:"Mexico", d:"+52", c:"MX", r:"America"},
+  {n:"Nicaragua", d:"+505", c:"NI", r:"America"},
+  {n:"Panama", d:"+507", c:"PA", r:"America"},
+  {n:"St Kitts & Nevis", d:"+1", c:"KN", r:"America"},
+  {n:"St Lucia", d:"+1", c:"LC", r:"America"},
+  {n:"St Vincent & Grenadines", d:"+1", c:"VC", r:"America"},
+  {n:"Trinidad & Tobago", d:"+1", c:"TT", r:"America"},
+  {n:"USA", d:"+1", c:"US", r:"America"},
+  // SOUTH AMERICA
+  {n:"Argentina", d:"+54", c:"AR", r:"South America"},
+  {n:"Bolivia", d:"+591", c:"BO", r:"South America"},
+  {n:"Brazil", d:"+55", c:"BR", r:"South America"},
+  {n:"Chile", d:"+56", c:"CL", r:"South America"},
+  {n:"Colombia", d:"+57", c:"CO", r:"South America"},
+  {n:"Ecuador", d:"+593", c:"EC", r:"South America"},
+  {n:"Guyana", d:"+592", c:"GY", r:"South America"},
+  {n:"Paraguay", d:"+595", c:"PY", r:"South America"},
+  {n:"Peru", d:"+51", c:"PE", r:"South America"},
+  {n:"Suriname", d:"+597", c:"SR", r:"South America"},
+  {n:"Uruguay", d:"+598", c:"UY", r:"South America"},
+  {n:"Venezuela", d:"+58", c:"VE", r:"South America"},
+  // AUSTRALIA / OCEANIA
+  {n:"Australia", d:"+61", c:"AU", r:"Australia"},
+  {n:"Fiji", d:"+679", c:"FJ", r:"Australia"},
+  {n:"Kiribati", d:"+686", c:"KI", r:"Australia"},
+  {n:"Marshall Islands", d:"+692", c:"MH", r:"Australia"},
+  {n:"Micronesia", d:"+691", c:"FM", r:"Australia"},
+  {n:"Nauru", d:"+674", c:"NR", r:"Australia"},
+  {n:"New Zealand", d:"+64", c:"NZ", r:"Australia"},
+  {n:"Palau", d:"+680", c:"PW", r:"Australia"},
+  {n:"Papua New Guinea", d:"+675", c:"PG", r:"Australia"},
+  {n:"Samoa", d:"+685", c:"WS", r:"Australia"},
+  {n:"Solomon Islands", d:"+677", c:"SB", r:"Australia"},
+  {n:"Tonga", d:"+676", c:"TO", r:"Australia"},
+  {n:"Tuvalu", d:"+688", c:"TV", r:"Australia"},
+  {n:"Vanuatu", d:"+678", c:"VU", r:"Australia"},
+  {n:"United States", d:"+1", c:"US", r:"America"},
+  {n:"Anguilla", d:"+1 264", c:"AI", r:"America"},
+  {n:"Aruba", d:"+297", c:"AW", r:"America"},
+  {n:"Bermuda", d:"+1 441", c:"BM", r:"America"},
+  {n:"Bonaire, Sint Eustatius and Saba", d:"+599", c:"BQ", r:"America"},
+  {n:"British Indian Ocean Territory", d:"+246", c:"IO", r:"Africa"},
+  {n:"British Virgin Islands", d:"+1 284", c:"VG", r:"America"},
+  {n:"Cayman Islands", d:"+1 345", c:"KY", r:"America"},
+  {n:"Christmas Island", d:"+61", c:"CX", r:"Australia"},
+  {n:"Cocos (Keeling) Islands", d:"+61", c:"CC", r:"Australia"},
+  {n:"Cook Islands", d:"+682", c:"CK", r:"Australia"},
+  {n:"Curacao", d:"+599", c:"CW", r:"America"},
+  {n:"Falkland Islands", d:"+500", c:"FK", r:"South America"},
+  {n:"Faroe Islands", d:"+298", c:"FO", r:"Europe"},
+  {n:"French Guiana", d:"+594", c:"GF", r:"South America"},
+  {n:"French Polynesia", d:"+689", c:"PF", r:"Australia"},
+  {n:"Gibraltar", d:"+350", c:"GI", r:"Europe"},
+  {n:"Greenland", d:"+299", c:"GL", r:"America"},
+  {n:"Guadeloupe", d:"+590", c:"GP", r:"America"},
+  {n:"Guam", d:"+1 671", c:"GU", r:"Australia"},
+  {n:"Guernsey", d:"+44 1481", c:"GG", r:"Europe"},
+  {n:"Hong Kong", d:"+852", c:"HK", r:"Asia"},
+  {n:"Isle of Man", d:"+44 1624", c:"IM", r:"Europe"},
+  {n:"Jersey", d:"+44 1534", c:"JE", r:"Europe"},
+  {n:"Macao", d:"+853", c:"MO", r:"Asia"},
+  {n:"Martinique", d:"+596", c:"MQ", r:"America"},
+  {n:"Mayotte", d:"+262", c:"YT", r:"Africa"},
+  {n:"Montserrat", d:"+1 664", c:"MS", r:"America"},
+  {n:"New Caledonia", d:"+687", c:"NC", r:"Australia"},
+  {n:"Niue", d:"+683", c:"NU", r:"Australia"},
+  {n:"Norfolk Island", d:"+672", c:"NF", r:"Australia"},
+  {n:"Northern Mariana Islands", d:"+1 670", c:"MP", r:"Australia"},
+  {n:"Puerto Rico", d:"+1 787", c:"PR", r:"America"},
+  {n:"Reunion", d:"+262", c:"RE", r:"Africa"},
+  {n:"Saint Barthelemy", d:"+590", c:"BL", r:"America"},
+  {n:"Saint Helena", d:"+290", c:"SH", r:"Africa"},
+  {n:"Saint Martin", d:"+590", c:"MF", r:"America"},
+  {n:"Sint Maarten", d:"+1 721", c:"SX", r:"America"},
+  {n:"Tokelau", d:"+690", c:"TK", r:"Australia"},
+  {n:"Turks and Caicos Islands", d:"+1 649", c:"TC", r:"America"},
+  {n:"US Virgin Islands", d:"+1 340", c:"VI", r:"America"},
+  {n:"Wallis and Futuna", d:"+681", c:"WF", r:"Australia"},
+  {n:"Western Sahara", d:"+212", c:"EH", r:"Africa"},
+  {n:"Antarctica", d:"+672", c:"AQ", r:"Antarctica"}
+];
+countries.sort((a,b)=>a.n.localeCompare(b.n));
+const countrySelect = document.getElementById("country");
+if (countrySelect) {
+  countries.forEach(country => {
+    const option = document.createElement("option");
+    option.value = country.n;
+    option.textContent = country.n;
+    countrySelect.appendChild(option);
+  });
+
+  const savedCountry = localStorage.getItem("selectedCountry");
+  const initialCountry = savedCountry === "UK" ? "United Kingdom" : savedCountry;
+  if (countries.some(country => country.n === initialCountry)) {
+    countrySelect.value = initialCountry;
+  }
+
+  countrySelect.addEventListener("change", () => {
+    const country = countries.find(item => item.n === countrySelect.value);
+    if (!country) return;
+    localStorage.setItem("selectedCountry", country.n);
+    document.getElementById("phoneCode").value = country.d;
+    document.getElementById("shippingCountry").textContent = country.n;
+  });
+
+  if (countrySelect.value) countrySelect.dispatchEvent(new Event("change"));
+}
+});
+
+document.getElementById('menuBtn').addEventListener('click', toggleSidePanel);
+document.getElementById('closeSidebarBtn').addEventListener('click', toggleSidePanel);
+document.getElementById('panelOverlay').addEventListener('click', toggleSidePanel);
+document.getElementById('sidebar').querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    if(window.matchMedia('(max-width: 1024px)').matches) closeSidePanel();
+  });
+});
+document.getElementById('signOutBtn').addEventListener('click', function() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('user');
+  localStorage.removeItem('userBalance');
+  localStorage.removeItem('loggedIn');
+  localStorage.removeItem('isLoggedIn');
+  window.location.href = 'index.html';
+});
+
+let installPromptEvent = null;
+const installAppButton = document.getElementById("installAppBtn");
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  installPromptEvent = event;
+});
+installAppButton.addEventListener("click", async () => {
+  if(!installPromptEvent){
+    alert("To install manually, open the Chrome menu and choose Add to Home screen or Install app.");
+    return;
+  }
+  const promptEvent = installPromptEvent;
+  await promptEvent.prompt();
+  await promptEvent.userChoice;
+  installPromptEvent = null;
+});
+window.addEventListener("appinstalled", () => {
+  installPromptEvent = null;
+  installAppButton.hidden = true;
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .catch(error => console.error("Service worker registration failed:", error));
   });
 }
 
-function completePayment(index){
-  let booked = getBookedPets();
-  let item = booked[index];
-  if(!item) return;
-  let wallet = getBalance();
-  if(wallet < item.remaining){
-    let m = document.getElementById('bookedMsg-'+index);
-    if(m){ m.style.color='red'; m.textContent = 'Not enough virtual balance. Top up wallet first!'; }
-    return;
-  }
-  setBalance(wallet - item.remaining);
-  item.paid = item.price;
-  item.remaining = 0;
-  item.status = 'Fully Paid - Order Started';
-  booked[index] = item;
-  saveBookedPets(booked);
-  let m = document.getElementById('bookedMsg-'+index);
-  if(m){ m.style.color='green'; m.textContent = `Order started for ${item.custName||''}! We will notify you soon.`; }
-  showBookedPets();
+window.addEventListener("load", () => {
+  getPaystackPublicKey().catch(error => console.warn("Paystack configuration prefetch failed:", error));
+});
+// --- INSTALL APP - LOGIN PAGE ---
+let deferredPrompt = null;
+const installWrap = document.getElementById('installWrap');
+const installBtn = document.getElementById('installBtn');
+const installHelp = document.getElementById('installHelp');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installWrap) installWrap.style.display = 'block';
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (installWrap) installWrap.style.display = 'none';
+  });
 }
 
-function cancelBooking(index){
-  let booked = getBookedPets();
-  booked.splice(index,1);
-  saveBookedPets(booked);
-  showBookedPets();
+window.addEventListener('appinstalled', () => {
+  if (installWrap) installWrap.style.display = 'none';
+});
+
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+if (isIOS && installWrap && installHelp && installBtn) {
+  installWrap.style.display = 'block';
+  installBtn.style.display = 'none';
+  installHelp.style.display = 'block';
 }
 
-// ===== FIXED ONLY: depositHalfToBook =====
+// ===== BOOKED PETS - DEPOSIT 50% FEATURE - ADDED ONLY AT BOTTOM, NOTHING ABOVE TOUCHED =====
+function getBookedPets(){ try{ return JSON.parse(localStorage.getItem('bookedPets')||'[]'); }catch(e){ return []; } }
+function saveBookedPets(list){ localStorage.setItem('bookedPets', JSON.stringify(list)); }
+
 function depositHalfToBook(){
   if(!cart || !cart.length){ alert('Your cart is empty'); return; }
   let wallet = getBalance();
   let totalDeposit = 0;
-  cart.forEach(item=>{ totalDeposit += Number(item.price||0) / 2 * (item.qty || 1); });
-  const msg = document.getElementById('depositMessage') || document.getElementById('orderMessage');
+  cart.forEach(item=>{ totalDeposit += Number(item.price||0) / 2; });
+  const msg = document.getElementById('orderMessage');
   if(wallet < totalDeposit){
-    if(msg){ msg.style.color='red'; msg.textContent = 'Top up 50% of the pets price to book!!'; }
+    if(msg){ msg.style.color='red'; msg.textContent = 'Not enough in wallet. You need ' + formatUsd(totalDeposit) + ' to book (50%). Your wallet: ' + formatUsd(wallet); }
+    else alert('Not enough in wallet. You need ' + formatUsd(totalDeposit));
     return;
   }
+  // deduct 50% using YOUR existing setBalance / userBalance
   setBalance(wallet - totalDeposit);
+  // save delivery details with booking so Complete Payment can use them
   let booked = getBookedPets();
   let custName = document.getElementById('custName') ? document.getElementById('custName').value : '';
   let custAddress = document.getElementById('custAddress') ? document.getElementById('custAddress').value : '';
@@ -434,71 +1185,75 @@ function depositHalfToBook(){
   if(msg){ msg.style.color='green'; msg.textContent = 'Pet Booked successfully🐶'; }
   showBookedPets();
 }
-
-// ===== ALIASES ONLY - FOR home.html onclicks, NO OTHER LOGIC CHANGED =====
-function showPets(category){
-  const map = {dog:'Dog', cat:'Cat', kitten:'Cat', parrot:'Parrot', puppy:'Dog', all:'All'};
-  filterPets(map[category] || 'All');
+function showBookedPets(){
+  const page = document.getElementById('bookedPetsPage');
+  if(page) page.style.display = 'block';
+  // close sidebar using YOUR existing function
+  if(typeof closeSidePanel === 'function') closeSidePanel();
+  const ov = document.getElementById('panelOverlay'); if(ov) ov.classList.remove('show');
+  const cd = document.getElementById('cartDrawer'); if(cd) cd.style.display='none';
+  renderBookedPets();
 }
-function goHome(){
-  closeSidePanel();
-  const hp = document.getElementById('homePage');
-  if(hp) hp.style.display = '';
-  const pt = document.getElementById('pageTitle');
-  if(pt) pt.textContent = 'All Pets';
-  buildAllPets();
+function closeBookedPets(){ const page = document.getElementById('bookedPetsPage'); if(page) page.style.display = 'none'; }
+function renderBookedPets(){
+  const listEl = document.getElementById('bookedList');
+  if(!listEl) return;
+  let booked = getBookedPets();
+  if(!booked.length){ listEl.innerHTML = '<p style="text-align:center;">No booked pets yet.</p>'; return; }
+  listEl.innerHTML = booked.map((p, i)=>{
+    let img = p.image ? '<img src="'+p.image+'" style="width:100%;height:150px;object-fit:cover;border-radius:10px;">' : '<div style="font-size:50px;text-align:center;">🐶</div>';
+    let btn = p.status === 'Fully Paid' ? '<p style="color:green;font-weight:bold;">✅ Fully Paid</p>' : '<button onclick="completePayment('+i+')" style="width:100%;padding:10px;background:#ff6b00;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Complete Payment</button>';
+    return '<div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px #ddd;">' + img + '<h3 style="margin:8px 0 4px;">'+p.name+'</h3>' + '<p style="margin:2px 0;">Total Price: '+formatUsd(Number(p.price))+'</p>' + '<p style="margin:2px 0;">Paid: '+formatUsd(Number(p.paid))+'</p>' + '<p style="margin:2px 0;font-weight:bold;">Remaining: '+formatUsd(Number(p.remaining))+'</p>' + '<p style="margin:2px 0;">Status: '+p.status+'</p>' + btn + '</div>';
+  }).join('');
 }
-function openCart(){
-  const d = document.getElementById('cartDrawer');
-  if(d) d.style.display = 'block';
-  else toggleCart();
-}
-function closeCart(){
-  const d = document.getElementById('cartDrawer');
-  if(d) d.style.display = 'none';
-  const p = document.getElementById('cartPanel');
-  if(p) p.classList.remove('open');
-}
-function googleSearch(){
-  const q = (document.getElementById('searchInput')?.value || document.getElementById('homeSearch')?.value || '').trim().toLowerCase();
-  if(!q) return buildAllPets();
-  buildAllPets().then(()=>{
-    const filtered = allPets.filter(p => (p.breed||'').toLowerCase().includes(q) || (p.name||'').toLowerCase().includes(q) || (p.desc||'').toLowerCase().includes(q));
-    renderPets(filtered, 'Search');
-    const hp = document.getElementById('homePage');
-    if(hp) hp.style.display = 'none';
-  });
-}
-function clearSearch(){
-  const s = document.getElementById('searchInput');
-  if(s) s.value = '';
-  const sb = document.getElementById('suggestionsBox');
-  if(sb) sb.innerHTML = '';
-  buildAllPets();
-}
-function feelingLucky(){
-  buildAllPets().then(()=>{
-    if(!allPets.length) return;
-    renderPets([allPets[Math.floor(Math.random()*allPets.length)]], 'Lucky');
-  });
-}
-function closeBookedPets(){
-  const p = document.getElementById('bookedPetsPage');
-  if(p) p.style.display = 'none';
-}
-// AUTO-LOAD PETS ON HOME PAGE OPEN
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    if (typeof buildAllPets === "function") {
-      await buildAllPets();
-    }
-    if (typeof showPets === "function") {
-      showPets('all');
-    } else if (typeof renderPets === "function" && typeof allPets !== "undefined") {
-      renderPets(allPets);
-    }
-    console.log("Pets loaded:", typeof allPets !== "undefined" ? allPets.length : "unknown");
-  } catch (e) {
-    console.error("Auto-load failed:", e);
+function completePayment(index){
+  let booked = getBookedPets();
+  let pet = booked[index];
+  if(!pet) return;
+  if(pet.status === 'Fully Paid'){ alert('Already fully paid'); return; }
+  let wallet = getBalance();
+  let need = Number(pet.remaining);
+  const msgEl = document.getElementById('bookedMsg');
+  if(wallet < need){
+    if(msgEl){ msgEl.style.color='red'; msgEl.textContent = 'Not enough in wallet. You need ' + formatUsd(need) + ' to complete. Your wallet: ' + formatUsd(wallet); }
+    else alert('Not enough in wallet. You need ' + formatUsd(need));
+    return;
   }
-});
+  setBalance(wallet - need);
+  pet.paid = Number(pet.price);
+  pet.remaining = 0;
+  pet.status = 'Fully Paid';
+  booked[index] = pet;
+  saveBookedPets(booked);
+  renderBookedPets();
+  if(msgEl){ msgEl.style.color='green'; msgEl.textContent = 'Your order is fully paid for wait for communication in your Phone number and adress'; }
+  else alert('Your order is fully paid for wait for communication in your Phone number and adress');
+}
+// FIX ONLY: Your old updateCartUI disabled orange button when balance < FULL total.
+// For deposit we only need 50%, so re-enable it after original function runs.
+// This does NOT edit updateCartUI above, it just adds a wrapper at bottom.
+(function(){
+  const _origUpdateCartUI = updateCartUI;
+  updateCartUI = function(){
+    _origUpdateCartUI();
+    try{
+      const btn = document.getElementById('checkoutBtn');
+      const info = document.getElementById('balanceInfo');
+      if(btn && info && cart && cart.length){
+        const total = cart.reduce((s,p)=> s + Number(p.price||0), 0);
+        const need50 = total / 2;
+        if(getBalance() >= need50){
+          btn.disabled = false;
+          btn.style.background = "#ff6b00";
+          info.innerText = '✅ Deposit 50% to book: ' + formatUsd(need50) + ' | Your wallet: ' + formatUsd(getBalance());
+          info.style.color = "green";
+        } else {
+          btn.disabled = true;
+          btn.style.background = "#ccc";
+          info.innerText = '❌ Not enough for deposit. Need ' + formatUsd(need50) + ', you have ' + formatUsd(getBalance()) + '. Top up first.';
+          info.style.color = "red";
+        }
+      }
+    }catch(e){}
+  };
+})();
