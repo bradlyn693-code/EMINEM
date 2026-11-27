@@ -1296,7 +1296,8 @@ function renderBookedPets(){
     return '<div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px #ddd;">' + img + '<h3 style="margin:8px 0 4px;">'+p.name+'</h3>' + '<p style="margin:2px 0;">Total Price: '+formatUsd(Number(p.price))+'</p>' + '<p style="margin:2px 0;">Paid: '+formatUsd(Number(p.paid))+'</p>' + '<p style="margin:2px 0;font-weight:bold;">Remaining: '+formatUsd(Number(p.remaining))+'</p>' + '<p style="margin:2px 0;">Status: '+p.status+'</p>' + btn + '<p id="bookedMsg-' + i + '" style="font-weight:bold; margin-top:8px;"></p>' + '</div>';
   }).join('');
 }
-  let booked = getBookedPets();
+  function completeBookedPayment(index){
+let booked = getBookedPets();
   let pet = booked[index];
   if(!pet) return;
 
@@ -1332,7 +1333,7 @@ function renderBookedPets(){
   // Show green message on THAT card after re-render
   const newMsg = document.getElementById('bookedMsg-' + index);
   if(newMsg){ newMsg.style.color='green'; newMsg.textContent = `Order placed successfully we'll notify you on your details ✅`; }
-
+   }
 // FIX ONLY: Your old updateCartUI disabled orange button when balance < FULL total.
 // For deposit we only need 50%, so re-enable it after original function runs.
 // This does NOT edit updateCartUI above, it just adds a wrapper at bottom.
@@ -1360,4 +1361,5 @@ function renderBookedPets(){
       }
     }catch(e){}
   };
-})();
+}
+)();
