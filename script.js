@@ -1332,7 +1332,7 @@ function renderBookedPets(){
   // Show green message on THAT card after re-render
   const newMsg = document.getElementById('bookedMsg-' + index);
   if(newMsg){ newMsg.style.color='green'; newMsg.textContent = `Order placed successfully we'll notify you on your details ✅`; }
-}
+
 // FIX ONLY: Your old updateCartUI disabled orange button when balance < FULL total.
 // For deposit we only need 50%, so re-enable it after original function runs.
 // This does NOT edit updateCartUI above, it just adds a wrapper at bottom.
