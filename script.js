@@ -200,16 +200,35 @@ function parrotFallbackImage(bodyColor, accentColor){
 
 // === PARROT IMAGES FIXED ONLY - real parrot photos, property renamed img -> image ===
 let parrotList = [
-  {breed:"African Grey Parrot", price:1200, desc:"Intelligent...", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#808080", accentColor:"#FF0000"},
-  {breed:"Blue and Gold Macaw", price:1500, desc:"Blue wings...", image:"https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=600&q=80", bodyColor:"#0066FF", accentColor:"#FFCC00"},
-  {breed:"Budgerigar / Budgie", price:45, desc:"A small, live...", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#00CC66", accentColor:"#FFFF00"},
-  {breed:"Cockatiel", price:120, desc:"Grey cockatiel...", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#999999", accentColor:"#FF9900"},
-  {breed:"Amazon Parrot", price:800, desc:"A sociable green...", image:"https://images.unsplash.com/photo-1619468005516-1a8a0a0a0a0a?w=600&q=80", bodyColor:"#009900", accentColor:"#FF0000"},
-  {breed:"Sun Conure", price:1420, desc:"A brilliant conure...", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#FF9900", accentColor:"#FFFF00"},
-  {breed:"Lovebird", price:1190, desc:"A small, affectionate...", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#FF3399", accentColor:"#00CCFF"},
-  {breed:"White Cockatoo", price:950, desc:"An elegant all-white...", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
+  {breed:"African Grey Parrot", price:245, desc:"Intelligent talker, very social and loyal.", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80", bodyColor:"#808080", accentColor:"#FF0000"},
+  {breed:"Blue and Gold Macaw", price:256, desc:"Blue wings, gold chest, playful and loud.", image:"https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=600&q=80", bodyColor:"#0066FF", accentColor:"#FFCC00"},
+  {breed:"Budgerigar / Budgie", price:130, desc:"A small, lively and easy to train parrot.", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80", bodyColor:"#00CC66", accentColor:"#FFFF00"},
+  {breed:"Cockatiel", price:145, desc:"Grey cockatiel with orange cheeks, gentle.", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80", bodyColor:"#999999", accentColor:"#FF9900"},
+  {breed:"Amazon Parrot", price:210, desc:"A sociable green parrot, great talker.", image:"https://images.unsplash.com/photo-1591198936750-16d8e15edb9e?w=600&q=80", bodyColor:"#009900", accentColor:"#FF0000"},
+  {breed:"Sun Conure", price:198, desc:"A brilliant orange and yellow conure.", image:"https://images.unsplash.com/photo-1619468005516-1a8a0a0a0a0a?w=600&q=80", bodyColor:"#FF9900", accentColor:"#FFFF00"},
+  {breed:"Lovebird", price:135, desc:"A small, affectionate and colourful parrot.", image:"https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=600&q=80", bodyColor:"#FF3399", accentColor:"#00CCFF"},
+  {breed:"White Cockatoo", price:220, desc:"An elegant all-white cockatoo, very cuddly.", image:"https://images.unsplash.com/photo-1574068468668-a05a11f871da?w=600&q=80", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
+  {breed:"Scarlet Macaw", price:250, desc:"Bright red, yellow and blue large macaw.", image:"https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=600&q=80", bodyColor:"#FF0000", accentColor:"#FFCC00"},
+  {breed:"Green Cheeked Conure", price:155, desc:"Playful, quiet and great for families.", image:"https://images.unsplash.com/photo-1605092676920-8ac5ae40c0d8?w=600&q=80", bodyColor:"#009900", accentColor:"#FF6600"},
+  {breed:"Eclectus Parrot", price:240, desc:"Male is green, female is red, very calm.", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80&sat=-100", bodyColor:"#00AA00", accentColor:"#FF0000"},
+  {breed:"Ringneck Parakeet", price:165, desc:"Green parakeet with a red ring, smart.", image:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80", bodyColor:"#00CC66", accentColor:"#FF0000"},
+  {breed:"Quaker Parrot", price:140, desc:"Chatty, funny and loves attention.", image:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=600&q=80", bodyColor:"#00AA00", accentColor:"#00CCFF"},
+  {breed:"Caique Parrot", price:185, desc:"Clown of parrots, loves to play and bounce.", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80&crop=entropy", bodyColor:"#FF9900", accentColor:"#FFFFFF"},
+  {breed:"Pionus Parrot", price:195, desc:"Quiet, gentle and easy to keep.", image:"https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=600&q=80&crop=top", bodyColor:"#0066CC", accentColor:"#FF0000"},
+  {breed:"Senegal Parrot", price:170, desc:"Small, calm and good for apartments.", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80&crop=entropy", bodyColor:"#009900", accentColor:"#FFCC00"},
+  {breed:"Jardine Parrot", price:190, desc:"Orange head, smart and active.", image:"https://images.unsplash.com/photo-1549608276-5786777e6587?w=600&q=80&crop=top", bodyColor:"#FF6600", accentColor:"#009900"},
+  {breed:"Meyers Parrot", price:175, desc:"Brown and green, quiet and friendly.", image:"https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=600&q=80&fit=crop", bodyColor:"#8B4513", accentColor:"#00CC66"},
+  {breed:"Hahn's Macaw", price:230, desc:"Smallest macaw, big personality.", image:"https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=600&q=80&crop=entropy", bodyColor:"#009900", accentColor:"#FF0000"},
+  {breed:"Yellow Naped Amazon", price:225, desc:"Yellow head, excellent talker.", image:"https://images.unsplash.com/photo-1591198936750-16d8e15edb9e?w=600&q=80&crop=top", bodyColor:"#009900", accentColor:"#FFFF00"},
+  {breed:"Double Yellow Head Amazon", price:235, desc:"Bright yellow head, very social.", image:"https://images.unsplash.com/photo-1619468005516-1a8a0a0a0a0a?w=600&q=80&crop=entropy", bodyColor:"#009900", accentColor:"#FFFF00"},
+  {breed:"Blue Fronted Amazon", price:215, desc:"Blue forehead, playful and talkative.", image:"https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=600&q=80&crop=top", bodyColor:"#009900", accentColor:"#0066FF"},
+  {breed:"Red Lored Amazon", price:205, desc:"Red forehead, gentle and funny.", image:"https://images.unsplash.com/photo-1574068468668-a05a11f871da?w=600&q=80&crop=entropy", bodyColor:"#009900", accentColor:"#FF0000"},
+  {breed:"Galah Cockatoo", price:200, desc:"Pink and grey, very affectionate.", image:"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80&crop=entropy", bodyColor:"#FF99CC", accentColor:"#999999"},
+  {breed:"Sulphur Crested Cockatoo", price:245, desc:"White with yellow crest, very loud.", image:"https://images.unsplash.com/photo-1444464666168-49d633b86797?w=600&q=80&crop=entropy", bodyColor:"#FFFFFF", accentColor:"#FFCC00"},
+  {breed:"Major Mitchell Cockatoo", price:252, desc:"Pink and white, beautiful and rare.", image:"https://images.unsplash.com/photo-1605092676920-8ac5ae40c0d8?w=600&q=80&crop=entropy", bodyColor:"#FF99CC", accentColor:"#FFFFFF"},
+  {breed:"Pineapple Conure", price:150, desc:"Colourful conure, cuddly and sweet.", image:"https://images.unsplash.com/photo-1552727451-6f5671e14d83?w=600&q=80&crop=entropy", bodyColor:"#FF9900", accentColor:"#009900"},
+  {breed:"Turquoise Conure", price:160, desc:"Blue-green conure, calm and loving.", image:"https://images.unsplash.com/photo-1522858547137-f1dcec554f55?w=600&q=80&fit=crop", bodyColor:"#00CCCC", accentColor:"#009900"},
 ];
-
 async function fetchWithTimeout(url, timeoutMs = 8000){
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -1274,31 +1293,45 @@ function renderBookedPets(){
   listEl.innerHTML = booked.map((p, i)=>{
     let img = p.image ? '<img src="'+p.image+'" style="width:100%;height:150px;object-fit:cover;border-radius:10px;">' : '<div style="font-size:50px;text-align:center;">🐶</div>';
     let btn = p.status === 'Fully Paid' ? '<p style="color:green;font-weight:bold;">✅ Fully Paid</p>' : '<button onclick="completePayment('+i+')" style="width:100%;padding:10px;background:#ff6b00;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">Complete Payment</button>';
-    return '<div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px #ddd;">' + img + '<h3 style="margin:8px 0 4px;">'+p.name+'</h3>' + '<p style="margin:2px 0;">Total Price: '+formatUsd(Number(p.price))+'</p>' + '<p style="margin:2px 0;">Paid: '+formatUsd(Number(p.paid))+'</p>' + '<p style="margin:2px 0;font-weight:bold;">Remaining: '+formatUsd(Number(p.remaining))+'</p>' + '<p style="margin:2px 0;">Status: '+p.status+'</p>' + btn + '</div>';
+    return '<div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px #ddd;">' + img + '<h3 style="margin:8px 0 4px;">'+p.name+'</h3>' + '<p style="margin:2px 0;">Total Price: '+formatUsd(Number(p.price))+'</p>' + '<p style="margin:2px 0;">Paid: '+formatUsd(Number(p.paid))+'</p>' + '<p style="margin:2px 0;font-weight:bold;">Remaining: '+formatUsd(Number(p.remaining))+'</p>' + '<p style="margin:2px 0;">Status: '+p.status+'</p>' + btn + '<p id="bookedMsg-' + i + '" style="font-weight:bold; margin-top:8px;"></p>' + '</div>';
   }).join('');
 }
-function completePayment(index){
   let booked = getBookedPets();
   let pet = booked[index];
   if(!pet) return;
-  if(pet.status === 'Fully Paid'){ alert('Already fully paid'); return; }
-  let wallet = getBalance();
-  let need = Number(pet.remaining);
-  const msgEl = document.getElementById('bookedMsg');
-  if(wallet < need){
-    if(msgEl){ msgEl.style.color='red'; msgEl.textContent = 'Not enough in wallet. You need ' + formatUsd(need) + ' to complete. Your wallet: ' + formatUsd(wallet); }
-    else alert('Not enough in wallet. You need ' + formatUsd(need));
+
+  // FIX: per-card message, not one global bookedMsg
+  const msgEl = document.getElementById('bookedMsg-' + index);
+
+  if(pet.status === 'Fully Paid'){
+    if(msgEl){ msgEl.style.color='green'; msgEl.textContent = 'Already fully paid'; }
     return;
   }
-  setBalance(wallet - need);
+
+  // ACCURATE MATHS - cents, no 99.99 errors
+  const priceCents = Math.round(Number(pet.price) * 100);
+  const paidCents = Math.round(Number(pet.paid || 0) * 100);
+  const needCents = priceCents - paidCents; // remaining = price - paid
+  const need = needCents / 100;
+
+  const walletCents = Math.round(Number(getBalance()) * 100);
+
+  if(walletCents < needCents){
+    if(msgEl){ msgEl.style.color='red'; msgEl.textContent = 'Not enough funds'; }
+    return;
+  }
+
+  setBalance((walletCents - needCents) / 100);
   pet.paid = Number(pet.price);
   pet.remaining = 0;
   pet.status = 'Fully Paid';
   booked[index] = pet;
   saveBookedPets(booked);
   renderBookedPets();
-  if(msgEl){ msgEl.style.color='green'; msgEl.textContent = 'Your order is fully paid for wait for communication in your Phone number and adress'; }
-  else alert('Your order is fully paid for wait for communication in your Phone number and adress');
+
+  // Show green message on THAT card after re-render
+  const newMsg = document.getElementById('bookedMsg-' + index);
+  if(newMsg){ newMsg.style.color='green'; newMsg.textContent = `Order placed successfully we'll notify you on your details ✅`; }
 }
 // FIX ONLY: Your old updateCartUI disabled orange button when balance < FULL total.
 // For deposit we only need 50%, so re-enable it after original function runs.
