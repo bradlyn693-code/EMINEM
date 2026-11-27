@@ -1285,6 +1285,38 @@ function showBookedPets(){
   renderBookedPets();
 }
 function closeBookedPets(){ const page = document.getElementById('bookedPetsPage'); if(page) page.style.display = 'none'; }
+function completeBookedPayment(index){
+  const booked = getBookedPets();
+  const pet = booked[index];
+  if(!pet) return;
+
+  const msg = document.getElementById('bookedMsg-' + index);
+  if(msg){ msg.style.color=''; msg.textContent=''; }
+
+  // ACCURATE MATHS IN CENTS - FOR THIS CARD ONLY
+  const priceCents = Math.round(Number(pet.price) * 100);
+  const paidCents = Math.round(Number(pet.paid || 0) * 100);
+  const needCents = priceCents - paidCents; // remaining 50%
+  const walletCents = Math.round(Number(getBalance()) * 100);
+
+  // NOT ENOUGH FOR REMAINING 50%
+  if(walletCents < needCents){
+    if(msg){ msg.style.color='red'; msg.textContent='Not enough funds'; }
+    return;
+  }
+
+  // HAS ENOUGH - DEDUCT + MARK FULLY PAID
+  setBalance((walletCents - needCents) / 100);
+  pet.paid = Number(pet.price);
+  pet.remaining = 0;
+  pet.status = 'Fully Paid';
+  booked[index] = pet;
+  saveBookedPets(booked);
+  if(typeof renderBookedPets === 'function') renderBookedPets();
+
+  const newMsg = document.getElementById('bookedMsg-' + index);
+  if(newMsg){ newMsg.style.color='green'; newMsg.textContent=`Order placed successfully we'll notify you on your details ✅`; }
+}
 function renderBookedPets(){
   const listEl = document.getElementById('bookedList');
   if(!listEl) return;
@@ -1296,44 +1328,7 @@ function renderBookedPets(){
     return '<div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 2px 8px #ddd;">' + img + '<h3 style="margin:8px 0 4px;">'+p.name+'</h3>' + '<p style="margin:2px 0;">Total Price: '+formatUsd(Number(p.price))+'</p>' + '<p style="margin:2px 0;">Paid: '+formatUsd(Number(p.paid))+'</p>' + '<p style="margin:2px 0;font-weight:bold;">Remaining: '+formatUsd(Number(p.remaining))+'</p>' + '<p style="margin:2px 0;">Status: '+p.status+'</p>' + btn + '<p id="bookedMsg-' + i + '" style="font-weight:bold; margin-top:8px;"></p>' + '</div>';
   }).join('');
 }
-  function completeBookedPayment(index){
-let booked = getBookedPets();
-  let pet = booked[index];
-  if(!pet) return;
-
-  // FIX: per-card message, not one global bookedMsg
-  const msgEl = document.getElementById('bookedMsg-' + index);
-
-  if(pet.status === 'Fully Paid'){
-    if(msgEl){ msgEl.style.color='green'; msgEl.textContent = 'Already fully paid'; }
-    return;
-  }
-
-  // ACCURATE MATHS - cents, no 99.99 errors
-  const priceCents = Math.round(Number(pet.price) * 100);
-  const paidCents = Math.round(Number(pet.paid || 0) * 100);
-  const needCents = priceCents - paidCents; // remaining = price - paid
-  const need = needCents / 100;
-
-  const walletCents = Math.round(Number(getBalance()) * 100);
-
-  if(walletCents < needCents){
-    if(msgEl){ msgEl.style.color='red'; msgEl.textContent = 'Not enough funds'; }
-    return;
-  }
-
-  setBalance((walletCents - needCents) / 100);
-  pet.paid = Number(pet.price);
-  pet.remaining = 0;
-  pet.status = 'Fully Paid';
-  booked[index] = pet;
-  saveBookedPets(booked);
-  renderBookedPets();
-
-  // Show green message on THAT card after re-render
-  const newMsg = document.getElementById('bookedMsg-' + index);
-  if(newMsg){ newMsg.style.color='green'; newMsg.textContent = `Order placed successfully we'll notify you on your details ✅`; }
-   }
+  
 // FIX ONLY: Your old updateCartUI disabled orange button when balance < FULL total.
 // For deposit we only need 50%, so re-enable it after original function runs.
 // This does NOT edit updateCartUI above, it just adds a wrapper at bottom.
